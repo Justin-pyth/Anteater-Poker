@@ -18,6 +18,14 @@ typedef enum {
     RAISE
 } MoveType;
 
+//enum of stage.
+typedef enum {
+    PREFLOP,
+    FLOP,
+    TURN,
+    RIVER
+} Stage;
+
 //enum of suit.
 typedef enum {
     HEARTS,
