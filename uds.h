@@ -10,6 +10,14 @@
 #define SPECIAL_CARDS 4
 #define HAND_SIZE 2
 
+//enum of move type.
+typedef enum {
+    FOLD,
+    CHECK,
+    CALL,
+    RAISE
+} MoveType;
+
 //enum of suit.
 typedef enum {
     HEARTS,
@@ -81,6 +89,8 @@ typedef struct{
     uint8_t top;
 } Deck;
 
+//struct that current game state (broadcast to all players)
+// excludes the deck and player cards which are server-side
 typedef struct {
     Player players[MAX_PLAYERS];
     uint8_t playerCount;
