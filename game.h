@@ -1,69 +1,23 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-#include <time.h>
-
-#define MAX_PLAYERS 10  //change # of max players
-#define MAX_NAMELEN 32  //change char lim for name
-
-typedef enum {
-    FOLD,
-    CHECK,
-    CALL,
-    RAISE
-} MoveType;
-
-typedef enum {
-    PREFLOP,
-    FLOP,
-    TURN,
-    RIVER
-} Stage;
-
-typedef enum {
-    SPADES,
-    HEARTS,
-    DIAMONDS,
-    CLUBS
-} Suit;
+#include "uds.h"
 
 typedef struct {
-    int rank;
-    Suit suit;
-} Card;
-
-typedef struct {
-    char userName[MAX_NAMELEN];
-
-    int chips;
-    int currentBet; //bet placed by specific player
-    bool isFolded;
-
-    Card holeCards[2];
-} Player;
-
-typedef struct {
-    int playerCount;
     Player players[MAX_PLAYERS];
+    uint8_t playerCount;
 
-    Card deck[52];
-    int deckCount;
     Card community[5];
-    Stage stage;
+    uint8_t communityCount;  // how many community cards are revealed
 
-    int currentPlayer;
+    uint8_t stage;           // use Stage enum
+    uint8_t currentPlayer;
+    uint8_t dealerIndex;
+    uint8_t yourIndex;
 
-    int pot;
-    int currentBet; //bet needed to match
-    int minRaise;
-
-
-    int yourIndex;
-    int dealerIndex;
+    uint32_t pot;
+    uint32_t currentBet;     // bet needed to match
+    uint32_t minRaise;
 } GameState;
 
 /*  SERVER calls this once per non-folded player to determine
