@@ -3,23 +3,6 @@
 
 #include "uds.h"
 
-typedef struct {
-    Player players[MAX_PLAYERS];
-    uint8_t playerCount;
-
-    Card community[5];
-    uint8_t communityCount;  // how many community cards are revealed
-
-    uint8_t stage;           // use Stage enum
-    uint8_t currentPlayer;
-    uint8_t dealerIndex;
-    uint8_t yourIndex;
-
-    uint32_t pot;
-    uint32_t currentBet;     // bet needed to match
-    uint32_t minRaise;
-} GameState;
-
 /*  SERVER calls this once per non-folded player to determine
     the winner after the final betting round. The player with
     the max score should win. Will leave the server to handle
@@ -30,6 +13,6 @@ typedef struct {
 
     Will need to handle flush, full house, etc.
 */
-int evaluateHand(const GameState* gs, Player player);
+int evaluateHand(const GameState* gs, const PlayerHand* hand);
 
 #endif

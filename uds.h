@@ -9,7 +9,7 @@
 #define DECK_SIZE 52
 #define SPECIAL_CARDS 4
 #define HAND_SIZE 2
-#endif
+
 //enum of suit.
 typedef enum {
     HEARTS,
@@ -80,3 +80,22 @@ typedef struct{
     Card cards[DECK_SIZE + SPECIAL_CARDS];
     uint8_t top;
 } Deck;
+
+typedef struct {
+    Player players[MAX_PLAYERS];
+    uint8_t playerCount;
+
+    Card community[5];
+    uint8_t communityCount;  // how many community cards are revealed
+
+    uint8_t stage;           // use Stage enum
+    uint8_t currentPlayer;
+    uint8_t dealerIndex;
+    uint8_t yourIndex;
+
+    uint32_t pot;
+    uint32_t currentBet;     // bet needed to match
+    uint32_t minRaise;
+} GameState;
+
+#endif
