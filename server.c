@@ -7,12 +7,16 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/select.h>
 #include "protocol.h"
 
 
 
 int main(int argc, char *argv[])
 {
+    (void)argc;
+    (void)argv;
+
     int listen_fd; // Socket file descriptor for listening
     ServerState state; // Server state to hold client information
 
@@ -62,10 +66,11 @@ int main(int argc, char *argv[])
                 }
             }
         }
-        close(listen_fd); // Close the listening socket when the server is shutting down
-        cleanup_server(&state); // Clean up server resources
-
     }
+
+    cleanup_server(&state); // Clean up server resources
+
+    return 0;
 }
 /*     int sockfd, newsockfd, portno;
      socklen_t clilen;
