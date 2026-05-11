@@ -49,8 +49,6 @@ typedef enum{
     QUEEN,
     KING,
     ACE,
-    JOKER,
-    ANT_EATER
 } Rank;
 
 //enum of player status.
@@ -70,7 +68,13 @@ typedef enum {
 typedef struct {
     uint8_t suit;
     uint8_t rank;
+    uint8_t value;
 } Card;
+
+//struct of deck, cotains 52 cards and N special cards, 8 bits top to indicate the top card index in the deck.
+typedef struct{
+    Card *cards[5];
+} CommunityCards;
 
 //struct of player, cotains 8 bits id, 32 bytes name, 32 bits chips, 32 bits current bet, 8 bits status and 8 bits has_cards.
 typedef struct {
@@ -96,6 +100,27 @@ typedef struct{
     Card cards[DECK_SIZE + SPECIAL_CARDS];
     uint8_t top;
 } Deck;
+
+//struct for rankings of poker hands
+typedef enum {
+    HIGHT_CARD,
+    PAIR,
+    TWO_PAIR,
+    THREE_KIND,
+    STRAIGHT,
+    FLUSH,
+    FULL_HOUSE,
+    FOUR_KIND,
+    STRAIGHT_FLUSH,
+    ROYAL_FLUSH
+} Rankings;
+
+//Struct for player's current highest hand
+typedef struct {
+    Card *cards[5];
+    int handType; // 0-9 (High Card to Royal Flush)
+    int score;    // For tie-breaking
+} HighHand;
 
 //struct that current game state (broadcast to all players)
 // excludes the deck and player cards which are server-side
