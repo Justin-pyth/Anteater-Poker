@@ -15,7 +15,8 @@ typedef enum {
     FOLD,
     CHECK,
     CALL,
-    RAISE
+    RAISE,
+    ALL_IN
 } MoveType;
 
 //enum of stage.
@@ -28,6 +29,7 @@ typedef enum {
 
 //enum of suit.
 typedef enum {
+    UNKNOW,// for hiding card information when sending data to other players.
     HEARTS,
     DIAMONDS,
     CLUBS,
@@ -36,6 +38,7 @@ typedef enum {
 
 //enum of rank.
 typedef enum{
+    UNKNOW,// for hiding card information when sending data to other players.
     TWO,
     THREE,
     FOUR,
@@ -76,18 +79,6 @@ typedef struct{
     Card *cards[5];
 } CommunityCards;
 
-//struct of player, cotains 8 bits id, 32 bytes name, 32 bits chips, 32 bits current bet, 8 bits status and 8 bits has_cards.
-typedef struct {
-    uint8_t id;
-    char name[MAX_NAME_LENTH];
-
-    uint32_t chips;
-    uint32_t current_bet;
-
-    uint8_t status;
-    uint8_t has_cards;
-
-}   Player;
 
 //struct of player hand, cotains 2 cards. This is for the client to see their own hand
 // the server will not send the hand to other players.
@@ -100,6 +91,18 @@ typedef struct{
     Card cards[DECK_SIZE + SPECIAL_CARDS];
     uint8_t top;
 } Deck;
+//struct of player, cotains 8 bits id, 32 bytes name, 32 bits chips, 32 bits current bet, 8 bits status and 8 bits has_cards.
+typedef struct {
+    uint8_t id;
+    char name[MAX_NAME_LENTH];
+    PlayerHand hand;
+    uint32_t chips;
+    uint32_t current_bet;
+
+    uint8_t status;
+    uint8_t has_cards;
+
+}   Player;
 
 //struct for rankings of poker hands
 typedef enum {
@@ -127,18 +130,23 @@ typedef struct {
 typedef struct {
     Player players[MAX_PLAYERS];
     uint8_t playerCount;
-
+    //uint8_t turn;
     Card community[5];
     uint8_t communityCount;  // how many community cards are revealed
 
     uint8_t stage;           // use Stage enum
     uint8_t currentPlayer;
     uint8_t dealerIndex;
-    uint8_t yourIndex;
+    //uint8_t yourIndex;
 
     uint32_t pot;
     uint32_t currentBet;     // bet needed to match
     uint32_t minRaise;
 } GameState;
+typedef struct {
+    uint8_t playerID;
+    MoveType move;
+    uint32_t amount;// same as chips. It is duplicate right now. But will comebine back with chips in the future.
+} PlayerAction;
 
 #endif
