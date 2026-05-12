@@ -12,7 +12,7 @@
 #include "uds.h"
 
 #define MAX_CLIENTS 6
-#define PORT 9200 // port 9200
+#define PORT 10160 // port 10160
 #define BUFFER_SIZE 256
 
 typedef struct{

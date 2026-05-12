@@ -63,11 +63,11 @@ void add_connection(ServerState *state, Client *client)
             state->clients[i].sock_fd = client_fd;
             state->clients[i].connected = 1; // Mark the client as connected
             state->clients[i].address = address;
-
+            state->clients[i].id = i+1; // Assign an ID to each client
             if (client != NULL)
                 *client = state->clients[i];
 
-            printf("New client connected: %d\n", client_fd); // Print a message indicating a new client has connected
+            printf("New client connected: %d\n", state->clients[i].id ); // Print a message indicating a new client has connected
             return;
         }
     }
@@ -90,7 +90,7 @@ void handle_client_communication(ServerState *state, Client *client)
         remove_client(state, client);
         return;
     }
-    printf("Received message from client %d: %s\n", client->client_fd, buffer); // Print the received message from the client
+    printf("Received message from client %d: %s\n", client->id, buffer); // Print the received message from the client
     //reply to client
     n = write(client->client_fd, "Message received", 16); // Send a response back to the client
     if (n < 0) {
@@ -104,7 +104,7 @@ void remove_client(ServerState *state, Client *client)
     (void)state;
 
     // Remove a client from the server state and close the connection
-    printf("Client disconnected: %d\n", client->client_fd); // Print a message indicating the client has disconnected
+    printf("Client disconnected: %d\n", client->id); // Print a message indicating the client has disconnected
     close(client->client_fd); // Close the client's socket connection
     client->client_fd = -1;
     client->sock_fd = -1;
