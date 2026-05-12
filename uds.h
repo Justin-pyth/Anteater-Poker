@@ -29,7 +29,7 @@ typedef enum {
 
 //enum of suit.
 typedef enum {
-    UNKNOW,// for hiding card information when sending data to other players.
+    UNKNOW_S,// for hiding card information when sending data to other players.
     HEARTS,
     DIAMONDS,
     CLUBS,
@@ -38,7 +38,7 @@ typedef enum {
 
 //enum of rank.
 typedef enum{
-    UNKNOW,// for hiding card information when sending data to other players.
+    UNKNOW_R,// for hiding card information when sending data to other players.
     TWO,
     THREE,
     FOUR,
@@ -51,7 +51,7 @@ typedef enum{
     JACK,
     QUEEN,
     KING,
-    ACE,
+    ACE
 } Rank;
 
 //enum of player status.
