@@ -3,6 +3,7 @@
 #define UDS_H
 
 #include<stdint.h>
+#include <stdbool.h>
 
 #define MAX_PLAYERS 6
 #define MAX_NAME_LENTH 32
@@ -142,6 +143,8 @@ typedef struct {
     uint32_t pot;
     uint32_t currentBet;     // bet needed to match
     uint32_t minRaise;
+
+    bool handPlaying; //for starting new hands after reset
 } GameState;
 typedef struct {
     uint8_t playerID;

@@ -23,6 +23,11 @@ void shuffle(Deck* deck);   //shuffle the deck
 void deal(GameState* gs, Deck* deck, PlayerHand hand[MAX_PLAYERS]); //deal cards to each player
 bool validate(const GameState* gs, MoveType move, uint32_t amount); //check if a move is valid (FOLD, CHECK, CALL, RAISE)
 void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount); //apply the move on the server if valid
+
+int findActive(const GameState * gs, int activeIDS[]); //find id array of all active players
+void award(GameState*gs); //award players at showdown
+int nextActive(GameState* gs, int curr); //find the next active player
+void resetHand(GameState* gs); //reset hand after final betting round
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     The flow of a move will be:
         -client uses sendMove() to the server
