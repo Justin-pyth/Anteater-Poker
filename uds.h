@@ -10,6 +10,8 @@
 #define DECK_SIZE 52
 #define SPECIAL_CARDS 4
 #define HAND_SIZE 2
+#define SMALL_BLIND 5
+#define BIG_BLIND 10
 
 //enum of move type.
 typedef enum {
@@ -145,6 +147,7 @@ typedef struct {
     uint32_t minRaise;
 
     bool handPlaying; //for starting new hands after reset
+    bool acted[MAX_PLAYERS];
 } GameState;
 typedef struct {
     uint8_t playerID;

@@ -2,7 +2,9 @@
 #define GAME_H
 
 #include "uds.h"
-#include <stdbool.h>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /*  SHARED FUNCTIONS (CLIENT + SERVER)
 
@@ -19,15 +21,26 @@
 int evaluateHand(const GameState* gs, const PlayerHand* hand);
 
 //SERVER ONLY FUNCTIONS
+void initDeck(Deck *deck);  //init the deck once
 void shuffle(Deck* deck);   //shuffle the deck
-void deal(GameState* gs, Deck* deck, PlayerHand hand[MAX_PLAYERS]); //deal cards to each player
-bool validate(const GameState* gs, MoveType move, uint32_t amount); //check if a move is valid (FOLD, CHECK, CALL, RAISE)
+Card deal(GameState* gs, Deck* deck); //deals a single card
+void dealHoles(GameState* gs, Deck* deck);//deal private cards to each player
+
+bool validate(const GameState* gs, uint8_t playerID, MoveType move, uint32_t amount); //check if a move is valid (FOLD, CHECK, CALL, RAISE)
 void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount); //apply the move on the server if valid
 
-int findActive(const GameState * gs, int activeIDS[]); //find id array of all active players
-void award(GameState*gs); //award players at showdown
+int findActive(const GameState * gs, int activeIDs[]); //find id array of all active players
 int nextActive(GameState* gs, int curr); //find the next active player
+
+void award(GameState*gs); //award players at showdown
+
 void resetHand(GameState* gs); //reset hand after final betting round
+void newHand(GameState* gs, Deck* deck); //start the new hand
+void initBlinds(GameState* gs); //post blinds at preflop
+
+bool allPlayersWent(const GameState* gs);
+void advance(GameState* gs, Deck* deck);
+bool processMove(GameState* gs, Deck* deck, uint8_t playerID);
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     The flow of a move will be:
         -client uses sendMove() to the server
