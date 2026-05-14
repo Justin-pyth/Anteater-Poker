@@ -1,6 +1,21 @@
 #include "bot.h"
 
-
+void addBot(const GameState* gs)
+{
+    char botNames[6][MAX_NAME_LENTH] = {"Alvin", "Randy", "Betty",
+                                        "Colleen", "Minnie", "Dumbo"};
+    int readyPlayers = 0;
+    for(int i = 0; i<MAX_PLAYERS; i++)
+    {
+        if(gs->players[i].status == PLAYER_READY)
+            readyPlayers++;
+    }
+    for(int r = 0; r<readyPlayers; r++)
+    {
+        initPlayer(add name randomly out of bot pot)
+        use bot name in decide function for tendencies
+    }
+}
 double monteCarloSim(const GameState* gs, const Deck* deck, const PlayerHand* botHand, int simCount)
 {
     int winCount;
@@ -60,12 +75,12 @@ double monteCarloSim(const GameState* gs, const Deck* deck, const PlayerHand* bo
     return winCount/simCount;
 }
 
-void botMove(const GameState* gs, const Deck* deck, uint8_t* playerID, MoveType* move, uint32_t* amount)
+void botMove(const GameState* gs, const Deck* deck, uint8_t* botID, MoveType* move, uint32_t* amount)
 {
     //return id, movetype, raise amnt
-    uint8_t botID = gs->currentPlayer;
-    MoveType move = decide(gs, deck);
-    int amount = 0;
+    botID = gs->currentPlayer;
+    move = decide(gs, deck);
+    amount = 0;
     if(move == RAISE)
     {
         //pick a random amount to raise
