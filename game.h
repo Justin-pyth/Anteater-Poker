@@ -5,6 +5,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /*  SHARED FUNCTIONS (CLIENT + SERVER)
 

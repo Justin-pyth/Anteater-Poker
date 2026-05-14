@@ -80,17 +80,17 @@ int main(int argc, char *argv[])
                     */
 
                     //IF MESSAGE == MOVE
-                    uint8_t _playerID = i;
-                    MoveType _move; //decoded move
-                    uint32_t _amount; //decoded amount
-                    if(tryMove(&state.game, &state.deck, _playerID, _move, _amount))
-                    {
+                    //uint8_t _playerID = i;
+                    //MoveType _move; //decoded move
+                    //uint32_t _amount; //decoded amount
+                    //if(tryMove(&state.game, &state.deck, _playerID, _move, _amount))
+                    //{
                         //BROADCAST UPDATED GAMESTATE TO CLIENTS
-                    }
-                    else
-                    {
-                        //SEND "INVALID"
-                    }
+                    //}
+                    //else
+                    //{
+                    //    //SEND "INVALID"
+                    //}
                     //=============================================================
 
 

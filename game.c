@@ -92,7 +92,7 @@ bool validate(const GameState* gs, uint8_t playerID, MoveType move, uint32_t amo
             if(amount < gs->minRaise)
                 return false;
             
-                return p->chips >= (gs->currentBet+amount) - p->current_bet;
+            return p->chips >= (gs->currentBet+amount) - p->current_bet;
         }
         case ALL_IN:
         {
