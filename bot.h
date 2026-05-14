@@ -14,6 +14,6 @@ MoveType decide(const GameState* gs, const Deck* deck);
 int reconstructDeck(const GameState* gs, const PlayerHand* hand, Deck* deck);
 
 bool isBot(const char* name);
-void addBot(const GameState* gs);
+void addBot(GameState* gs);
 void botMove(const GameState* gs, const Deck* deck, uint8_t* botID, MoveType* move, uint32_t* amount);
 #endif

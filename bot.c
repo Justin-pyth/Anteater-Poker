@@ -1,6 +1,6 @@
 #include "bot.h"
 
-void addBot(const GameState* gs)
+void addBot(GameState* gs)
 {
 
     char botNames[MAX_PLAYERS][MAX_NAME_LENTH] = {"Alvin", "Randy", "Betty",
