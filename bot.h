@@ -9,8 +9,9 @@
 */
 void sendMove(int socket, MoveType move, int amount);
 
-double monteCarloSim(const GameState* gs, int simCount);
+double monteCarloSim(const GameState gs, const Deck deck, const PlayerHand* botHand, uint8_t botID, int simCount);
 MoveType decide(const GameState* gs, int socket);
-void checkRemainingCards(const GameState* gs);
+int checkRemainingCards(const Deck* deck);
+void reconstructDeck(const GameState* gs, const PlayerHand* hand, Deck* deck);
 
 #endif

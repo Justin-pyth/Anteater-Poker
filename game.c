@@ -43,6 +43,20 @@ void shuffle(Deck* deck)
 
 }
 
+void shuffleRemaining(Deck* deck)
+{
+    for(int i = DECK_SIZE - 1; i>deck->top; i--)
+    {
+        //generate a random index
+        int j = rand() % (i-deck->top+1);
+
+        //swap cards at the random index
+        Card temp = deck->cards[j];
+        deck->cards[j] = deck->cards[i];
+        deck->cards[i] = temp;
+    }
+}
+
 Card deal(Deck* deck)
 {
     return deck->cards[deck->top++];
