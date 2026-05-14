@@ -12,6 +12,7 @@
 #define HAND_SIZE 2
 #define SMALL_BLIND 5
 #define BIG_BLIND 10
+#define INIT_CHIPS 1000
 
 //enum of move type.
 typedef enum {
@@ -94,7 +95,7 @@ typedef struct{
     Card cards[DECK_SIZE + SPECIAL_CARDS];
     uint8_t top;
 } Deck;
-//struct of player, cotains 8 bits id, 32 bytes name, 32 bits chips, 32 bits current bet, 8 bits status and 8 bits has_cards.
+//struct of player, contains 8 bits id, 32 bytes name, 32 bits chips, 32 bits current bet, 8 bits status and 8 bits has_cards.
 typedef struct {
     uint8_t id;
     char name[MAX_NAME_LENTH];

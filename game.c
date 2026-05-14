@@ -27,6 +27,21 @@ void initDeck(Deck *deck)
 
 }
 
+void initPlayer(Player *p, uint8_t id, const char* name, uint32_t chips)
+{
+    memset(p, 0, sizeof(Player));
+    p->id = id;
+
+    p->chips = chips;
+    p->has_cards = 0;
+    p->status = PLAYER_READY;
+
+    //copy the name into the player struct
+    strncpy(p->name, name, MAX_NAME_LENTH - 1);
+    p->name[MAX_NAME_LENTH - 1] = '\0'; //manually add termination char
+
+}
+
 void shuffle(Deck* deck)
 {
     deck->top = 0;
@@ -43,12 +58,12 @@ void shuffle(Deck* deck)
 
 }
 
-void shuffleRemaining(Deck* deck)
+void shuffleRemaining(Deck* deck, int count)
 {
-    for(int i = DECK_SIZE - 1; i>deck->top; i--)
+    for(int i = count - 1; i>deck->top; i--)
     {
         //generate a random index
-        int j = rand() % (i-deck->top+1);
+        int j = deck->top + rand() % (i - deck->top + 1);
 
         //swap cards at the random index
         Card temp = deck->cards[j];

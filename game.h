@@ -24,7 +24,7 @@ int evaluateHand(const GameState* gs, const PlayerHand* hand);
 //SERVER ONLY FUNCTIONS
 void initDeck(Deck *deck);  //init the deck once
 void shuffle(Deck* deck);   //shuffle all 52 cards back
-void shuffleRemaining(Deck* deck); //shuffle only the remaining cards (for bot)
+void shuffleRemaining(Deck* deck, int count); //shuffle only the remaining cards (for bot)
 Card deal(Deck* deck); //deals a single card
 void dealHoles(GameState* gs, Deck* deck);//deal private cards to each player
 
