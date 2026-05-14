@@ -46,6 +46,10 @@ void init_server(ServerState *state)
         memset(&state->clients[i].address, 0, sizeof(state->clients[i].address));
         memset(state->clients[i].name, 0, sizeof(state->clients[i].name));
     }
+
+    //init deck and gamestate
+    memset(&state->game, 0, sizeof(GameState));
+    initDeck(&state->deck);
 }
 void add_connection(ServerState *state, Client *client)
 {
@@ -98,6 +102,7 @@ void handle_client_communication(ServerState *state, Client *client)
         remove_client(state, client); // Remove the client if there is an error writing to the
         return;
     }
+
 }
 void remove_client(ServerState *state, Client *client)
 {

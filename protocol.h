@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "uds.h"
+#include "game.h"
 
 #define MAX_CLIENTS 6
 #define PORT 10160 // port 10160
@@ -29,6 +30,9 @@ typedef struct{
     int listen_fd;
     Client clients[MAX_CLIENTS];
     int running;
+
+    GameState game;
+    Deck deck;
 } ServerState;
 
 typedef struct {

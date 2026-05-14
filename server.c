@@ -63,11 +63,42 @@ int main(int argc, char *argv[])
                 if (FD_ISSET(fd, &read_fds)) {
                     // If there is activity on the client socket, handle communication with the client
                     handle_client_communication(&state, &state.clients[i]);
+
+
+                    //=============================================================
+                    //GAME LOGIC (should probably be in handle_client_communcation)
+                    //-------------------------------------------------------------
+                    //dummy variables
+
+                    //IF MESSAGE == READY
+                    /*
+                    -set playerID
+                    -set player status as READY
+                    -if more than 2 players are ready
+                        -newHand()
+                    -broadcast gamestate
+                    */
+
+                    //IF MESSAGE == MOVE
+                    uint8_t _playerID = i;
+                    MoveType _move; //decoded move
+                    uint32_t _amount; //decoded amount
+                    if(tryMove(&state.game, &state.deck, _playerID, _move, _amount))
+                    {
+                        //BROADCAST UPDATED GAMESTATE TO CLIENTS
+                    }
+                    else
+                    {
+                        //SEND "INVALID"
+                    }
+                    //=============================================================
+
+
                 }
             }
         }
     }
-
+    
     cleanup_server(&state); // Clean up server resources
 
     return 0;

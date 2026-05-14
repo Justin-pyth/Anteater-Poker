@@ -30,7 +30,7 @@ void initDeck(Deck *deck)
 void shuffle(Deck* deck)
 {
     deck->top = 0;
-    for(int i = 0; i < DECK_SIZE - 1; i++)
+    for(int i = DECK_SIZE - 1; i>0; i--)
     {
         //generate a random index
         int j = rand() % (i+1);
@@ -43,7 +43,7 @@ void shuffle(Deck* deck)
 
 }
 
-Card deal(GameState* gs, Deck* deck)
+Card deal(Deck* deck)
 {
     return deck->cards[deck->top++];
 }
@@ -53,10 +53,10 @@ void dealHoles(GameState* gs, Deck* deck)
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
         Player *p = &gs->players[i];
-        if(p->status != PLAYER_READY); continue; //check if player is ready
+        if(p->status != PLAYER_READY) continue; //check if player is ready
         
         //deal both cards
-        p->hand.hand[0] = deal(gs, deck); p->hand.hand[1] = deal(gs, deck);
+        p->hand.hand[0] = deal(deck); p->hand.hand[1] = deal(deck);
         p->has_cards = 1;
         p->status = PLAYER_PLAYING;
     }
@@ -64,6 +64,7 @@ void dealHoles(GameState* gs, Deck* deck)
 
 bool validate(const GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
 {
+    if(playerID >= MAX_PLAYERS) return false;
     if(playerID != gs->currentPlayer) return false;
     if(!gs->handPlaying) return false;
     
@@ -127,6 +128,10 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
             p->chips -= call;
             p->current_bet += call;
             gs->pot += call;
+
+            if(p->chips == 0)
+                p->status = PLAYER_ALL_IN;
+
             break;
         }
         case RAISE:
@@ -147,6 +152,9 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
                 if(p->status == PLAYER_PLAYING && i != playerID)//might need to change id condition
                     gs->acted[i] = false;
             }
+
+            if(p->chips == 0)
+                p->status = PLAYER_ALL_IN;
 
             break;
         }
@@ -185,42 +193,71 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
 
 }
 
-int nextActive(GameState* gs, int curr)
+int nextActive(GameState* gs, int curr, bool inclReady)
 {
     //move to next player in a circle
     int next = (curr + 1) % MAX_PLAYERS;
     while(next != curr)
     {
         //if the player is active, return index
-        if(gs->players[next].status == PLAYER_PLAYING || gs->players[next].status == PLAYER_READY)
+        if(gs->players[next].status == PLAYER_PLAYING || (inclReady && gs->players[next].status == PLAYER_READY))
             return next;
 
         //otherwise check the next player
         next = (next + 1) % MAX_PLAYERS;
     }
-    return curr; //default
+    
+    if(gs->players[curr].status == PLAYER_PLAYING || (inclReady && gs->players[curr].status == PLAYER_READY))
+        return curr;
+        
+    return -1; //return if no one found
 }
 
-int findActive(const GameState * gs, int activeIDs[])
+int findActive(const GameState * gs, int activeIDs[], bool inclAllIn)
 {   
     int count = 0;
     for(int i = 0 ; i < MAX_PLAYERS ; i++)
-        if(gs->players[i].status == PLAYER_ALL_IN || gs->players[i].status == PLAYER_PLAYING)
-            activeIDs[count++] = gs->players[i].id;
+        if(gs->players[i].status == PLAYER_PLAYING || (inclAllIn && gs->players[i].status == PLAYER_ALL_IN))
+            activeIDs[count++] = i; //maybe change to gs->players[i].id
 
     return count;
 }
 
 void award(GameState* gs)
 {
-    int activeIDS[MAX_PLAYERS];
-    int count = findActive(gs, activeIDS);
+    int activeIDs[MAX_PLAYERS];
+    int count = findActive(gs, activeIDs, true);
+    if(count == 0) return;
 
-    int split = gs->pot/count;
-    for(int i = 0 ; i < count ; i++)
-        if(gs->players[i].id == activeIDS[i])
-            gs->players[i].chips += split;
+
+    int bestScore = -1, score, winnerCount = 0;
+    int winnerIDs[MAX_PLAYERS];
+    for(int i = 0 ; i < count; i++)
+    {
+        int pID = activeIDs[i];
+        const Player* p = &gs->players[pID];
+
+        score = evaluateHand(gs, &p->hand);
+
+        if(score > bestScore)
+        {
+            bestScore = score;
+            winnerCount = 0;
+            winnerIDs[winnerCount++] = pID;
+        }
+        else if(score == bestScore)
+        {
+            winnerIDs[winnerCount++] = pID;
+        }
             
+    }
+
+
+    int split = gs->pot / winnerCount;
+    int remainder = gs->pot % winnerCount;
+    for(int i = 0 ; i < winnerCount ; i++)
+        gs->players[winnerIDs[i]].chips += split;
+    gs->players[winnerIDs[0]].chips += remainder; //may change, just give to first winner for now
 }
 
 void resetHand(GameState* gs)
@@ -240,6 +277,8 @@ void resetHand(GameState* gs)
         p->current_bet = 0; p->has_cards = 0;
         memset(&p->hand, 0, sizeof(PlayerHand));
 
+        gs->acted[i] = false;
+
     }
 
     //reset gamestate values
@@ -247,7 +286,7 @@ void resetHand(GameState* gs)
     memset(gs->community, 0, sizeof(gs->community));
     gs->communityCount = 0;
 
-    gs->dealerIndex = nextActive(gs, gs->dealerIndex); //new dealer
+    gs->dealerIndex = nextActive(gs, gs->dealerIndex, true); //new dealer
 
     gs->pot = 0;
     gs->currentBet = 0;
@@ -259,8 +298,10 @@ void resetHand(GameState* gs)
 
 void initBlinds(GameState* gs)
 {
-    int small   = nextActive(gs, gs->dealerIndex);
-    int big     = nextActive(gs, small);
+    int small   = nextActive(gs, gs->dealerIndex, false);
+    int big     = nextActive(gs, small, false);
+
+    if(small == -1 || big == -1) return; //no active players found
 
     if(gs->players[small].chips <= SMALL_BLIND)
     {
@@ -298,7 +339,7 @@ void initBlinds(GameState* gs)
     gs->minRaise = BIG_BLIND;
     
     //add rest of texas holdem conditions later
-    gs->currentPlayer = nextActive(gs, big);
+    gs->currentPlayer = nextActive(gs, big, false);
 }
 
 void newHand(GameState* gs, Deck* deck)
@@ -311,6 +352,7 @@ void newHand(GameState* gs, Deck* deck)
 
     //set current player after blinds
     initBlinds(gs);
+    resolveNoAct(gs, deck);
 }
 
 bool allPlayersWent(const GameState* gs)
@@ -342,21 +384,21 @@ void advance(GameState* gs, Deck* deck)
     {
         case PREFLOP:
         {
-            gs->community[gs->communityCount++] = deal(gs, deck);
-            gs->community[gs->communityCount++] = deal(gs, deck);
-            gs->community[gs->communityCount++] = deal(gs, deck);
+            gs->community[gs->communityCount++] = deal(deck);
+            gs->community[gs->communityCount++] = deal(deck);
+            gs->community[gs->communityCount++] = deal(deck);
             gs->stage = FLOP;
             break;
         }
         case FLOP:
         {
-            gs->community[gs->communityCount++] = deal(gs, deck);
+            gs->community[gs->communityCount++] = deal(deck);
             gs->stage = TURN;
             break;
         }
         case TURN:
         {
-            gs->community[gs->communityCount++] = deal(gs, deck);
+            gs->community[gs->communityCount++] = deal(deck);
             gs->stage = RIVER;
             break;
         }
@@ -368,28 +410,29 @@ void advance(GameState* gs, Deck* deck)
         }
     }
 
-    gs->currentPlayer = nextActive(gs, gs->dealerIndex);
+    gs->currentPlayer = nextActive(gs, gs->dealerIndex, false);
 }
 
-bool oneLeft(const GameState* gs)
+bool resolveNoAct(GameState* gs, Deck* deck)
 {
     int activeIDs[MAX_PLAYERS];
-    int count = findActive(gs, activeIDs);
 
-    if(count == 1)
-    {
-        return true;
-        //gs->players[activeIDs[0]].chips += pot;
-        //resetHand(gs);
-    }
+    if(findActive(gs, activeIDs, false) > 0)
+        return false;
 
-    return false;
+    while(gs->stage != RIVER)
+        advance(gs, deck);
+
+    award(gs);
+    resetHand(gs);
+    return true;
 }
+
 
 void processMove(GameState* gs, Deck* deck, uint8_t playerID)
 {
     int activeIDs[MAX_PLAYERS];
-    int count = findActive(gs, activeIDs);
+    int count = findActive(gs, activeIDs, true);
 
     //check if everyone except 1 folded (or left)
     if(count == 1)
@@ -399,6 +442,9 @@ void processMove(GameState* gs, Deck* deck, uint8_t playerID)
         return;
     }
 
+    if(resolveNoAct(gs, deck))
+        return;
+
     //if everyone went, then advance to next stage
     if(allPlayersWent(gs))
     {
@@ -407,6 +453,17 @@ void processMove(GameState* gs, Deck* deck, uint8_t playerID)
     }
 
     //next player's turn if normal move and nothing else occurs
-    gs->currentPlayer = nextActive(gs, playerID);
+    gs->currentPlayer = nextActive(gs, playerID, false);
 
+}
+
+bool tryMove(GameState* gs, Deck* deck, uint8_t playerID, MoveType move, uint32_t amount)
+{
+    if(!validate(gs, playerID, move, amount))
+        return false;
+
+    apply(gs, playerID, move, amount);
+    processMove(gs, deck, playerID);
+
+    return true;
 }
