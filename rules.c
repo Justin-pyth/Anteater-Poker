@@ -7,20 +7,19 @@
 /*  Scores exactly 5 cards as a packed int: bits 23-20 = hand type (0-9),
     bits 19-0 = up to 5 tie-breaker rank nibbles in descending importance.
     Higher score always beats lower score; equal scores are ties.
-
-    Internal helper for evaluateHand() — not exposed in rules.h because
-    callers always want the best-of-7 result, not a 5-card score.
 */
 static int score5(Card five[5])
 {
-    // Extract ranks and suits into plain arrays for easier manipulation
+    // Extract ranks and suits into plain arrays
     int r[5], suits[5];
     for (int i = 0; i < 5; i++) { r[i] = five[i].rank; suits[i] = five[i].suit; }
 
     // Sort ranks descending so r[0] is highest — needed for straight/flush tie-breaks
     for (int i = 0; i < 4; i++)
         for (int j = i + 1; j < 5; j++)
-            if (r[j] > r[i]) { int t = r[i]; r[i] = r[j]; r[j] = t; }
+            if (r[j] > r[i]) {
+                int t = r[i]; r[i] = r[j]; r[j] = t; 
+            }
 
     // Flush: all five cards share the same suit
     int isFlush = (suits[0] == suits[1] && suits[1] == suits[2] &&
@@ -42,9 +41,7 @@ static int score5(Card five[5])
     int count[14] = {0};
     for (int i = 0; i < 5; i++) count[r[i]]++;
 
-    // Walk ranks high-to-low and bucket them by frequency.
-    // Scanning high-to-low means all arrays end up in descending rank order,
-    // which is exactly the tie-breaker order we need later.
+    //Finding Pairs, Trips, Quads, and Singles
     int quad = -1, triple = -1, pairs[2] = {-1, -1}, pairCount = 0;
     int singles[5], singleCount = 0;
     for (int rank = ACE; rank >= TWO; rank--) {
@@ -99,8 +96,7 @@ int evaluateHand(const GameState* gs, const PlayerHand* hand)
 
     if (total < 5) return 0; // not enough cards to form a hand yet
 
-    // Try every possible 5-card combination (at most C(7,5) = 21 at the river)
-    // and keep the highest-scoring one
+    //Try all 21 hand combinations
     int best = 0;
     for (int a = 0; a < total-4; a++)
     for (int b = a+1; b < total-3; b++)
