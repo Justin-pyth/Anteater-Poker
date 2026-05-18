@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include "uds.h"
+#include "rules.h"
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,7 +20,7 @@
 
     Will need to handle flush, full house, etc.
 */
-int evaluateHand(const GameState* gs, const PlayerHand* hand);
+// evaluateHand() moved to rules.h
 
 //SERVER ONLY FUNCTIONS
 void initDeck(Deck *deck);  //init the deck once
@@ -29,19 +30,18 @@ void shuffleRemaining(Deck* deck, int count); //shuffle only the remaining cards
 Card deal(Deck* deck); //deals a single card
 void dealHoles(GameState* gs, Deck* deck);//deal private cards to each player
 
-bool validate(const GameState* gs, uint8_t playerID, MoveType move, uint32_t amount); //check if a move is valid (FOLD, CHECK, CALL, RAISE)
+// validate() moved to rules.h
 void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount); //apply the move on the server if valid
 
-int findActive(const GameState * gs, int activeIDs[], bool inclAllIn); //find id array of all active players
-int nextActive(GameState* gs, int curr, bool inclReady); //find next active player (set inclReady to true for reset hand)
+// findActive() and nextActive() moved to rules.h
 
 void award(GameState*gs); //award players at showdown
 
 void resetHand(GameState* gs); //reset hand after final betting round
 void newHand(GameState* gs, Deck* deck); //start the new hand
-void initBlinds(GameState* gs); //post blinds at preflop
+// initBlinds() moved to rules.h
 
-bool allPlayersWent(const GameState* gs); //check to end betting round
+// allPlayersWent() moved to rules.h
 void advance(GameState* gs, Deck* deck); //advance to next stage after all players go
 void processMove(GameState* gs, Deck* deck, uint8_t playerID); //after applying move, decide state
 bool tryMove(GameState* gs, Deck* deck, uint8_t playerID, MoveType move, uint32_t amount); //for server
