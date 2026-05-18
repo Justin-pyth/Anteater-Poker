@@ -3,6 +3,8 @@
 #define  SPECIALCARDS_H
 
 #include "uds.h"
+#include "Rules.h"
+#include "game.h"
 
 //Swap one or both of your cards with an opponent of your choosing
 void swapCards (GameState gs, PlayerHand ownHand, PlayerHand oppHand);
@@ -18,7 +20,6 @@ void revealOppCard (GameState gs, PlayerHand ownHand, PlayerHand oppHand);
 
 //Swap your opponent's cards
 void swapOppCards (GameState gs, PlayerHand oppHand1, PlayerHand oppHand2);
-
 
 
 #endif
