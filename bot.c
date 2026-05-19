@@ -149,6 +149,42 @@ MoveType decide(const GameState* gs, const Deck* deck)
     uint32_t call = gs->currentBet - gs->players[gs->currentPlayer].current_bet;
     uint32_t chips = gs->players[gs->currentPlayer].chips;
 
+    char name[MAX_NAME_LENTH];
+    strcpy(name, gs->players[gs->currentPlayer].name);
+    double _allIn, _raise, _call, _check, _bluff;
+
+    if(strcmp(name, "Alvin") == 0)
+    {
+        _allIn = 0.30; _raise = 0.45; _call = 0.30; _check = 0.40, _bluff = 0.15;
+    }
+    else if(strcmp(name, "Randy") == 0)
+    {
+        _allIn = 0.50; _raise = 0.50; _call = 0.50; _check = 0.50, _bluff = 0.30;
+    }
+    else if(strcmp(name, "Betty") == 0)
+    {
+        _allIn = 0.50; _raise = 0.75; _call = 0.50; _check = 0.65, _bluff = 0.05;
+    }
+    else if(strcmp(name, "Colleen") == 0)
+    {
+        _allIn = 0.70; _raise = 0.85; _call = 0.70; _check = 0.80, _bluff = 0.00;
+    }
+    else if(strcmp(name, "Minnie") == 0)
+    {
+        _allIn = 0.25; _raise = 0.35; _call = 0.25; _check = 0.30, _bluff = 0.40;
+    }
+    else if(strcmp(name, "Dumbo") == 0)
+    {
+        _allIn = 0.10; _raise = 0.20; _call = 0.10; _check = 0.15, _bluff = 0.50;
+    }
+    else{ //default
+        _allIn = 0.50; _raise = 0.75; _call = 0.50; _check = 0.65, _bluff = 0.05;
+    }
+
+    //if the bot is able to raise, bluff (based on bot name)
+    if(call == 0 || chips >= call)
+        if( (rand() / (double)RAND_MAX) < _bluff) return RAISE;
+    
     //if bot owes chips
     if(call > 0)
     {
@@ -156,17 +192,17 @@ MoveType decide(const GameState* gs, const Deck* deck)
         if(chips < call)
         {
             //you are allowed to go all_in on a call with insufficient chips
-            if (prob > 0.5) return ALL_IN;
+            if (prob > _allIn) return ALL_IN;
             else            return FOLD; //fold if bad hand
         }
 
-        if(prob > 0.75)     return RAISE;
-        else if(prob > 0.5) return CALL;
+        if(prob > _raise)     return RAISE;
+        else if(prob > _call) return CALL;
         else                return FOLD;
     }
     else
     {
-        if(prob > 0.65)     return RAISE;
+        if(prob > _check)     return RAISE;
         else                return CHECK;
     }
 }
