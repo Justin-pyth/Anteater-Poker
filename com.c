@@ -15,7 +15,7 @@ void write_u8(uint8_t *buffer, uint32_t *offset,uint8_t val)
     //the "cursor" will move to the next byte in the buffer.
 
 }
-static void write_u32(uint8_t *buffer, uint32_t *offset, uint32_t val)
+void write_u32(uint8_t *buffer, uint32_t *offset, uint32_t val)
 {
     buffer[*offset + 0] = (val >> 24) & 0xFF;
     buffer[*offset + 1] = (val >> 16) & 0xFF;
@@ -30,55 +30,96 @@ static void write_u32(uint8_t *buffer, uint32_t *offset, uint32_t val)
     
     *offset += 4;
 }
-int read_u8(const uint8_t *buffer, uint32_t *offset)
+uint8_t read_u8(const uint8_t *buffer, uint32_t *offset, uint8_t *val)
 {
-    uint8_t val = buffer[*offset];
+    *val = buffer[*offset];
     (*offset)++;
-    return val;
+    return 0;
 }
 //now, both read (decode)function only need to do the opposite of write (encode) function, 
 //which is to read the data from buffer and move the offset accordingly.
-int read_u32(const uint8_t *buffer, uint32_t *offset)
+uint32_t read_u32(const uint8_t *buffer, uint32_t *offset, uint32_t *val)
 {
     uint32_t temp1 = buffer[*offset + 0]<<24;
     uint32_t temp2 = buffer[*offset + 1]<<16;
     uint32_t temp3 = buffer[*offset + 2]<<8;
     uint32_t temp4 = buffer[*offset + 3];
-    uint32_t val = temp1 | temp2 | temp3 | temp4;
+    *val = temp1 | temp2 | temp3 | temp4;
 
     *offset += 4;
-    return val;
-}
-uint32_t encode_client_data(uint8_t *buffer, const PlayerAction *action)
-{
-    uint32_t offset = 0;
-    write_u8(buffer, &offset, action->playerID);
-    write_u8(buffer, &offset, action->move);
-    write_u32(buffer, &offset, action->amount);
-    return offset;
-}
-int decode_client_data(const uint8_t *buffer, uint32_t length, PlayerAction *action)
-{
-    if (length < 6) {
-        return -1; // Not enough data
-    }
-    uint32_t offset = 0;
-    action->playerID = read_u8(buffer, &offset);
-    action->move = read_u8(buffer, &offset);
-    action->amount = read_u32(buffer, &offset);
-    if (action->playerID<0 ||action->move <0 || action->amount <0) {
-        return -1; // Invalid data
-    }
     return 0;
 }
-uint32_t encode_player_data(uint8_t *buffer, const Player *player)
+uint32_t encode_client_data(uint8_t *buffer, uint32_t *offset, const PlayerAction *action)
 {
-    
+    write_u8(buffer, offset, action->playerID);
+    write_u8(buffer, offset, action->move);
+    write_u32(buffer, offset, action->amount);
+    return *offset;
 }
-int decode_player_data(const uint8_t *buffer, uint32_t length, Player *player)
+int decode_client_data(const uint8_t *buffer, uint32_t *offset, PlayerAction *action)
 {
+   
+    read_u8(buffer, offset, &action->playerID);
+    read_u8(buffer, offset, &action->move);
+    read_u32(buffer, offset, &action->amount);
+    /*if (action->playerID<0 ||action->move <0 || action->amount <0) {
+        return -1; // Invalid data
+    }*/
+    return 0;
 }
-uint32_t encode_server_data(uint8_t *buffer, const GameState *gameState)
+uint32_t encode_player_data(uint8_t *buffer, uint32_t *offset, const Player *player)
 {
-
+    write_u8(buffer, offset, player->id);//write id
+    write_u8(buffer, offset, player->status);//write status
+    write_u8(buffer, offset, player->has_cards);//write has_cards
+    write_u32(buffer, offset, player->chips);//write chips
+    write_u32(buffer, offset, player->current_bet);//write current_bet
+    return *offset;
+}
+int decode_player_data(const uint8_t *buffer, uint32_t *offset, Player *player)
+{
+    read_u8(buffer, offset, &player->id);
+    read_u8(buffer, offset, &player->status);
+    read_u8(buffer, offset, &player->has_cards);
+   read_u32(buffer, offset, &player->chips);
+     read_u32(buffer, offset, &player->current_bet);
+    /*if (player->id < 0 || player->status < 0 || player->has_cards < 0 || player->chips < 0 || player->current_bet < 0) {
+        return -1; // Invalid data
+    }*/
+    return 0;
+}
+uint32_t encode_server_data(uint8_t *buffer, uint32_t *offset, const GameState *gameState)
+{
+    write_u8(buffer, offset, gameState->playerCount);
+    write_u8(buffer, offset, gameState->communityCount);
+    write_u8(buffer, offset, gameState->stage);
+    write_u8(buffer, offset, gameState->currentPlayer);
+    write_u8(buffer, offset, gameState->dealerIndex);
+    write_u32(buffer, offset, gameState->pot);
+    write_u32(buffer, offset, gameState->currentBet);
+    write_u32(buffer, offset, gameState->minRaise);
+    write_u8(buffer, offset, gameState->handPlaying);
+   /* for (int i = 0; i < MAX_PLAYERS; i++) {
+        write_u8(buffer, offset, &gameState->acted[i]);
+    }*/
+    return *offset;
+}
+int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameState)
+{
+    read_u8(buffer, offset, &gameState->playerCount);
+     read_u8(buffer, offset, &gameState->communityCount);
+     read_u8(buffer, offset, &gameState->stage);
+     read_u8(buffer, offset, &gameState->currentPlayer);
+     read_u8(buffer, offset, &gameState->dealerIndex);
+    read_u32(buffer, offset, &gameState->pot);
+    read_u32(buffer, offset, &gameState->currentBet);
+    read_u32(buffer, offset, &gameState->minRaise);
+    read_u8(buffer, offset, &gameState->handPlaying);
+    /*for (int i = 0; i < MAX_PLAYERS; i++) {
+        read_u8(buffer, offset, &gameState->acted[i]);
+    }*/
+    /*if (gameState->playerCount < 0 || gameState->communityCount < 0 || gameState->stage < 0 || gameState->currentPlayer < 0 || gameState->dealerIndex < 0 || gameState->pot < 0 || gameState->currentBet < 0 || gameState->minRaise < 0 || gameState->handPlaying < 0) {
+        return -1; // Invalid data
+    }*/
+    return 0;
 }
