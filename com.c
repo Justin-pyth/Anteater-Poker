@@ -60,7 +60,9 @@ int decode_client_data(const uint8_t *buffer, uint32_t *offset, PlayerAction *ac
 {
    
     read_u8(buffer, offset, &action->playerID);
-    read_u8(buffer, offset, &action->move);
+    uint8_t move_byte;
+    read_u8(buffer, offset, &move_byte);
+    action->move = move_byte;
     read_u32(buffer, offset, &action->amount);
     /*if (action->playerID<0 ||action->move <0 || action->amount <0) {
         return -1; // Invalid data
@@ -70,6 +72,13 @@ int decode_client_data(const uint8_t *buffer, uint32_t *offset, PlayerAction *ac
 uint32_t encode_player_data(uint8_t *buffer, uint32_t *offset, const Player *player)
 {
     write_u8(buffer, offset, player->id);//write id
+    
+    for (int i = 0; i < MAX_NAME_LENTH; i++) 
+        write_u8(buffer, offset, player->name[i]);//write name
+    for (int i = 0; i<2;i++)
+        encode_card(buffer, offset, &player->hand[i]);//write hand cards
+    
+    
     write_u8(buffer, offset, player->status);//write status
     write_u8(buffer, offset, player->has_cards);//write has_cards
     write_u32(buffer, offset, player->chips);//write chips
@@ -79,19 +88,47 @@ uint32_t encode_player_data(uint8_t *buffer, uint32_t *offset, const Player *pla
 int decode_player_data(const uint8_t *buffer, uint32_t *offset, Player *player)
 {
     read_u8(buffer, offset, &player->id);
+    for (int i = 0; i < MAX_NAME_LENTH; i++) 
+        read_u8(buffer, offset, (uint8_t *)&player->name[i]);
+    for (int i = 0; i<2;i++)
+        decode_card(buffer, offset, &player->hand[i]);
+    
     read_u8(buffer, offset, &player->status);
     read_u8(buffer, offset, &player->has_cards);
    read_u32(buffer, offset, &player->chips);
-     read_u32(buffer, offset, &player->current_bet);
+    read_u32(buffer, offset, &player->current_bet);
+    
     /*if (player->id < 0 || player->status < 0 || player->has_cards < 0 || player->chips < 0 || player->current_bet < 0) {
         return -1; // Invalid data
     }*/
     return 0;
 }
+uint32_t encode_card(uint8_t *buffer, uint32_t *offset, const Card *card)
+{
+    write_u8(buffer, offset, card->rank);
+    write_u8(buffer, offset, card->suit);
+    return *offset;
+}
+int decode_card(const uint8_t *buffer, uint32_t *offset, Card *card)
+{
+    read_u8(buffer, offset, &card->rank);
+    read_u8(buffer, offset, &card->suit);
+    
+    return 0;
+}
+
 uint32_t encode_server_data(uint8_t *buffer, uint32_t *offset, const GameState *gameState)
 {
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        encode_player_data(buffer, offset, &gameState->players[i]);
+    }
     write_u8(buffer, offset, gameState->playerCount);
     write_u8(buffer, offset, gameState->communityCount);
+    for(int i=0; i<gameState->communityCount;i++)
+    {
+   //     if(&gameState->community[i] != NULL)
+            encode_card(buffer, offset, &gameState->community[i]);
+    }
     write_u8(buffer, offset, gameState->stage);
     write_u8(buffer, offset, gameState->currentPlayer);
     write_u8(buffer, offset, gameState->dealerIndex);
@@ -99,15 +136,21 @@ uint32_t encode_server_data(uint8_t *buffer, uint32_t *offset, const GameState *
     write_u32(buffer, offset, gameState->currentBet);
     write_u32(buffer, offset, gameState->minRaise);
     write_u8(buffer, offset, gameState->handPlaying);
-   /* for (int i = 0; i < MAX_PLAYERS; i++) {
-        write_u8(buffer, offset, &gameState->acted[i]);
-    }*/
+
+    
     return *offset;
 }
 int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameState)
 {
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        decode_player_data(buffer, offset, &gameState->players[i]);
+    }
     read_u8(buffer, offset, &gameState->playerCount);
      read_u8(buffer, offset, &gameState->communityCount);
+    for(int i=0; i<gameState->communityCount;i++)
+    {
+        decode_card(buffer, offset, &gameState->community[i]);
+    }
      read_u8(buffer, offset, &gameState->stage);
      read_u8(buffer, offset, &gameState->currentPlayer);
      read_u8(buffer, offset, &gameState->dealerIndex);
@@ -115,11 +158,32 @@ int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameS
     read_u32(buffer, offset, &gameState->currentBet);
     read_u32(buffer, offset, &gameState->minRaise);
     read_u8(buffer, offset, &gameState->handPlaying);
-    /*for (int i = 0; i < MAX_PLAYERS; i++) {
-        read_u8(buffer, offset, &gameState->acted[i]);
-    }*/
+    
     /*if (gameState->playerCount < 0 || gameState->communityCount < 0 || gameState->stage < 0 || gameState->currentPlayer < 0 || gameState->dealerIndex < 0 || gameState->pot < 0 || gameState->currentBet < 0 || gameState->minRaise < 0 || gameState->handPlaying < 0) {
         return -1; // Invalid data
     }*/
     return 0;
+}
+uint32_t prepare_payload(uint8_t *buffer, MessageType type, const void *data)
+{
+    uint32_t offset=0;
+    switch(type)
+    {
+        case MSG_TYPE_GAME_STATE:
+            return encode_server_data(buffer, &offset, (const GameState *)data);
+        case MSG_TYPE_PLAYER_ACTION:
+            return encode_client_data(buffer, &offset, (const PlayerAction *)data);
+        case MSG_TYPE_CHAT_MESSAGE:
+            return encode_chat_message(buffer, &offset, (const char *)data);
+        case MSG_TYPE_ERROR_MESSAGE:
+            return encode_error_message(buffer, &offset, (const char *)data);
+        default:
+            return 0;
+    }
+}
+int receive_payload(const uint8_t *buffer, uint32_t buf_len, MessageType *out_type, void *out_data)
+{
+    if(buf_len < PROTOCOL_HEADER_SIZE)
+        return -1; // Not enough data for header
+    
 }
