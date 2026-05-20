@@ -84,12 +84,12 @@ static int score5(Card five[5])
     return (type << 20) | s;
 }
 
-int evaluateHand(const GameState* gs, const PlayerHand* hand)
+int evaluateHand(const GameState* gs, const Card* hand)
 {
     // Gather all available cards: 2 hole cards + however many community cards
     Card pool[7];
-    pool[0] = hand->hand[0];
-    pool[1] = hand->hand[1];
+    pool[0] = hand[0];
+    pool[1] = hand[1];
     int total = 2;
     for (int i = 0; i < gs->communityCount; i++)
         pool[total++] = gs->community[i];
@@ -271,7 +271,7 @@ int determineWinners(const GameState* gs, int winnerIDs[])
         int pID = activeIDs[i];
         const Player* p = &gs->players[pID];
 
-        score = evaluateHand(gs, &p->hand);
+        score = evaluateHand(gs, p->hand);
 
         if(score > bestScore)
         {

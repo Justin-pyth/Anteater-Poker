@@ -80,7 +80,7 @@ void dealHoles(GameState* gs, Deck* deck)
         if(p->status != PLAYER_READY) continue; //check if player is ready
         
         //deal both cards
-        p->hand.hand[0] = deal(deck); p->hand.hand[1] = deal(deck);
+        p->hand[0] = deal(deck); p->hand[1] = deal(deck);
         p->has_cards = 1;
         p->status = PLAYER_PLAYING;
     }
@@ -194,7 +194,7 @@ void award(GameState* gs)
         int pID = activeIDs[i];
         const Player* p = &gs->players[pID];
 
-        score = evaluateHand(gs, &p->hand);
+        score = evaluateHand(gs, p->hand);
 
         if(score > bestScore)
         {
@@ -232,7 +232,7 @@ void resetHand(GameState* gs)
         
         //reset bets and cards
         p->current_bet = 0; p->has_cards = 0;
-        memset(&p->hand, 0, sizeof(PlayerHand));
+        memset(&p->hand, 0, sizeof(p->hand));
 
         gs->acted[i] = false;
 

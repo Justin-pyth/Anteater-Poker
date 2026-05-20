@@ -28,7 +28,7 @@
     Called once per non-folded player at showdown (server) and thousands of
     times by the bot's Monte Carlo simulation (client).
 */
-int evaluateHand(const GameState* gs, const PlayerHand* hand);
+int evaluateHand(const GameState* gs, const Card* hand);
 
 
 /* ============================================================
