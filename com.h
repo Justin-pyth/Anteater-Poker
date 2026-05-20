@@ -13,6 +13,7 @@ payload            // N bytes
 #include<stdint.h>
 #define PROTOCOL_HEADER_SIZE 6// 2 bytes for type and 4 bytes for length
 #define MAX_PAYLOAD_SIZE 4096 //4096 bytes
+
 typedef enum {
     MSG_TYPE_GAME_STATE = 1,
     MSG_TYPE_PLAYER_ACTION = 2,

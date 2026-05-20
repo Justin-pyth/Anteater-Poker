@@ -164,26 +164,100 @@ int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameS
     }*/
     return 0;
 }
+uint32_t encode_chat_message(uint8_t *buffer, uint32_t *offset, const char *message)
+{
+    uint32_t length = strlen(message);
+    write_u32(buffer, offset, length);
+    for (uint32_t i = 0; i < length; i++) {
+        write_u8(buffer, offset, message[i]);
+    }
+    return *offset;
+}
+int decode_chat_message(const uint8_t *buffer, uint32_t *offset, char *message)
+{
+    uint32_t length;
+    read_u32(buffer, offset, &length);
+    for (uint32_t i = 0; i < length; i++) {
+        read_u8(buffer, offset, (uint8_t *)&message[i]);
+    }
+    message[length] = '\0'; // Null-terminate the string
+    return 0;
+}
+uint32_t encode_error_message(uint8_t *buffer, uint32_t *offset, const char *message)
+{
+    uint32_t length = strlen(message);
+    write_u32(buffer, offset, length);
+    for (uint32_t i = 0; i < length; i++) {
+        write_u8(buffer, offset, message[i]);
+    }
+    return *offset;
+}
+int decode_error_message(const uint8_t *buffer, uint32_t *offset, char *message)
+{    uint32_t length;
+    read_u32(buffer, offset, &length);
+    for (uint32_t i = 0; i < length; i++) {
+        read_u8(buffer, offset, (uint8_t *)&message[i]);
+    }
+    message[length] = '\0'; // Null-terminate the string
+    return 0;
+}
 uint32_t prepare_payload(uint8_t *buffer, MessageType type, const void *data)
 {
     uint32_t offset=0;
+    buffer[offset++] = (type >> 8) & 0xFF; // Write the high byte of the message type
+    buffer[offset++] = type & 0xFF; // Write the low byte of the message type
+    uint32_t length_offset = offset; // Store the offset for the length field
+    offset += 4; // Reserve space for the length field, will fill it later
+
+    uint32_t payload_start = offset;
     switch(type)
     {
         case MSG_TYPE_GAME_STATE:
-            return encode_server_data(buffer, &offset, (const GameState *)data);
+            encode_server_data(buffer, &offset, (const GameState *)data);
+                break;
         case MSG_TYPE_PLAYER_ACTION:
-            return encode_client_data(buffer, &offset, (const PlayerAction *)data);
+            encode_client_data(buffer, &offset, (const PlayerAction *)data);
+            break;
         case MSG_TYPE_CHAT_MESSAGE:
-            return encode_chat_message(buffer, &offset, (const char *)data);
+            encode_chat_message(buffer, &offset, (const char *)data);
+            break;
         case MSG_TYPE_ERROR_MESSAGE:
-            return encode_error_message(buffer, &offset, (const char *)data);
+            encode_error_message(buffer, &offset, (const char *)data);
+            break;
         default:
             return 0;
     }
+    uint32_t payload_length = offset - payload_start; // Calculate the length of the payload
+    buffer[length_offset + 0] = (payload_length >> 24) & 0xFF;
+    buffer[length_offset + 1] = (payload_length >> 16) & 0xFF;
+    buffer[length_offset + 2] = (payload_length >> 8) & 0xFF;
+    buffer[length_offset + 3] = payload_length & 0xFF; // Write the payload length in big-endian format
+    return offset; // Return the total bytes written (header + payload)
 }
 int receive_payload(const uint8_t *buffer, uint32_t buf_len, MessageType *out_type, void *out_data)
 {
+    uint32_t offset=0;
     if(buf_len < PROTOCOL_HEADER_SIZE)
         return -1; // Not enough data for header
-    
+    uint8_t temp1, temp2;
+    read_u8(buffer, &offset, &temp1);
+    read_u8(buffer, &offset, &temp2);
+    *out_type = (temp1 << 8) | temp2; // Combine the two bytes to get the message type
+    uint32_t length;
+    read_u32(buffer, &offset, &length);
+    if(buf_len < PROTOCOL_HEADER_SIZE + length)
+        return -1; // Not enough data for payload
+    switch(*out_type){
+    case MSG_TYPE_GAME_STATE:
+        return decode_server_data(buffer, &offset, (GameState *)out_data);
+    case MSG_TYPE_PLAYER_ACTION:
+        return decode_client_data(buffer, &offset, (PlayerAction *)out_data);
+    case MSG_TYPE_CHAT_MESSAGE:
+        return decode_chat_message(buffer, &offset, (char *)out_data);//future implementation
+    case MSG_TYPE_ERROR_MESSAGE:
+        return decode_error_message(buffer, &offset, (char *)out_data);//future implementation
+    default:
+        return -1; // Unknown message type
+
+    }
 }

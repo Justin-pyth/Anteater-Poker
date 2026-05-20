@@ -83,13 +83,6 @@ typedef struct{
     Card *cards[5];
 } CommunityCards;
 
-
-//struct of player hand, cotains 2 cards. This is for the client to see their own hand
-// the server will not send the hand to other players.
-typedef struct {
-    Card hand[HAND_SIZE];
-}   PlayerHand;
-
 //struct of deck, cotains 52 cards and N special cards, 8 bits top to indicate the top card index in the deck.
 typedef struct{
     Card cards[DECK_SIZE + SPECIAL_CARDS];
@@ -99,7 +92,7 @@ typedef struct{
 typedef struct {
     uint8_t id;
     char name[MAX_NAME_LENTH];
-    PlayerHand hand;
+    Card hand[HAND_SIZE];
     uint32_t chips;
     uint32_t current_bet;
 

@@ -47,7 +47,9 @@ int main(int argc, char *argv[])
         }
         if (FD_ISSET(client.socket_fd, &read_fds)) {
             receive_data_from_server(&client); // Handle incoming data from the server
+            
             //ui update goes here
+            
         }
         if (FD_ISSET(STDIN_FILENO, &read_fds)) {
             //handle_user_input(&client); // Handle user input from standard input
