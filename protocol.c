@@ -5,6 +5,84 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
+/************************************************* 
+ *Client handling functions, all the game logic will
+ * be implemented after  recieve payload data is valid
+*****************************************************/
+void handle_client_communication(ServerState *state, Client *client)
+{
+    uint8_t buffer[BUFFER_SIZE];
+    ssize_t n = read(client->client_fd, buffer, sizeof(buffer));
+    if (n < 0) {
+        perror("ERROR reading from socket");
+        client->connected = 0;
+        return;
+    }
+    if (n==0){
+            client->connected = 0;
+            return;
+        }
+    MessageType type;
+    PlayerAction action;
+    if (receive_payload(buffer, n, &type, &action) == 0) {
+        if (type == MSG_TYPE_PLAYER_ACTION)
+        {
+            // ********************************************
+            // game logic goes here
+            //recommendation: attempt the move with validation
+
+            
+
+
+            
+            /********************************************* */
+            broadcast_game_state(state); // After processing the action, broadcast the updated game state to all clients
+        }
+        else{
+            //send error back to the client
+            uint8_t error_buffer[BUFFER_SIZE];
+            uint32_t error_len = prepare_payload(error_buffer, MSG_TYPE_ERROR_MESSAGE, "Invalid move ");
+            send_to_client(client, error_buffer, error_len);
+        }
+
+
+
+
+
+
+
+
+
+
+
+        
+    } else {
+        fprintf(stderr, "ERROR processing received payload\n");
+     } 
+
+}
+//this function will handle server incomming packages and update to the client data.
+//DO NOT IMPLEMENT UI and user input in this function. You can but it will not work well with UI.
+void handle_server_communication(ClientState *client)
+{
+    uint8_t buffer[BUFFER_SIZE];
+    ssize_t n = read(client->socket_fd, buffer, sizeof(buffer));
+    if (n < 0) {
+        perror("ERROR reading from socket");
+        client->connected = 0;
+        return;
+    }
+    MessageType type;
+    if (n==0){
+            client->connected = 0;
+            return;
+        }
+    if (receive_payload(buffer, n, &type, &client->game) == 0) {
+    } else {
+        fprintf(stderr, "ERROR processing received payload\n");
+    }
+
+}
 
 int create_socket(Client *client)
 {
@@ -123,49 +201,11 @@ void send_to_server(ClientState *client, const uint8_t *data, uint32_t len)
     }
 
 }
-void handle_client_communication(ServerState *state, Client *client)
+void send_action(ClientState *client, const PlayerAction *action)
 {
     uint8_t buffer[BUFFER_SIZE];
-    ssize_t n = read(client->client_fd, buffer, sizeof(buffer));
-    if (n < 0) {
-        perror("ERROR reading from socket");
-        client->connected = 0;
-        return;
-    }
-    if (n==0){
-            client->connected = 0;
-            return;
-        }
-    MessageType type;
-    PlayerAction action;
-    if (receive_payload(buffer, n, &type, &action) == 0) {
-        // implement game logic hear
-    } else {
-        fprintf(stderr, "ERROR processing received payload\n");
-     } 
-
-}
-void handle_server_communication(ClientState *client)
-{
-    uint8_t buffer[BUFFER_SIZE];
-    ssize_t n = read(client->socket_fd, buffer, sizeof(buffer));
-    if (n < 0) {
-        perror("ERROR reading from socket");
-        client->connected = 0;
-        return;
-    }
-    MessageType type;
-    if (n==0){
-            client->connected = 0;
-            return;
-        }
-    if (receive_payload(buffer, n, &type, &client->game) == 0) {
-        //update UI here
-        
-    } else {
-        fprintf(stderr, "ERROR processing received payload\n");
-    }
-
+    uint32_t len = prepare_payload(buffer, MSG_TYPE_PLAYER_ACTION, action);
+    send_to_server(client, buffer, len);
 }
 void remove_client(ServerState *state, Client *client)
 {

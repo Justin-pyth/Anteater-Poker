@@ -6,105 +6,83 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/select.h>
-#include <netdb.h> 
+#include <netdb.h>
 #include "protocol.h"
+#include "com.h"
 #include "uds.h"
 
+// display game state to the player
+// TODO: implement UI
+static void display_game_state(ClientState *client)
+{
+    (void)client;
+}
+
+// read move from stdin, encode, and send to server
+// TODO: implement user input handling
+void handle_user_input(ClientState *client)
+{
+    (void)client;
+    //PlayerAction action;// ask and store the user input into this function
+    //implementation goes here
+
+
+
+    //display_game_state(client); // re-display game state to show updated info after each move   
+    //send_action(client, &action);
+}
+void handle_chat_message(const char *message)
+{
+    (void)message;
+    //to be implemented.
+}
+void handle_error_message(const char *message)
+{
+    (void)message;
+    //to be implemented.    
+}
 int main(int argc, char *argv[])
 {
-    char* hostname;
-    int sockfd;
-    ClientState client;
-    init_client_state(&client); // Initialize the client state
-    if (argc < 3) {// Check if the hostname and port number are provided as command-line arguments
-       fprintf(stderr,"usage %s hostname port\n", argv[0]);
-       exit(0);
-    }
-    hostname = argv[1];
-    int port = atoi(argv[2]);// Convert the port number from string to integer
-
-    sockfd = connect_to_server(hostname, port);
-    if (sockfd < 0)
-        exit(1);
-    client.socket_fd = sockfd;
-    client.connected = 1;
-    while (client.running)
-    {
-        fd_set read_fds; // Set of file descriptors for select
-        int max_fd;
-        FD_ZERO(&read_fds); // Clear the set of file descriptors
-
-        FD_SET(client.socket_fd, &read_fds); // Add the client socket to the set of file descriptors
-        FD_SET(STDIN_FILENO, &read_fds); // Add standard input to the set of file descriptors
-        max_fd = sockfd; // Initialize max_fd to the client socket file descriptor
-        if (STDIN_FILENO > max_fd) {
-            max_fd = STDIN_FILENO; // Update max_fd if standard input is greater
-    }
-        int activity = select(max_fd + 1, &read_fds, NULL, NULL, NULL); // Wait for activity on the sockets
-        if (activity < 0) {
-            perror("select error");
-            continue; // Continue to the next iteration of the loop if select fails
-        }
-        if (FD_ISSET(client.socket_fd, &read_fds)) {
-            handle_server_communication(&client); // Handle incoming data from the server
-            
-            //ui update goes here
-            
-        }
-        if (FD_ISSET(STDIN_FILENO, &read_fds)) {
-            //handle_user_input(&client); // Handle user input from standard input
-            // also update ui here if needed
-            printf("enter message: ");
-            memset(client.input_buffer, 0, sizeof(client.input_buffer));
-            if (fgets(client.input_buffer, sizeof(client.input_buffer), stdin) == NULL) {
-                client.running = 0;
-                continue;
-            }
-            // TODO: encode input into a PlayerAction and call send_to_server()
-        }
-    }
-    
-    close(client.socket_fd);
-    return 0;
-
-}
-/* int sockfd, portno, n;
-    struct sockaddr_in serv_addr;
-    struct hostent *server;
-
-    char buffer[256];
     if (argc < 3) {
-       fprintf(stderr,"usage %s hostname port\n", argv[0]);
-       exit(0);
-    }
-    portno = atoi(argv[2]);
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) 
-        error("ERROR opening socket");
-    server = gethostbyname(argv[1]);
-    if (server == NULL) {
-        fprintf(stderr,"ERROR, no such host\n");
+        fprintf(stderr, "usage: %s hostname port\n", argv[0]);
         exit(0);
     }
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr, 
-         (char *)&serv_addr.sin_addr.s_addr,
-         server->h_length);
-    serv_addr.sin_port = htons(portno);
-    if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
-        error("ERROR connecting");
-    printf("Please enter the message: ");
-    bzero(buffer,256);
-    fgets(buffer,255,stdin);
-    n = write(sockfd,buffer,strlen(buffer));
-    if (n < 0) 
-         error("ERROR writing to socket");
-    bzero(buffer,256);
-    n = read(sockfd,buffer,255);
-    if (n < 0) 
-         error("ERROR reading from socket");
-    printf("%s\n",buffer);
-    close(sockfd);
+
+    ClientState client;
+    init_client_state(&client);
+
+    int sockfd = connect_to_server(argv[1], atoi(argv[2]));
+    if (sockfd < 0)
+        exit(1);
+
+    client.socket_fd = sockfd;
+    client.connected = 1;
+
+    while (client.running) {
+        fd_set read_fds;
+        FD_ZERO(&read_fds);
+        FD_SET(client.socket_fd, &read_fds);
+        FD_SET(STDIN_FILENO, &read_fds);
+        int max_fd = client.socket_fd > STDIN_FILENO ? client.socket_fd : STDIN_FILENO;
+
+        int activity = select(max_fd + 1, &read_fds, NULL, NULL, NULL);
+        if (activity < 0) {
+            perror("select error");
+            continue;
+        }
+
+        if (FD_ISSET(client.socket_fd, &read_fds)) {
+            handle_server_communication(&client); // decode incoming bytes into client.game
+            if (!client.connected) break;
+            display_game_state(&client);         // display state, prompt if our turn
+        }
+
+        if (FD_ISSET(STDIN_FILENO, &read_fds)) {
+            handle_user_input(&client);           // read move, encode, send to server
+        }
+    }
+
+    close(client.socket_fd);
+    printf("Disconnected.\n");
     return 0;
-}*/
+}

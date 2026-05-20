@@ -78,6 +78,7 @@ void handle_user_input(ClientState *client);
 
 void handle_server_communication(ClientState *client);
 
+void send_action(ClientState *client, const PlayerAction *action);
 
 //shared functions
 void error(const char *msg);
