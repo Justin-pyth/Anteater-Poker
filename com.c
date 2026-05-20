@@ -157,7 +157,7 @@ int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameS
     read_u32(buffer, offset, &gameState->pot);
     read_u32(buffer, offset, &gameState->currentBet);
     read_u32(buffer, offset, &gameState->minRaise);
-    read_u8(buffer, offset, &gameState->handPlaying);
+    read_u8(buffer, offset, (uint8_t *)&gameState->handPlaying);
     
     /*if (gameState->playerCount < 0 || gameState->communityCount < 0 || gameState->stage < 0 || gameState->currentPlayer < 0 || gameState->dealerIndex < 0 || gameState->pot < 0 || gameState->currentBet < 0 || gameState->minRaise < 0 || gameState->handPlaying < 0) {
         return -1; // Invalid data

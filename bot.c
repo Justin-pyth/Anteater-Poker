@@ -41,7 +41,7 @@ bool isBot(const char* name)
     return false;
 }
 
-double monteCarloSim(const GameState* gs, const Deck* deck, const PlayerHand* botHand, int simCount)
+double monteCarloSim(const GameState* gs, const Deck* deck, const Card* botHand, int simCount)
 {
     double winCount = 0.0;
 
@@ -72,8 +72,8 @@ double monteCarloSim(const GameState* gs, const Deck* deck, const PlayerHand* bo
             int pID = activeIDs[p];
             if(pID == state_copy.currentPlayer) continue; //skip if bot
 
-            state_copy.players[pID].hand.hand[0] = deal(&deck_copy);
-            state_copy.players[pID].hand.hand[1] = deal(&deck_copy);
+            state_copy.players[pID].hand[0] = deal(&deck_copy);
+            state_copy.players[pID].hand[1] = deal(&deck_copy);
             state_copy.players[pID].has_cards = 1;
         }
 
@@ -85,7 +85,7 @@ double monteCarloSim(const GameState* gs, const Deck* deck, const PlayerHand* bo
             int pID = activeIDs[i];
             const Player p = state_copy.players[pID];
 
-            score = evaluateHand(&state_copy, &p.hand);
+            score = evaluateHand(&state_copy, p.hand);
 
             if(score > bestScore)
             {
@@ -145,7 +145,7 @@ void botMove(const GameState* gs, const Deck* deck, uint8_t* botID, MoveType* mo
 
 MoveType decide(const GameState* gs, const Deck* deck)
 {
-    double prob = monteCarloSim(gs, deck, &gs->players[gs->currentPlayer].hand, 1000);
+    double prob = monteCarloSim(gs, deck, gs->players[gs->currentPlayer].hand, 1000);
     uint32_t call = gs->currentBet - gs->players[gs->currentPlayer].current_bet;
     uint32_t chips = gs->players[gs->currentPlayer].chips;
 
@@ -207,7 +207,7 @@ MoveType decide(const GameState* gs, const Deck* deck)
     }
 }
 
-int reconstructDeck(const GameState* gs, const PlayerHand* hand, Deck* deck)
+int reconstructDeck(const GameState* gs, const Card* hand, Deck* deck)
 {
     Card known[DECK_SIZE];
     int kCount = 0;
@@ -222,8 +222,8 @@ int reconstructDeck(const GameState* gs, const PlayerHand* hand, Deck* deck)
         kCount++;
     }
 
-    known[comCount] = hand->hand[0]; kCount++;
-    known[comCount+1] = hand->hand[1]; kCount++;
+    known[comCount] = hand[0]; kCount++;
+    known[comCount+1] = hand[1]; kCount++;
 
 
     //reconstruct the deck with known cards excluded

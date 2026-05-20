@@ -5,6 +5,8 @@
 #include<stdint.h>
 #include <stdbool.h>
 
+#define PROTOCOL_HEADER_SIZE 6
+#define MAX_PAYLOAD_SIZE 4096
 #define MAX_PLAYERS 6
 #define MAX_NAME_LENTH 32
 #define DECK_SIZE 52

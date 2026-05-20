@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
             continue; // Continue to the next iteration of the loop if select fails
         }
         if (FD_ISSET(client.socket_fd, &read_fds)) {
-            receive_data_from_server(&client); // Handle incoming data from the server
+            handle_server_communication(&client); // Handle incoming data from the server
             
             //ui update goes here
             
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
                 client.running = 0;
                 continue;
             }
-            send_data_to_server(&client, client.input_buffer); // Send the user input to the server
+            // TODO: encode input into a PlayerAction and call send_to_server()
         }
     }
     
