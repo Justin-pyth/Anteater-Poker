@@ -3,15 +3,20 @@
 #include "protocol.h"
 #include "com.h"
 
+#define TEST_CLIENTS 2
+
 int main(void)
 {
     ServerState state;
     init_server(&state);
     state.listen_fd = create_socket(NULL);
-    printf("Test server listening on port %d...\n", PORT);
+    printf("Test server listening on port %d, waiting for %d clients...\n", PORT, TEST_CLIENTS);
 
-    Client client;
-    add_connection(&state, &client);
+    // accept all clients before starting
+    for (int i = 0; i < TEST_CLIENTS; i++) {
+        add_connection(&state, NULL);
+        printf("Client %d/%d connected.\n", i + 1, TEST_CLIENTS);
+    }
 
     // dummy game state
     state.game.playerCount = 2;
@@ -50,28 +55,39 @@ int main(void)
     state.game.players[1].hand[1].suit = HEARTS;
     strncpy(state.game.players[1].name, "Player2", MAX_NAME_LENTH);
 
-    printf("Sending game state to client...\n");
-    broadcast_game_state(&state);
-    printf("Game state sent. Waiting for client action...\n");
+    // main loop: broadcast then collect actions from each client
+    while (1) {
+        printf("\n--- Broadcasting game state ---\n");
+        broadcast_game_state(&state);
 
-    // receive action from client
-    uint8_t buffer[BUFFER_SIZE];
-    ssize_t n = read(client.client_fd, buffer, sizeof(buffer));
-    if (n <= 0) {
-        fprintf(stderr, "ERROR reading from client\n");
-        cleanup_server(&state);
-        return 1;
-    }
+        // receive one action from each connected client
+        int any_connected = 0;
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            if (!state.clients[i].connected) continue;
+            any_connected = 1;
 
-    MessageType type;
-    PlayerAction action;
-    if (receive_payload(buffer, (uint32_t)n, &type, &action) == 0) {
-        printf("Received action:\n");
-        printf("  playerID : %d\n", action.playerID);
-        printf("  move     : %d\n", action.move);
-        printf("  amount   : %u\n", action.amount);
-    } else {
-        fprintf(stderr, "ERROR decoding client action\n");
+            uint8_t buffer[BUFFER_SIZE];
+            ssize_t n = read(state.clients[i].client_fd, buffer, sizeof(buffer));
+            if (n <= 0) {
+                printf("Client %d disconnected.\n", state.clients[i].id);
+                remove_client(&state, &state.clients[i]);
+                continue;
+            }
+
+            MessageType type;
+            PlayerAction action;
+            if (receive_payload(buffer, (uint32_t)n, &type, &action) == 0) {
+                printf("Action from client %d: move=%d amount=%u\n",
+                       state.clients[i].id, action.move, action.amount);
+            } else {
+                fprintf(stderr, "ERROR decoding action from client %d\n", state.clients[i].id);
+            }
+        }
+
+        if (!any_connected) {
+            printf("All clients disconnected. Shutting down.\n");
+            break;
+        }
     }
 
     cleanup_server(&state);
