@@ -1,1 +1,5 @@
+tar -xvzf Poker_Alpha_src.tar.gz
+cd Poker_Alpha_src
 
+Run:
+make
