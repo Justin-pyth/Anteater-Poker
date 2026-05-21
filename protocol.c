@@ -5,6 +5,84 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
+/************************************************* 
+ *Client handling functions, all the game logic will
+ * be implemented after  recieve payload data is valid
+*****************************************************/
+void handle_client_communication(ServerState *state, Client *client)
+{
+    uint8_t buffer[BUFFER_SIZE];
+    ssize_t n = read(client->client_fd, buffer, sizeof(buffer));
+    if (n < 0) {
+        perror("ERROR reading from socket");
+        client->connected = 0;
+        return;
+    }
+    if (n==0){
+            client->connected = 0;
+            return;
+        }
+    MessageType type;
+    PlayerAction action;
+    if (receive_payload(buffer, n, &type, &action) == 0) {
+        if (type == MSG_TYPE_PLAYER_ACTION)
+        {
+            // ********************************************
+            // game logic goes here
+            //recommendation: attempt the move with validation
+
+            
+
+
+            
+            /********************************************* */
+            broadcast_game_state(state); // After processing the action, broadcast the updated game state to all clients
+        }
+        else{
+            //send error back to the client
+            uint8_t error_buffer[BUFFER_SIZE];
+            uint32_t error_len = prepare_payload(error_buffer, MSG_TYPE_ERROR_MESSAGE, "Invalid move ");
+            send_to_client(client, error_buffer, error_len);
+        }
+
+
+
+
+
+
+
+
+
+
+
+        
+    } else {
+        fprintf(stderr, "ERROR processing received payload\n");
+     } 
+
+}
+//this function will handle server incomming packages and update to the client data.
+//DO NOT IMPLEMENT UI and user input in this function. You can but it will not work well with UI.
+void handle_server_communication(ClientState *client)
+{
+    uint8_t buffer[BUFFER_SIZE];
+    ssize_t n = read(client->socket_fd, buffer, sizeof(buffer));
+    if (n < 0) {
+        perror("ERROR reading from socket");
+        client->connected = 0;
+        return;
+    }
+    MessageType type;
+    if (n==0){
+            client->connected = 0;
+            return;
+        }
+    if (receive_payload(buffer, n, &type, &client->game) == 0) {
+    } else {
+        fprintf(stderr, "ERROR processing received payload\n");
+    }
+
+}
 
 int create_socket(Client *client)
 {
@@ -79,30 +157,55 @@ void add_connection(ServerState *state, Client *client)
     fprintf(stderr, "Server full; rejecting connection\n");
     close(client_fd);
 }
-void handle_client_communication(ServerState *state, Client *client)
+// this function will not send to full game state. But rather sending raw bytes to client socket
+void send_to_client(Client *client, const uint8_t *data, uint32_t len)
 {
-    // Handle communication with the connected client
-    char buffer[256]; // Buffer to hold incoming data from the client
-    memset(buffer, 0, sizeof(buffer)); // zero out the buffer
-    ssize_t n = read(client->client_fd, buffer, sizeof(buffer) - 1); // Read data from the client socket
-    if (n < 0) {
-        perror("ERROR reading from socket");
-        remove_client(state, client); // Remove the client if there is an error reading from the socket
-        return;
-    }
-    if (n == 0) {
-        remove_client(state, client);
-        return;
-    }
-    printf("Received message from client %d: %s\n", client->id, buffer); // Print the received message from the client
-    //reply to client
-    n = write(client->client_fd, "Message received", 16); // Send a response back to the client
+    ssize_t n = write(client->client_fd, data, len);
     if (n < 0) {
         perror("ERROR writing to socket");
-        remove_client(state, client); // Remove the client if there is an error writing to the
-        return;
+        client->connected = 0;
+    }
+}
+void hide_card_info_for_others(GameState *game, uint8_t player_id)
+{
+    for (int i = 0; i < game->playerCount; i++) {
+        if (game->players[i].id != player_id)
+           { game->players[i].hand[0].rank = UNKNOW_R;
+            game->players[i].hand[0].suit = UNKNOW_S;
+            game->players[i].hand[1].rank = UNKNOW_R;
+            game->players[i].hand[1].suit = UNKNOW_S;
+            }
+           }
+    
+}
+void broadcast_game_state(ServerState *state)
+{
+    uint8_t buffer[BUFFER_SIZE];
+    
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (state->clients[i].connected) {
+            GameState tempGame = state->game; // Create a temporary copy of the game state
+            hide_card_info_for_others(&tempGame, state->clients[i].id); //
+            uint32_t payload_len = prepare_payload(buffer, MSG_TYPE_GAME_STATE, &tempGame); // Prepare the payload with the modified game state
+            send_to_client(&state->clients[i], buffer, payload_len);
+        }
+    }
+}
+void send_to_server(ClientState *client, const uint8_t *data, uint32_t len)
+{
+    
+    ssize_t n = write(client->socket_fd, data, len);
+    if (n < 0) {
+        perror("ERROR writing to socket");
+        client->connected = 0;
     }
 
+}
+void send_action(ClientState *client, const PlayerAction *action)
+{
+    uint8_t buffer[BUFFER_SIZE];
+    uint32_t len = prepare_payload(buffer, MSG_TYPE_PLAYER_ACTION, action);
+    send_to_server(client, buffer, len);
 }
 void remove_client(ServerState *state, Client *client)
 {
@@ -166,34 +269,6 @@ int connect_to_server(const char *hostname, int port)
 
 }
 
-void send_data_to_server(ClientState *client, const char *data)
-{
-
-    ssize_t n = write(client->socket_fd, data, strlen(data)); // Write data to the server socket
-    if (n < 0) {
-        perror("ERROR writing to socket");
-        client->running = 0;
-        return; // Return if there is an error writing to the socket
-    }
-}
-void receive_data_from_server(ClientState *client)
-{
-    char buffer[256]; // Buffer to hold incoming data from the server
-    memset(buffer, 0, sizeof(buffer)); // Zero out the buffer
-    ssize_t n = read(client->socket_fd, buffer, sizeof(buffer) - 1); // Read data from the server socket
-    if (n < 0) {
-        perror("ERROR reading from socket");
-        client->running = 0;
-        return; // Return if there is an error reading from the socket
-    }
-    if (n == 0) {
-        printf("Server disconnected\n");
-        client->running = 0;
-        return;
-    }
-    printf("Received message from server: %s\n", buffer); // Print the received message from the server
-    // Here you can add logic to process the server's message and update the client state accordingly
-}
 
 void error(const char *msg)
 {

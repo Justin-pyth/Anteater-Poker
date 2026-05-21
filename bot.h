@@ -9,9 +9,9 @@
 */
 void sendMove(int socket, MoveType move, int amount);
 
-double monteCarloSim(const GameState* gs, const Deck* deck, const PlayerHand* botHand, int simCount);
+double monteCarloSim(const GameState* gs, const Deck* deck, const Card* botHand, int simCount);
 MoveType decide(const GameState* gs, const Deck* deck);
-int reconstructDeck(const GameState* gs, const PlayerHand* hand, Deck* deck);
+int reconstructDeck(const GameState* gs, const Card* hand, Deck* deck);
 
 bool isBot(const char* name);
 void addBot(GameState* gs);

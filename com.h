@@ -11,8 +11,7 @@ payload            // N bytes
 #include "protocol.h"
 #include "uds.h"
 #include<stdint.h>
-#define PROTOCOL_HEADER_SIZE 6// 2 bytes for type and 4 bytes for length
-#define MAX_PAYLOAD_SIZE 4096 //4096 bytes
+
 typedef enum {
     MSG_TYPE_GAME_STATE = 1,
     MSG_TYPE_PLAYER_ACTION = 2,
@@ -29,6 +28,20 @@ uint32_t encode_player_data(uint8_t *buffer,uint32_t *offset ,const Player *play
 int decode_player_data(const uint8_t *buffer, uint32_t *offset, Player *player);
 uint32_t encode_server_data(uint8_t *buffer, uint32_t *offset, const GameState *gameState);
 int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameState);
+uint32_t encode_card(uint8_t *buffer, uint32_t *offset, const Card *card);
+int decode_card(const uint8_t *buffer, uint32_t *offset, Card *card);
+uint32_t encode_chat_message(uint8_t *buffer, uint32_t *offset, const char *message);
+int decode_chat_message(const uint8_t *buffer, uint32_t *offset, char *message);
+uint32_t encode_error_message(uint8_t *buffer, uint32_t *offset, const char *message);
+int decode_error_message(const uint8_t *buffer, uint32_t *offset, char *message);
+
+// builds [type(2)][length(4)][payload] into buffer, returns total bytes written
+uint32_t prepare_payload(uint8_t *buffer, MessageType type, const void *data);
+
+// parses header, dispatches decode into out_data, returns 0 on success
+int receive_payload(const uint8_t *buffer, uint32_t buf_len, MessageType *out_type, void *out_data);
+
 
 #endif
+
 
