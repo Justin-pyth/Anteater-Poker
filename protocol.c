@@ -31,28 +31,20 @@ void handle_client_communication(ServerState *state, Client *client)
             // game logic goes here
             //recommendation: attempt the move with validation
 
-            
-
-
+            if(tryMove(&state->game, &state->deck, action.playerID, action.move, action.amount))
+            {
+                broadcast_game_state(state); // After processing the action, broadcast the updated game state to all clients
+            }
+            else
+            {
+                //send error back to the client
+                uint8_t error_buffer[BUFFER_SIZE];
+                uint32_t error_len = prepare_payload(error_buffer, MSG_TYPE_ERROR_MESSAGE, "Invalid move ");
+                send_to_client(client, error_buffer, error_len);
+            }
             
             /********************************************* */
-            broadcast_game_state(state); // After processing the action, broadcast the updated game state to all clients
         }
-        else{
-            //send error back to the client
-            uint8_t error_buffer[BUFFER_SIZE];
-            uint32_t error_len = prepare_payload(error_buffer, MSG_TYPE_ERROR_MESSAGE, "Invalid move ");
-            send_to_client(client, error_buffer, error_len);
-        }
-
-
-
-
-
-
-
-
-
 
 
         
@@ -145,7 +137,12 @@ void add_connection(ServerState *state, Client *client)
             state->clients[i].sock_fd = client_fd;
             state->clients[i].connected = 1; // Mark the client as connected
             state->clients[i].address = address;
-            state->clients[i].id = i+1; // Assign an ID to each client
+            state->clients[i].id = i; // Assign the matching 0-based player index
+
+            //create a new player on gamestate
+            initPlayer(&state->game.players[i], i, "Player", 1000);
+            state->game.playerCount++;
+
             if (client != NULL)
                 *client = state->clients[i];
 
@@ -168,7 +165,7 @@ void send_to_client(Client *client, const uint8_t *data, uint32_t len)
 }
 void hide_card_info_for_others(GameState *game, uint8_t player_id)
 {
-    for (int i = 0; i < game->playerCount; i++) {
+    for (int i = 0; i < MAX_PLAYERS; i++) {
         if (game->players[i].id != player_id)
            { game->players[i].hand[0].rank = UNKNOW_R;
             game->players[i].hand[0].suit = UNKNOW_S;
@@ -209,11 +206,14 @@ void send_action(ClientState *client, const PlayerAction *action)
 }
 void remove_client(ServerState *state, Client *client)
 {
-    (void)state;
-
     // Remove a client from the server state and close the connection
     printf("Client disconnected: %d\n", client->id); // Print a message indicating the client has disconnected
     close(client->client_fd); // Close the client's socket connection
+    if (client->id >= 0 && client->id < MAX_PLAYERS) {
+        state->game.players[client->id].status = PLAYER_DISCONNECTED;
+        if (state->game.playerCount > 0)
+            state->game.playerCount--;
+    }
     client->client_fd = -1;
     client->sock_fd = -1;
     client->connected = 0; // Mark the client as not connected

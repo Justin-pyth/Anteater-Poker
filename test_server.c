@@ -43,7 +43,7 @@ int main(void)
     state.game.community[1].rank = KING;
     state.game.community[1].suit = SPADES;
 
-    state.game.players[0].id = 1;
+    state.game.players[0].id = 0;
     state.game.players[0].chips = 980;
     state.game.players[0].current_bet = 20;
     state.game.players[0].status = PLAYER_PLAYING;
@@ -54,7 +54,7 @@ int main(void)
     state.game.players[0].hand[1].suit = CLUBS;
     strncpy(state.game.players[0].name, "Player1", MAX_NAME_LENTH);
 
-    state.game.players[1].id = 2;
+    state.game.players[1].id = 1;
     state.game.players[1].chips = 980;
     state.game.players[1].current_bet = 20;
     state.game.players[1].status = PLAYER_PLAYING;
