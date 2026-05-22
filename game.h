@@ -38,6 +38,7 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount); //a
 void award(GameState*gs); //award players at showdown
 
 void resetHand(GameState* gs); //reset hand after final betting round
+void resetGame(GameState* gs); //reset hand and then reapply starting chips
 void newHand(GameState* gs, Deck* deck); //start the new hand
 // initBlinds() moved to rules.h
 

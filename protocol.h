@@ -11,6 +11,7 @@
 #include <netinet/in.h>
 #include "uds.h"
 #include "game.h"
+#include "bot.h"
 #include "com.h"
 
 #define MAX_CLIENTS 6

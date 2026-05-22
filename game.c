@@ -253,6 +253,21 @@ void resetHand(GameState* gs)
     
 }
 
+void resetGame(GameState* gs)
+{
+    resetHand(gs);
+
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        Player* p = &gs->players[i];
+
+        if (p->status == PLAYER_EMPTY || p->status == PLAYER_DISCONNECTED)
+            continue;
+
+        p->chips = INIT_CHIPS;
+        p->status = PLAYER_CONNECTED;
+    }
+}
+
 // initBlinds() moved to rules.c
 
 void newHand(GameState* gs, Deck* deck)
