@@ -34,6 +34,11 @@ void handle_client_communication(ServerState *state, Client *client)
             if(tryMove(&state->game, &state->deck, action.playerID, action.move, action.amount))
             {
                 doBotTurn(&state->game, &state->deck);
+
+                if(!state->game.handPlaying && remainingPlayers(&state->game) == 1)
+                {
+                    //final winner stuff
+                }
                 broadcast_game_state(state); // After processing the action, broadcast the updated game state to all clients
             }
             else
