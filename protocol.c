@@ -22,16 +22,15 @@ void handle_client_communication(ServerState *state, Client *client)
             client->connected = 0;
             return;
         }
-    MessageType type;
-    PlayerAction action;
-    if (receive_payload(buffer, n, &type, &action) == 0) {
-        if (type == MSG_TYPE_PLAYER_ACTION)
+    Message data;
+    if (receive_payload(buffer, n,  &data) == 0) {
+        if (data.type == MSG_TYPE_PLAYER_ACTION)
         {
             // ********************************************
             // game logic goes here
             //recommendation: attempt the move with validation
-
-            if(tryMove(&state->game, &state->deck, action.playerID, action.move, action.amount))
+        
+            if(tryMove(&state->game, &state->deck, data.action.playerID, data.action.move, data.action.amount))
             {
                 if(!state->game.handPlaying && remainingPlayers(&state->game) == 1)
                 {
@@ -48,11 +47,20 @@ void handle_client_communication(ServerState *state, Client *client)
             {
                 //send error back to the client
                 uint8_t error_buffer[BUFFER_SIZE];
-                uint32_t error_len = prepare_payload(error_buffer, MSG_TYPE_ERROR_MESSAGE, "Invalid move ");
+                Message error_message;
+                strncpy(error_message.error, "Invalid move", MAX_PAYLOAD_SIZE);
+                error_message.type = MSG_TYPE_ERROR_MESSAGE;
+                uint32_t error_len = prepare_payload(error_buffer, MSG_TYPE_ERROR_MESSAGE, &error_message);
+               
                 send_to_client(client, error_buffer, error_len);
             }
             
             /********************************************* */
+        }
+        else if (data.type == MSG_TYPE_CHAT_MESSAGE)
+        {
+            
+            broadcast_chat_message(state, data.sender_id, data.chat);
         }
 
 
@@ -62,27 +70,31 @@ void handle_client_communication(ServerState *state, Client *client)
      } 
 
 }
+
 //this function will handle server incomming packages and update to the client data.
 //DO NOT IMPLEMENT UI and user input in this function. You can but it will not work well with UI.
-void handle_server_communication(ClientState *client)
+int handle_server_communication(ClientState *client, Message *data)
 {
     uint8_t buffer[BUFFER_SIZE];
     ssize_t n = read(client->socket_fd, buffer, sizeof(buffer));
-    if (n < 0) {
-        perror("ERROR reading from socket");
-        client->connected = 0;
-        return;
-    }
-    MessageType type;
-    if (n==0){
-            client->connected = 0;
-            return;
-        }
-    if (receive_payload(buffer, n, &type, &client->game) == 0) {
-    } else {
-        fprintf(stderr, "ERROR processing received payload\n");
-    }
+    if (n < 0) { perror("ERROR reading from socket"); client->connected = 0; return -1; }
+    if (n == 0) { client->connected = 0; return -1; }
 
+    if (receive_payload(buffer, n, data) != 0) {
+        fprintf(stderr, "ERROR processing received payload\n");
+        return -1;
+    }
+    return 0;
+}
+
+void send_action(ClientState *client, const PlayerAction *action)
+{   
+    Message data;
+    data.type = MSG_TYPE_PLAYER_ACTION;
+    data.action = *action;
+    uint8_t buffer[BUFFER_SIZE];
+    uint32_t len = prepare_payload(buffer, MSG_TYPE_PLAYER_ACTION, &data);
+    send_to_server(client, buffer, len);
 }
 
 int create_socket(Client *client)
@@ -192,12 +204,27 @@ void hide_card_info_for_others(GameState *game, uint8_t player_id)
 void broadcast_game_state(ServerState *state)
 {
     uint8_t buffer[BUFFER_SIZE];
-    
+    Message temp_data;
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (state->clients[i].connected) {
-            GameState tempGame = state->game; // Create a temporary copy of the game state
-            hide_card_info_for_others(&tempGame, state->clients[i].id); //
-            uint32_t payload_len = prepare_payload(buffer, MSG_TYPE_GAME_STATE, &tempGame); // Prepare the payload with the modified game state
+            temp_data.gameState = state->game; // Create a temporary copy of the game state
+            hide_card_info_for_others(&temp_data.gameState, state->clients[i].id); //
+            temp_data.type = MSG_TYPE_GAME_STATE;
+            uint32_t payload_len = prepare_payload(buffer, MSG_TYPE_GAME_STATE, &temp_data);
+            send_to_client(&state->clients[i], buffer, payload_len);
+        }
+    }
+}
+void broadcast_chat_message(ServerState *state, uint8_t sender_id, const char *message)
+{
+    uint8_t buffer[BUFFER_SIZE];
+    Message temp_data;
+    temp_data.sender_id = sender_id;
+    strncpy(temp_data.chat, message, MAX_PAYLOAD_SIZE - 1);
+    temp_data.chat[MAX_PAYLOAD_SIZE - 1] = '\0'; // Ensure null-termination of the chat message
+    uint32_t payload_len = prepare_payload(buffer, MSG_TYPE_CHAT_MESSAGE, &temp_data); // Prepare the payload with the chat message
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (state->clients[i].connected) {
             send_to_client(&state->clients[i], buffer, payload_len);
         }
     }
@@ -212,12 +239,7 @@ void send_to_server(ClientState *client, const uint8_t *data, uint32_t len)
     }
 
 }
-void send_action(ClientState *client, const PlayerAction *action)
-{
-    uint8_t buffer[BUFFER_SIZE];
-    uint32_t len = prepare_payload(buffer, MSG_TYPE_PLAYER_ACTION, action);
-    send_to_server(client, buffer, len);
-}
+
 void remove_client(ServerState *state, Client *client)
 {
     // Remove a client from the server state and close the connection

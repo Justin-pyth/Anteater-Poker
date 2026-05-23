@@ -48,8 +48,7 @@ typedef struct {
 
     char input_buffer[BUFFER_SIZE];
 } ClientState;
-//server functions
-int create_socket(Client *client);
+
 
 void init_server(ServerState *state);
 
@@ -67,6 +66,7 @@ void remove_client(ServerState *state, Client *client);
 void cleanup_server(ServerState *state);
 
 void broadcast_game_state(ServerState *state);
+void broadcast_chat_message(ServerState *state, uint8_t sender_id, const char *message);
 
 //client functions
 void init_client_state(ClientState *client);
@@ -75,11 +75,9 @@ int connect_to_server (const char *hostname, int port);
 
 void send_to_server(ClientState *client, const uint8_t *data, uint32_t len);
 
-void handle_user_input(ClientState *client);
-
-void handle_server_communication(ClientState *client);
-
+int handle_server_communication(ClientState *client, Message *data);
 void send_action(ClientState *client, const PlayerAction *action);
+
 
 //shared functions
 void error(const char *msg);
