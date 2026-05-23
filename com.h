@@ -16,7 +16,8 @@ typedef enum {
     MSG_TYPE_GAME_STATE = 1,
     MSG_TYPE_PLAYER_ACTION = 2,
     MSG_TYPE_CHAT_MESSAGE = 3,
-    MSG_TYPE_ERROR_MESSAGE = 4
+    MSG_TYPE_ERROR_MESSAGE = 4,
+    MSG_TYPE_SPECIAL_MESSAGE = 5
 } MessageType;
 void write_u8(uint8_t *buffer, uint32_t *offset,uint8_t val);
 void write_u32(uint8_t *buffer, uint32_t *offset,uint32_t val);

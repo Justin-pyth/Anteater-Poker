@@ -22,7 +22,8 @@ typedef enum {
     CHECK,
     CALL,
     RAISE,
-    ALL_IN
+    ALL_IN,
+    USE_SPECIAL_CARD
 } MoveType;
 
 //enum of stage.
@@ -123,6 +124,14 @@ typedef struct {
     int handType; // 0-9 (High Card to Royal Flush)
     int score;    // For tie-breaking
 } HighHand;
+ typedef enum {
+    SWAP1, //swap 1 card with opponent
+	SWAP2, //swap 2 cards with opponent
+	REVEAL, //reveal next community card
+	REDRAW, //redraw one of your cards from the main deck
+	INSTAWIN, // win the game
+    SWAPOPS // swap your opponents cards
+} Anteater_shop;
 
 //struct that current game state (broadcast to all players)
 // excludes the deck and player cards which are server-side
@@ -132,7 +141,7 @@ typedef struct {
     //uint8_t turn;
     Card community[5];
     uint8_t communityCount;  // how many community cards are revealed
-
+    Anteater_shop cardPrice[6]; // price of each card in the anteater shop, 6 cards in total, including 4 special cards and 2 random community cards.
     uint8_t stage;           // use Stage enum
     uint8_t currentPlayer;
     uint8_t dealerIndex;
@@ -141,16 +150,19 @@ typedef struct {
     uint32_t pot;
     uint32_t currentBet;     // bet needed to match
     uint32_t minRaise;
-
+    uint8_t gameOver;
+    uint8_t winnerID;
+    //non encoded
     bool handPlaying; //for starting new hands after reset
     bool acted[MAX_PLAYERS];
-    bool gameOver;
-    uint8_t winnerID;
+  
 } GameState;
 typedef struct {
     uint8_t playerID;
     MoveType move;
     uint32_t amount;// same as chips. It is duplicate right now. But will comebine back with chips in the future.
+    uint8_t target;
+    Anteater_shop useSpecialCard;
 } PlayerAction;
 
 #endif

@@ -54,6 +54,9 @@ uint32_t encode_client_data(uint8_t *buffer, uint32_t *offset, const PlayerActio
     write_u8(buffer, offset, action->playerID);
     write_u8(buffer, offset, action->move);
     write_u32(buffer, offset, action->amount);
+    write_u8(buffer, offset, action->target);
+    write_u8(buffer, offset, action->useSpecialCard);
+
     return *offset;
 }
 int decode_client_data(const uint8_t *buffer, uint32_t *offset, PlayerAction *action)
@@ -64,6 +67,8 @@ int decode_client_data(const uint8_t *buffer, uint32_t *offset, PlayerAction *ac
     read_u8(buffer, offset, &move_byte);
     action->move = move_byte;
     read_u32(buffer, offset, &action->amount);
+    read_u8(buffer, offset, &action->target);
+    read_u8(buffer, offset, (uint8_t *)&action->useSpecialCard);
     /*if (action->playerID<0 ||action->move <0 || action->amount <0) {
         return -1; // Invalid data
     }*/
@@ -129,6 +134,10 @@ uint32_t encode_server_data(uint8_t *buffer, uint32_t *offset, const GameState *
    //     if(&gameState->community[i] != NULL)
             encode_card(buffer, offset, &gameState->community[i]);
     }
+    for (int i=0;i<6;i++)
+    {
+        write_u8(buffer, offset, gameState->cardPrice[i]);
+    }
     write_u8(buffer, offset, gameState->stage);
     write_u8(buffer, offset, gameState->currentPlayer);
     write_u8(buffer, offset, gameState->dealerIndex);
@@ -136,6 +145,8 @@ uint32_t encode_server_data(uint8_t *buffer, uint32_t *offset, const GameState *
     write_u32(buffer, offset, gameState->currentBet);
     write_u32(buffer, offset, gameState->minRaise);
     write_u8(buffer, offset, gameState->handPlaying);
+    write_u8(buffer, offset, gameState->gameOver);
+    write_u8(buffer, offset, gameState->winnerID);
 
     
     return *offset;
@@ -151,6 +162,10 @@ int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameS
     {
         decode_card(buffer, offset, &gameState->community[i]);
     }
+    for (int i=0;i<6;i++)
+    {
+        read_u8(buffer, offset, (uint8_t *)&gameState->cardPrice[i]);
+    }
      read_u8(buffer, offset, &gameState->stage);
      read_u8(buffer, offset, &gameState->currentPlayer);
      read_u8(buffer, offset, &gameState->dealerIndex);
@@ -158,6 +173,8 @@ int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameS
     read_u32(buffer, offset, &gameState->currentBet);
     read_u32(buffer, offset, &gameState->minRaise);
     read_u8(buffer, offset, (uint8_t *)&gameState->handPlaying);
+    read_u8(buffer, offset, &gameState->gameOver);
+    read_u8(buffer, offset, &gameState->winnerID);
     
     /*if (gameState->playerCount < 0 || gameState->communityCount < 0 || gameState->stage < 0 || gameState->currentPlayer < 0 || gameState->dealerIndex < 0 || gameState->pot < 0 || gameState->currentBet < 0 || gameState->minRaise < 0 || gameState->handPlaying < 0) {
         return -1; // Invalid data
@@ -224,6 +241,9 @@ uint32_t prepare_payload(uint8_t *buffer, MessageType type, const void *data)
         case MSG_TYPE_ERROR_MESSAGE:
             encode_error_message(buffer, &offset, (const char *)data);
             break;
+        case MSG_TYPE_SPECIAL_MESSAGE:
+            encode_chat_message(buffer, &offset, (const char *)data);
+            break;
         default:
             return 0;
     }
@@ -256,6 +276,8 @@ int receive_payload(const uint8_t *buffer, uint32_t buf_len, MessageType *out_ty
         return decode_chat_message(buffer, &offset, (char *)out_data);//future implementation
     case MSG_TYPE_ERROR_MESSAGE:
         return decode_error_message(buffer, &offset, (char *)out_data);//future implementation
+    case MSG_TYPE_SPECIAL_MESSAGE:
+        return decode_chat_message(buffer, &offset, (char *)out_data);//future implementation
     default:
         return -1; // Unknown message type
 
