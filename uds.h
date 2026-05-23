@@ -144,6 +144,8 @@ typedef struct {
 
     bool handPlaying; //for starting new hands after reset
     bool acted[MAX_PLAYERS];
+    bool gameOver;
+    uint8_t winnerID;
 } GameState;
 typedef struct {
     uint8_t playerID;

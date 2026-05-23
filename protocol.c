@@ -36,6 +36,11 @@ void handle_client_communication(ServerState *state, Client *client)
                 if(!state->game.handPlaying && remainingPlayers(&state->game) == 1)
                 {
                     //final winner stuff
+
+                    //TODO: UPDATE GAME STATE WITH WINNER ID AND SET GAMEOVER TO TRUE
+                    resetGame(&state->game);
+                    broadcast_game_state(state);
+                    return;
                 }
                 broadcast_game_state(state); // After processing the action, broadcast the updated game state to all clients
             }
