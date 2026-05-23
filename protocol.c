@@ -33,8 +33,6 @@ void handle_client_communication(ServerState *state, Client *client)
 
             if(tryMove(&state->game, &state->deck, action.playerID, action.move, action.amount))
             {
-                doBotTurn(&state->game, &state->deck);
-
                 if(!state->game.handPlaying && remainingPlayers(&state->game) == 1)
                 {
                     //final winner stuff
@@ -153,6 +151,11 @@ void add_connection(ServerState *state, Client *client)
                 *client = state->clients[i];
 
             printf("New client connected: %d\n", state->clients[i].id ); // Print a message indicating a new client has connected
+            if (!state->game.handPlaying && state->game.playerCount >= 1) {
+                addBot(&state->game);
+                newHand(&state->game, &state->deck);
+            }
+            broadcast_game_state(state);
             return;
         }
     }

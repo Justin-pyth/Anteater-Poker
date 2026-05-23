@@ -261,20 +261,29 @@ int reconstructDeck(const GameState* gs, const Card* hand, Deck* deck)
     return i;
 }
 
+bool doOneBotTurn(GameState* gs, Deck* deck)
+{
+    if(!gs->handPlaying || !isBot(gs->players[gs->currentPlayer].name))
+        return false;
+
+    uint8_t botID;
+    MoveType move;
+    uint32_t amount;
+
+    //get the bot's move
+    botMove(gs, deck, &botID, &move, &amount);
+
+    //see if its a valid move and apply it
+    return tryMove(gs, deck, botID, move, amount);
+}
+
 void doBotTurn(GameState* gs, Deck* deck)
 {
     //while the betting round is occuring and the player is a bot
     while(gs->handPlaying && isBot(gs->players[gs->currentPlayer].name))
     {
-        uint8_t botID;
-        MoveType move;
-        uint32_t amount;
-
-        //get the bot's move
-        botMove(gs, deck, &botID, &move, &amount);
-
         //try the move, if its invalid stop
-        if(!tryMove(gs, deck, botID, move, amount))
+        if(!doOneBotTurn(gs, deck))
             break;
     }
 }
