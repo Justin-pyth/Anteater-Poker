@@ -2,6 +2,8 @@
 #define GUI_ASSEST_H
 #include <gtk/gtk.h>
 #include <stdlib.h>
+
+#define GUI_OPPONENT_SLOTS 5
 /* -- Suits / Ranks --------------------------------------------------------- */
 static const char *RANK_STR[13] = {
     "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"
@@ -34,17 +36,18 @@ typedef struct {
     GtkWidget *my_cards[2];
     GtkWidget *deck_count_label;
 
-    /* opponent seats: top-left, top-center, top-right */
-    GtkWidget *opp_name[3];
-    GtkWidget *opp_chips[3];
-    GtkWidget *opp_status[3];
-    GtkWidget *opp_frame[3];
+    /* opponent seats */
+    GtkWidget *opp_name[GUI_OPPONENT_SLOTS];
+    GtkWidget *opp_chips[GUI_OPPONENT_SLOTS];
+    GtkWidget *opp_status[GUI_OPPONENT_SLOTS];
+    GtkWidget *opp_frame[GUI_OPPONENT_SLOTS];
 
     /* action buttons */
     GtkWidget *btn_fold;
     GtkWidget *btn_check;
     GtkWidget *btn_call;
     GtkWidget *btn_raise;
+    GtkWidget *btn_ready;
     GtkWidget *raise_spin;
 
     guint net_timer;
@@ -139,6 +142,7 @@ static const char *CSS =
 "#btn-check { background-color: #1a2a3a; border-color: #2980b9; color: #7ab8e8; }"
 "#btn-call  { background-color: #1a3a1a; border-color: #27ae60; color: #7ae890; }"
 "#btn-raise { background-color: #3a3a1a; border-color: #f39c12; color: #f0c050; }"
+"#btn-ready { background-color: #2b2438; border-color: #9b7ee8; color: #d6c8ff; }"
 ".action-btn:disabled { opacity: 0.3; }";
 
 #endif

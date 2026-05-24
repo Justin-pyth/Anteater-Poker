@@ -217,7 +217,7 @@ static void refresh_ui(void)
 
     /* opponent seats */
     int opp_slot = 0;
-    for (int pi = 0; pi < MAX_PLAYERS && opp_slot < 3; pi++) {
+    for (int pi = 0; pi < MAX_PLAYERS && opp_slot < GUI_OPPONENT_SLOTS; pi++) {
         if (pi == C.my_player_id) continue;
         Player *p = &game->players[pi];
         if (p->status == PLAYER_EMPTY) continue;
@@ -242,7 +242,7 @@ static void refresh_ui(void)
         opp_slot++;
     }
 
-    for (int i = opp_slot; i < 3; i++) {
+    for (int i = opp_slot; i < GUI_OPPONENT_SLOTS; i++) {
         gtk_label_set_text(GTK_LABEL(W.opp_name[i]), "Empty");
         gtk_label_set_text(GTK_LABEL(W.opp_chips[i]), "$0  |  bet $0");
         gtk_label_set_text(GTK_LABEL(W.opp_status[i]), "Waiting");
@@ -265,6 +265,7 @@ static void refresh_ui(void)
     gtk_widget_set_sensitive(W.btn_check, my_turn && can_check);
     gtk_widget_set_sensitive(W.btn_call, my_turn && !can_check);
     gtk_widget_set_sensitive(W.btn_raise, my_turn);
+    gtk_widget_set_sensitive(W.btn_ready, C.connected && !game->handPlaying);
     gtk_widget_set_sensitive(W.raise_spin, my_turn);
 }
 
@@ -290,6 +291,7 @@ static void on_raise(GtkButton *b, gpointer d)
     uint32_t amount = (uint32_t)gtk_spin_button_get_value(GTK_SPIN_BUTTON(W.raise_spin));
     send_gui_move(RAISE, amount);
 }
+static void on_ready(GtkButton *b, gpointer d) { (void)b; (void)d; sendReadyToServer(); }
 
 /* -- Switch to game screen ------------------------------------------------- */
 static void show_game_screen(void)
@@ -410,12 +412,12 @@ static GtkWidget *build_game_screen(void)
     gtk_widget_set_margin_end(main_area, 20);
     gtk_box_pack_start(GTK_BOX(root), main_area, TRUE, TRUE, 0);
 
-    /* --- opponent row (3 seats across the top) --- */
+    /* --- opponent row --- */
     GtkWidget *opp_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_widget_set_halign(opp_row, GTK_ALIGN_FILL);
     gtk_box_pack_start(GTK_BOX(main_area), opp_row, FALSE, FALSE, 4);
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < GUI_OPPONENT_SLOTS; i++) {
         GtkWidget *frame = gtk_event_box_new();
         GtkStyleContext *ctx = gtk_widget_get_style_context(frame);
         gtk_style_context_add_class(ctx, "opp-frame");
@@ -511,21 +513,25 @@ static GtkWidget *build_game_screen(void)
     W.btn_check = gtk_button_new_with_label("Check");
     W.btn_call = gtk_button_new_with_label("Call");
     W.btn_raise = gtk_button_new_with_label("Raise");
+    W.btn_ready = gtk_button_new_with_label("Ready");
 
     gtk_widget_set_name(W.btn_fold, "btn-fold");
     gtk_widget_set_name(W.btn_check, "btn-check");
     gtk_widget_set_name(W.btn_call, "btn-call");
     gtk_widget_set_name(W.btn_raise, "btn-raise");
+    gtk_widget_set_name(W.btn_ready, "btn-ready");
 
     gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_fold), "action-btn");
     gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_check), "action-btn");
     gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_call), "action-btn");
     gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_raise), "action-btn");
+    gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_ready), "action-btn");
 
     g_signal_connect(W.btn_fold, "clicked", G_CALLBACK(on_fold), NULL);
     g_signal_connect(W.btn_check, "clicked", G_CALLBACK(on_check), NULL);
     g_signal_connect(W.btn_call, "clicked", G_CALLBACK(on_call), NULL);
     g_signal_connect(W.btn_raise, "clicked", G_CALLBACK(on_raise), NULL);
+    g_signal_connect(W.btn_ready, "clicked", G_CALLBACK(on_ready), NULL);
 
     /* raise spin button */
     GtkAdjustment *adj = gtk_adjustment_new(50, 10, 10000, 10, 50, 0);
@@ -537,6 +543,7 @@ static GtkWidget *build_game_screen(void)
     gtk_box_pack_start(GTK_BOX(btn_row), W.btn_call, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(btn_row), W.raise_spin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(btn_row), W.btn_raise, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(btn_row), W.btn_ready, FALSE, FALSE, 0);
 
     refresh_ui();
     return root;

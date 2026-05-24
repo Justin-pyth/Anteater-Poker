@@ -50,7 +50,7 @@ uint32_t encode_error_message(uint8_t *buffer, uint32_t *offset, const char *mes
 int decode_error_message(const uint8_t *buffer, uint32_t *offset, char *message);
 
 // builds [type(2)][length(4)][payload] into buffer, returns total bytes written
-uint32_t prepare_payload(uint8_t *buffer, MessageType type, Message *in_data);
+uint32_t prepare_payload(uint8_t *buffer, MessageType type, const Message*data);
 
 // parses header, dispatches decode into out_data, returns 0 on success
 int receive_payload(const uint8_t *buffer, uint32_t buf_len, Message *out_data);
