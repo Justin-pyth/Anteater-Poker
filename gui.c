@@ -139,6 +139,46 @@ static const char *CSS =
 "#btn-raise { background-color: #3a3a1a; border-color: #f39c12; color: #f0c050; }"
 ".action-btn:disabled { opacity: 0.3; }";
 
+void on_send_chat_button_clicked(GtkEntry *entry, gpointer data)
+{
+    //get the text from chat box
+    const char *text = gtk_entry_get_text(entry);
+    if(text == NULL || strlen(text) == 0) return;   //return if nothing written
+    if(strcmp(text, "/ready") == 0) //if command = /ready, then ready up instead sending a chat message
+    {
+        sendReadyToServer();
+        appendChat("ADMIN", "READY");
+    }
+    else
+    {   //send a chat message if not a command
+        sendChatToServer(C.my_player_id, text);
+    }
+
+    //empty the entry box
+    gtk_entry_set_text(entry, "");
+}
+
+void sendChatToServer(uint8_t sender_id, const char *chatMessage)
+{
+    if(!C.connected) return; //check if the client is connected
+
+    //encode into a payload (chat message type)
+    Message msg;
+    msg.type = MSG_TYPE_CHAT_MESSAGE;
+    msg.sender_id = sender_id;
+
+    //copy the chat message into the msg.chat
+    strncpy(msg.chat, chatMessage, MAX_PAYLOAD_SIZE-1);
+    msg.chat[MAX_PAYLOAD_SIZE-1] = '\0'; //terminate char
+
+    uint8_t buffer[BUFFER_SIZE];
+    uint32_t len = prepare_payload(buffer, MSG_TYPE_CHAT_MESSAGE, &msg);
+
+    send_to_server(&C, buffer, len);
+
+}
+
+
 void appendChat(const char *sender, const char *chatMessage)
 {
     GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(W.chat_log));
@@ -427,7 +467,7 @@ static gboolean poll_server_cb(gpointer data)
             }
             else if (msg.type == MSG_TYPE_CHAT_MESSAGE)
             {
-                appendChat("Player", msg.chat);
+                appendChat(C.game.players[msg.sender_id].name, msg.chat);
             }
         }
     }

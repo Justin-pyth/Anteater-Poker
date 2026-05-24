@@ -256,6 +256,10 @@ void resetHand(GameState* gs)
 void resetGame(GameState* gs)
 {
     resetHand(gs);
+    
+    //reset gameover
+    gs->gameOver = 0;
+    gs->winnerID = MAX_PLAYERS+1;
 
     for (int i = 0; i < MAX_PLAYERS; i++) 
     {
@@ -278,6 +282,10 @@ void newHand(GameState* gs, Deck* deck)
 
     //set to Preflop stage
     gs->stage = PREFLOP; gs->handPlaying = true;
+
+    //reset gameover
+    gs->gameOver = 0;
+    gs->winnerID = MAX_PLAYERS+1;//aka invalid id (no winner yet)
 
     //set current player after blinds
     initBlinds(gs);
