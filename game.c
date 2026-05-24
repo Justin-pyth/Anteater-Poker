@@ -404,7 +404,7 @@ int remainingPlayers(const GameState* gs)
         const Player* p = &gs->players[i];
 
         //skip inactive players
-        if(p->status == PLAYER_DISCONNECTED || p->status == PLAYER_EMPTY) continue;
+        if(p->status == PLAYER_DISCONNECTED || p->status == PLAYER_EMPTY || p->status == PLAYER_SPECTATING) continue;
 
         if(p->chips > 0)
             count ++;

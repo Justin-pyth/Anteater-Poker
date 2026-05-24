@@ -71,12 +71,23 @@ void handle_client_communication(ServerState *state, Client *client)
             state->game.players[client->id].status = PLAYER_READY;
 
             //server counts # of ready vs connected
-            int readyCount      = countStatus(&state->game, PLAYER_READY);
-            int connectCount    = countStatus(&state->game, PLAYER_CONNECTED);
-            int waitingCount    = readyCount + connectCount;
+            int connectedClients = 0;
+            int readyClients = 0;
+
+            for (int i = 0; i < MAX_PLAYERS; i++) 
+            {
+                if (state->clients[i].connected) 
+                {
+                    connectedClients++;
+
+                if (state->game.players[i].status == PLAYER_READY)
+                    readyClients++;
+                }
+            }
+
 
             //if everyone readies up, start the hand
-            if((readyCount == waitingCount) && readyCount >= 1)
+            if((readyClients == connectedClients) && readyClients >= 1)
             {
                 //if the game is over
                 if(state->game.gameOver)
@@ -376,7 +387,8 @@ void handle_after_move(ServerState *state)
 
                 if (p->chips > 0 &&
                     p->status != PLAYER_EMPTY &&
-                    p->status != PLAYER_DISCONNECTED)
+                    p->status != PLAYER_DISCONNECTED &&
+                    p->status != PLAYER_SPECTATING)
                 {
                     state->game.winnerID = p->id;
                     break;

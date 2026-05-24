@@ -78,6 +78,8 @@ void send_to_server(ClientState *client, const uint8_t *data, uint32_t len);
 int handle_server_communication(ClientState *client, Message *data);
 void send_action(ClientState *client, const PlayerAction *action);
 
+int create_socket(Client *client);
+
 void handle_after_move(ServerState *state);
 
 //shared functions
