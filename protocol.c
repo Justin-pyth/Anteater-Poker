@@ -62,7 +62,7 @@ void handle_client_communication(ServerState *state, Client *client)
             
             broadcast_chat_message(state, data.sender_id, data.chat);
         }
-           else if (data.type == MSG_TYPE_READER)
+           else if (data.type == MSG_TYPE_READY)
         {
             
         //implement game logic here
