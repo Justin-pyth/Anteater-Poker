@@ -65,7 +65,18 @@ void handle_client_communication(ServerState *state, Client *client)
            else if (data.type == MSG_TYPE_READY)
         {
             
-        //implement game logic here
+            state->game.players[client->id].status = PLAYER_READY;
+
+            int readyCount      = countStatus(&state->game, PLAYER_READY);
+            int connectCount    = countStatus(&state->game, PLAYER_CONNECTED);
+            int waitingCount    = readyCount + connectCount;
+            if((readyCount == waitingCount) && readyCount >= 1)
+            {
+                addBot(&state->game);
+                newHand(&state->game, &state->deck);
+            }
+
+            broadcast_game_state(state);
         }
 
         
@@ -166,16 +177,13 @@ void add_connection(ServerState *state, Client *client)
 
             //create a new player on gamestate
             initPlayer(&state->game.players[i], i, "Player", 1000);
+            state->game.players[i].status = PLAYER_CONNECTED; //if the client is a player, then set them as connected instead of bot default(READY)
             state->game.playerCount++;
 
             if (client != NULL)
                 *client = state->clients[i];
 
             printf("New client connected: %d\n", state->clients[i].id ); // Print a message indicating a new client has connected
-            if (!state->game.handPlaying && state->game.playerCount >= 1) {
-                addBot(&state->game);
-                newHand(&state->game, &state->deck);
-            }
             broadcast_game_state(state);
             return;
         }

@@ -48,6 +48,8 @@ void processMove(GameState* gs, Deck* deck, uint8_t playerID); //after applying 
 bool tryMove(GameState* gs, Deck* deck, uint8_t playerID, MoveType move, uint32_t amount); //for server
 bool resolveNoAct(GameState* gs, Deck* deck); //to fix edge case where no players can go
 int remainingPlayers(const GameState* gs); //gets # of remaining players w/ chips
+
+int countStatus(const GameState* gs, PlayerStatus status); //return the number of players that are X status
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     The flow of a move will be:
         -client uses sendMove() to the server

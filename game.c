@@ -29,7 +29,7 @@ void initPlayer(Player *p, uint8_t id, const char* name, uint32_t chips)
 
     p->chips = chips;
     p->has_cards = 0;
-    p->status = PLAYER_READY;
+    p->status = PLAYER_READY; //for bots by default
 
     //copy the name into the player struct
     strncpy(p->name, name, MAX_NAME_LENTH - 1);
@@ -402,5 +402,19 @@ int remainingPlayers(const GameState* gs)
             count ++;
     }
 
+    return count;
+}
+
+int countStatus(const GameState* gs, PlayerStatus status)
+{
+    int count = 0;
+
+    for(int i = 0; i < MAX_PLAYERS; i++)
+    {
+        const Player* p = &gs->players[i];
+        if(p->status == status)
+            count++;
+    }
+    
     return count;
 }

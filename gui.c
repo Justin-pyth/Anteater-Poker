@@ -151,8 +151,22 @@ void appendChat(const char *sender, const char *chatMessage)
     gtk_text_buffer_insert(buf, &last, " : ", -1);
 
     //add message after "Name : "
-    gtk_text_buffer_insert(buf, &last, message, -1);
+    gtk_text_buffer_insert(buf, &last, chatMessage, -1);
     gtk_text_buffer_insert(buf, &last, "\n", -1);
+}
+
+void sendReadyToServer()
+{
+    if(!C.connected) return; //check if the client is connected
+
+    //encode the message into [type][length][payload]
+    Message msg;
+    msg.type = MSG_TYPE_READY;
+    uint8_t buffer[BUFFER_SIZE];
+    uint32_t len = prepare_payload(buffer, MSG_TYPE_READY, &msg);
+
+    //send the payload to the server
+    send_to_server(&C, buffer, len);
 }
 
 static int card_is_known(Card card)
@@ -397,9 +411,25 @@ static gboolean poll_server_cb(gpointer data)
     FD_SET(C.socket_fd, &read_fds);
 
     int ready = select(C.socket_fd + 1, &read_fds, NULL, NULL, &timeout);
-    if (ready > 0 && FD_ISSET(C.socket_fd, &read_fds)) {
-        handle_server_communication(&C);
-        refresh_ui();
+
+    if (ready > 0 && FD_ISSET(C.socket_fd, &read_fds)) 
+    {
+        //write data into this variable
+        Message msg;
+
+        //provide client fd and write the type into msg
+        if (handle_server_communication(&C, &msg) == 0)
+        {
+            if(msg.type == MSG_TYPE_GAME_STATE)
+            {
+                C.game = msg.gameState;
+                refresh_ui();
+            }
+            else if (msg.type == MSG_TYPE_CHAT_MESSAGE)
+            {
+                appendChat("Player", msg.chat);
+            }
+        }
     }
 
     return C.connected;
