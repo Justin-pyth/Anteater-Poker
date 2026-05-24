@@ -37,8 +37,10 @@ void handle_client_communication(ServerState *state, Client *client)
             }
 
             if(tryMove(&state->game, &state->deck, data.action.playerID, data.action.move, data.action.amount))
-            {
+            {   
+                        
                 handle_after_move(state);
+              
             }
             else
             {
@@ -112,6 +114,7 @@ void handle_client_communication(ServerState *state, Client *client)
                 //fill empty seats with bots
                 addBot(&state->game);
                 newHand(&state->game, &state->deck);    //start new hand
+                broadcast_cd_signal(state, state->game.currentPlayer); //send countdown signal to the next player
             }
 
             broadcast_game_state(state);
@@ -283,6 +286,19 @@ void broadcast_chat_message(ServerState *state, uint8_t sender_id, const char *m
         }
     }
 }
+void broadcast_cd_signal(ServerState *state, uint8_t target_id)
+{
+    uint8_t buffer[BUFFER_SIZE];
+    Message temp_data;
+    temp_data.sender_id = target_id; // Use sender_id to indicate the target player for the countdown signal
+    temp_data.type = MSG_CD_SIGNAL;
+    uint32_t payload_len = prepare_payload(buffer, MSG_CD_SIGNAL, &temp_data); // Prepare the payload with the countdown signal
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (state->clients[i].connected) {
+            send_to_client(&state->clients[i], buffer, payload_len);
+        }
+    }
+}
 void send_to_server(ClientState *client, const uint8_t *data, uint32_t len)
 {
     
@@ -365,7 +381,7 @@ void error(const char *msg)
     perror(msg);
     exit(1);
 }
-
+//return -1 if game over or invalid, next player id ow.
 void handle_after_move(ServerState *state)
 {   
     //don't let moves go through if game is already over
@@ -407,5 +423,8 @@ void handle_after_move(ServerState *state)
 
     //if the game is active, then just broadcast the state, otherwise
     //have to reset the hand if game is not active
+    
+    broadcast_cd_signal(state, state->game.currentPlayer); //send countdown signal to the next player
     broadcast_game_state(state);
+
 }

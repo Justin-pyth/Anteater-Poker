@@ -67,7 +67,7 @@ void cleanup_server(ServerState *state);
 
 void broadcast_game_state(ServerState *state);
 void broadcast_chat_message(ServerState *state, uint8_t sender_id, const char *message);
-
+void broadcast_cd_signal(ServerState *state, uint8_t target_id);
 //client functions
 void init_client_state(ClientState *client);
 
