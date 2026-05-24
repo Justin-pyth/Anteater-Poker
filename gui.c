@@ -1,4 +1,6 @@
 #include "gui.h"
+#include "gui_extensions.h"
+static GuiExtensions EXT;
 
 /* -- Suits / Ranks --------------------------------------------------------- */
 static const char *RANK_STR[13] = {
@@ -300,16 +302,16 @@ static void refresh_ui(void)
         set_card_back(W.my_cards[1]);
     }
 
-    /* opponent seats */
+    /* opponent seats (now 5 via EXT) */
     int opp_slot = 0;
-    for (int pi = 0; pi < MAX_PLAYERS && opp_slot < 3; pi++) {
+    for (int pi = 0; pi < MAX_PLAYERS && opp_slot < EXT_OPP_SEATS; pi++) {
         if (pi == C.my_player_id) continue;
         Player *p = &game->players[pi];
         if (p->status == PLAYER_EMPTY) continue;
 
-        gtk_label_set_text(GTK_LABEL(W.opp_name[opp_slot]), p->name[0] ? p->name : "Player");
+        gtk_label_set_text(GTK_LABEL(EXT.opp_name[opp_slot]), p->name[0] ? p->name : "Player");
         snprintf(buf, sizeof(buf), "$%u  |  bet $%u", p->chips, p->current_bet);
-        gtk_label_set_text(GTK_LABEL(W.opp_chips[opp_slot]), buf);
+        gtk_label_set_text(GTK_LABEL(EXT.opp_chips[opp_slot]), buf);
 
         const char *st = "Waiting";
         if (p->status == PLAYER_FOLDED) st = "Folded";
@@ -317,9 +319,9 @@ static void refresh_ui(void)
         else if (p->status == PLAYER_DISCONNECTED) st = "Disconnected";
         else if (p->status == PLAYER_SPECTATING) st = "Spectating";
         else if (pi == game->currentPlayer && game->handPlaying) st = "Acting";
-        gtk_label_set_text(GTK_LABEL(W.opp_status[opp_slot]), st);
+        gtk_label_set_text(GTK_LABEL(EXT.opp_status[opp_slot]), st);
 
-        GtkStyleContext *ctx = gtk_widget_get_style_context(W.opp_frame[opp_slot]);
+        GtkStyleContext *ctx = gtk_widget_get_style_context(EXT.opp_frame[opp_slot]);
         if (pi == game->currentPlayer && game->handPlaying)
             gtk_style_context_add_class(ctx, "active-seat");
         else
@@ -327,11 +329,11 @@ static void refresh_ui(void)
         opp_slot++;
     }
 
-    for (int i = opp_slot; i < 3; i++) {
-        gtk_label_set_text(GTK_LABEL(W.opp_name[i]), "Empty");
-        gtk_label_set_text(GTK_LABEL(W.opp_chips[i]), "$0  |  bet $0");
-        gtk_label_set_text(GTK_LABEL(W.opp_status[i]), "Waiting");
-        gtk_style_context_remove_class(gtk_widget_get_style_context(W.opp_frame[i]), "active-seat");
+    for (int i = opp_slot; i < EXT_OPP_SEATS; i++) {
+        gtk_label_set_text(GTK_LABEL(EXT.opp_name[i]), "Empty");
+        gtk_label_set_text(GTK_LABEL(EXT.opp_chips[i]), "$0  |  bet $0");
+        gtk_label_set_text(GTK_LABEL(EXT.opp_status[i]), "Waiting");
+        gtk_style_context_remove_class(gtk_widget_get_style_context(EXT.opp_frame[i]), "active-seat");
     }
 
     /* action buttons: only enabled on my turn */
@@ -479,48 +481,9 @@ static GtkWidget *build_game_screen(void)
     gtk_widget_set_margin_end(main_area, 20);
     gtk_box_pack_start(GTK_BOX(root), main_area, TRUE, TRUE, 0);
 
-    /* --- opponent row (3 seats across the top) --- */
-    GtkWidget *opp_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-    gtk_widget_set_halign(opp_row, GTK_ALIGN_FILL);
+    /* --- opponent row (6 seats across the top) --- */
+    GtkWidget *opp_row = build_six_seat_row(&EXT);
     gtk_box_pack_start(GTK_BOX(main_area), opp_row, FALSE, FALSE, 4);
-
-    for (int i = 0; i < 3; i++) {
-        GtkWidget *frame = gtk_event_box_new();
-        GtkStyleContext *ctx = gtk_widget_get_style_context(frame);
-        gtk_style_context_add_class(ctx, "opp-frame");
-        W.opp_frame[i] = frame;
-
-        GtkWidget *col = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
-        gtk_widget_set_margin_start(col, 8);
-        gtk_widget_set_margin_end(col, 8);
-        gtk_widget_set_margin_top(col, 6);
-        gtk_widget_set_margin_bottom(col, 6);
-        gtk_container_add(GTK_CONTAINER(frame), col);
-
-        /* two face-down card icons for opponents */
-        GtkWidget *card_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-        gtk_box_pack_start(GTK_BOX(col), card_row, FALSE, FALSE, 0);
-        gtk_box_pack_start(GTK_BOX(card_row), make_card_widget(28, 40), FALSE, FALSE, 0);
-        gtk_box_pack_start(GTK_BOX(card_row), make_card_widget(28, 40), FALSE, FALSE, 0);
-
-        W.opp_name[i] = gtk_label_new("Empty");
-        gtk_style_context_add_class(gtk_widget_get_style_context(W.opp_name[i]), "opp-name");
-        gtk_widget_set_halign(W.opp_name[i], GTK_ALIGN_START);
-
-        W.opp_chips[i] = gtk_label_new("$0  |  bet $0");
-        gtk_style_context_add_class(gtk_widget_get_style_context(W.opp_chips[i]), "opp-chips");
-        gtk_widget_set_halign(W.opp_chips[i], GTK_ALIGN_START);
-
-        W.opp_status[i] = gtk_label_new("Waiting");
-        gtk_style_context_add_class(gtk_widget_get_style_context(W.opp_status[i]), "opp-status");
-        gtk_widget_set_halign(W.opp_status[i], GTK_ALIGN_START);
-
-        gtk_box_pack_start(GTK_BOX(col), W.opp_name[i], FALSE, FALSE, 0);
-        gtk_box_pack_start(GTK_BOX(col), W.opp_chips[i], FALSE, FALSE, 0);
-        gtk_box_pack_start(GTK_BOX(col), W.opp_status[i], FALSE, FALSE, 0);
-
-        /* distribute evenly */
-        gtk_box_pack_start(GTK_BOX(opp_row), frame, TRUE, TRUE, 6);
     }
 
     /* --- felt table area --- */
@@ -530,7 +493,10 @@ static GtkWidget *build_game_screen(void)
     gtk_widget_set_margin_end(felt, 40);
     gtk_widget_set_vexpand(felt, TRUE);
     gtk_widget_set_valign(felt, GTK_ALIGN_CENTER);
-    gtk_box_pack_start(GTK_BOX(main_area), felt, TRUE, TRUE, 0);
+    GtkWidget *table_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
+    gtk_box_pack_start(GTK_BOX(table_row), felt, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(table_row), build_anteater_deck_panel(&EXT), FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(main_area), table_row, TRUE, TRUE, 0);
 
     W.stage_label = gtk_label_new("WAITING");
     gtk_widget_set_name(W.stage_label, "stage-label");
@@ -606,7 +572,9 @@ static GtkWidget *build_game_screen(void)
     gtk_box_pack_start(GTK_BOX(btn_row), W.btn_call, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(btn_row), W.raise_spin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(btn_row), W.btn_raise, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(btn_row), build_shop_button(&EXT), FALSE, FALSE, 0);
 
+    gtk_box_pack_start(GTK_BOX(root), build_chat_box(&EXT), FALSE, FALSE, 0);
     refresh_ui();
     return root;
 }

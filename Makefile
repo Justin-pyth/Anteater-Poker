@@ -22,8 +22,11 @@ server: server.o protocol.o game.o rules.o bot.o com.o
 client: client.o protocol.o game.o rules.o bot.o com.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-gui: gui.o protocol.o game.o rules.o bot.o com.o
+gui: gui.o gui_extensions.o protocol.o game.o rules.o bot.o com.o
 	$(CC) $(CFLAGS) $^ $(GTK_LIBS) -o $@
+
+gui_extensions.o: gui_extensions.c gui_extensions.h
+	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c gui_extensions.c -o gui_extensions.o
 
 test_server: test_server.o protocol.o game.o rules.o bot.o com.o
 	$(CC) $(CFLAGS) $^ -o $@
