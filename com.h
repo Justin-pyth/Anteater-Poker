@@ -17,7 +17,8 @@ typedef enum {
     MSG_TYPE_CHAT_MESSAGE = 3,
     MSG_TYPE_ERROR_MESSAGE = 4,
     MSG_TYPE_SPECIAL_MESSAGE = 5,
-    MSG_TYPE_READY = 6
+    MSG_TYPE_READY = 6,
+    MSG_CD_SIGNAL= 7// for sending count down signal
 } MessageType;
 typedef struct {
     MessageType type;

@@ -267,6 +267,11 @@ uint32_t prepare_payload(uint8_t *buffer, MessageType type, const Message*data)
         case MSG_TYPE_READY:
             // No payload to encode for ready message
             break;
+        case MSG_CD_SIGNAL:
+           {
+            write_u8(buffer, &offset, data->sender_id); // sender_id = target.
+            break;
+           }
         default:
             return 0;
     }
@@ -304,6 +309,10 @@ int receive_payload(const uint8_t *buffer, uint32_t buf_len,  Message *out_data)
     case MSG_TYPE_READY:
         // No payload to decode for ready message
         return 0;
+    case MSG_CD_SIGNAL:
+        {
+            return read_u8(buffer, &offset, &out_data->sender_id); // sender_id = target.
+        }
     default:
         return -1; // Unknown message type
 
