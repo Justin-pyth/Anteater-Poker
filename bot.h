@@ -16,4 +16,8 @@ int reconstructDeck(const GameState* gs, const Card* hand, Deck* deck);
 bool isBot(const char* name);
 void addBot(GameState* gs);
 void botMove(const GameState* gs, const Deck* deck, uint8_t* botID, MoveType* move, uint32_t* amount);
+
+bool doOneBotTurn(GameState* gs, Deck* deck);
+void doBotTurn(GameState* gs, Deck* deck);
+
 #endif

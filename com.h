@@ -8,7 +8,6 @@ payload            // N bytes
 */
 #ifndef COM_H
 #define COM_H
-#include "protocol.h"
 #include "uds.h"
 #include<stdint.h>
 
@@ -16,8 +15,21 @@ typedef enum {
     MSG_TYPE_GAME_STATE = 1,
     MSG_TYPE_PLAYER_ACTION = 2,
     MSG_TYPE_CHAT_MESSAGE = 3,
-    MSG_TYPE_ERROR_MESSAGE = 4
+    MSG_TYPE_ERROR_MESSAGE = 4,
+    MSG_TYPE_SPECIAL_MESSAGE = 5,
+    MSG_TYPE_READY = 6
 } MessageType;
+typedef struct {
+    MessageType type;
+    uint8_t sender_id;
+    union {
+        GameState gameState;
+        PlayerAction action;
+        char chat[MAX_PAYLOAD_SIZE];
+        char special[MAX_PAYLOAD_SIZE];
+        char error[MAX_PAYLOAD_SIZE];
+    };
+} Message; // for handling multi datatypes incomming payload.
 void write_u8(uint8_t *buffer, uint32_t *offset,uint8_t val);
 void write_u32(uint8_t *buffer, uint32_t *offset,uint32_t val);
 uint8_t read_u8(const uint8_t *buffer, uint32_t *offset,uint8_t *val);
@@ -30,16 +42,18 @@ uint32_t encode_server_data(uint8_t *buffer, uint32_t *offset, const GameState *
 int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameState);
 uint32_t encode_card(uint8_t *buffer, uint32_t *offset, const Card *card);
 int decode_card(const uint8_t *buffer, uint32_t *offset, Card *card);
-uint32_t encode_chat_message(uint8_t *buffer, uint32_t *offset, const char *message);
-int decode_chat_message(const uint8_t *buffer, uint32_t *offset, char *message);
+uint32_t encode_chat_message(uint8_t *buffer, uint32_t *offset, uint8_t sender_id, const char *message);
+int decode_chat_message(const uint8_t *buffer, uint32_t *offset, uint8_t *sender_id, char *message);
+uint32_t encode_special_message(uint8_t *buffer, uint32_t *offset, const char *message);
+int decode_special_message(const uint8_t *buffer, uint32_t *offset, char *message);
 uint32_t encode_error_message(uint8_t *buffer, uint32_t *offset, const char *message);
 int decode_error_message(const uint8_t *buffer, uint32_t *offset, char *message);
 
 // builds [type(2)][length(4)][payload] into buffer, returns total bytes written
-uint32_t prepare_payload(uint8_t *buffer, MessageType type, const void *data);
+uint32_t prepare_payload(uint8_t *buffer, MessageType type, Message *in_data);
 
 // parses header, dispatches decode into out_data, returns 0 on success
-int receive_payload(const uint8_t *buffer, uint32_t buf_len, MessageType *out_type, void *out_data);
+int receive_payload(const uint8_t *buffer, uint32_t buf_len, Message *out_data);
 
 
 #endif

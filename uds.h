@@ -30,7 +30,7 @@ typedef enum {
     CALL,
     RAISE,
     ALL_IN,
-    USE_SPECIAL_CARD
+    USE_SPECIAL_CARD,
 } MoveType;
 
 //enum of anteater cards
@@ -109,6 +109,7 @@ typedef struct{
     Card cards[DECK_SIZE];
     uint8_t top;
 } Deck;
+
 //struct of player, contains 8 bits id, 32 bytes name, 32 bits chips, 32 bits current bet, 8 bits status and 8 bits has_cards.
 typedef struct {
     uint8_t id;
@@ -152,6 +153,14 @@ typedef struct {
     int handType; // 0-9 (High Card to Royal Flush)
     int score;    // For tie-breaking
 } HighHand;
+ typedef enum {
+    SWAP1, //swap 1 card with opponent
+	SWAP2, //swap 2 cards with opponent
+	REVEAL, //reveal next community card
+	REDRAW, //redraw one of your cards from the main deck
+	INSTAWIN, // win the game
+    SWAPOPS // swap your opponents cards
+} Anteater_shop;
 
 //struct that current game state (broadcast to all players)
 // excludes the deck and player cards which are server-side
@@ -171,16 +180,20 @@ typedef struct {
     uint32_t pot;
     uint32_t currentBet;     // bet needed to match
     uint32_t minRaise;
-
+    uint8_t gameOver;
+    uint8_t winnerID;
     //non-encode
     bool handPlaying; //for starting new hands after reset
     bool acted[MAX_PLAYERS];
+  
 } GameState;
 
 typedef struct {
     uint8_t playerID;
     MoveType move;
     uint32_t amount;// same as chips. It is duplicate right now. But will comebine back with chips in the future.
+    uint8_t target;
+    Anteater_shop useSpecialCard;
 } PlayerAction;
 
 #endif

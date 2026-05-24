@@ -38,6 +38,7 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount); //a
 void award(GameState*gs); //award players at showdown
 
 void resetHand(GameState* gs); //reset hand after final betting round
+void resetGame(GameState* gs); //reset hand and then reapply starting chips
 void newHand(GameState* gs, Deck* deck); //start the new hand
 // initBlinds() moved to rules.h
 
@@ -46,6 +47,7 @@ void advance(GameState* gs, Deck* deck); //advance to next stage after all playe
 void processMove(GameState* gs, Deck* deck, uint8_t playerID); //after applying move, decide state
 bool tryMove(GameState* gs, Deck* deck, uint8_t playerID, MoveType move, uint32_t amount); //for server
 bool resolveNoAct(GameState* gs, Deck* deck); //to fix edge case where no players can go
+int remainingPlayers(const GameState* gs); //gets # of remaining players w/ chips
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     The flow of a move will be:
         -client uses sendMove() to the server
