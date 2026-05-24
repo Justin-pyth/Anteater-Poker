@@ -264,6 +264,9 @@ uint32_t prepare_payload(uint8_t *buffer, MessageType type, const Message*data)
         case MSG_TYPE_SPECIAL_MESSAGE:
             encode_special_message(buffer, &offset, data->special);
             break;
+        case MSG_TYPE_READY:
+            // No payload to encode for ready message
+            break;
         default:
             return 0;
     }
@@ -298,6 +301,9 @@ int receive_payload(const uint8_t *buffer, uint32_t buf_len,  Message *out_data)
         return decode_error_message(buffer, &offset, out_data->error);//future implementation
     case MSG_TYPE_SPECIAL_MESSAGE:
         return decode_special_message(buffer, &offset, out_data->special);//future implementation
+    case MSG_TYPE_READY:
+        // No payload to decode for ready message
+        return 0;
     default:
         return -1; // Unknown message type
 
