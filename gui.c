@@ -1,8 +1,4 @@
-#include <gtk/gtk.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/select.h>
-#include "protocol.h"
+#include "gui.h"
 
 /* -- Suits / Ranks --------------------------------------------------------- */
 static const char *RANK_STR[13] = {
@@ -23,6 +19,10 @@ typedef struct {
     GtkWidget *host_entry;
     GtkWidget *port_entry;
     GtkWidget *login_status;
+
+    /* chat screen */
+    GtkWidget *chat_log;
+    GtkWidget *chat_input;
 
     /* game screen */
     GtkWidget *pot_label;
@@ -138,6 +138,22 @@ static const char *CSS =
 "#btn-call  { background-color: #1a3a1a; border-color: #27ae60; color: #7ae890; }"
 "#btn-raise { background-color: #3a3a1a; border-color: #f39c12; color: #f0c050; }"
 ".action-btn:disabled { opacity: 0.3; }";
+
+void appendChat(const char *sender, const char *chatMessage)
+{
+    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(W.chat_log));
+    GtkTextIter last;
+
+    gtk_text_buffer_get_end_iter(buf, &last);
+
+    // "Name : "
+    gtk_text_buffer_insert(buf, &last, sender, -1);
+    gtk_text_buffer_insert(buf, &last, " : ", -1);
+
+    //add message after "Name : "
+    gtk_text_buffer_insert(buf, &last, message, -1);
+    gtk_text_buffer_insert(buf, &last, "\n", -1);
+}
 
 static int card_is_known(Card card)
 {
