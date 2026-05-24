@@ -16,14 +16,33 @@
 #define BIG_BLIND 10
 #define INIT_CHIPS 1000
 
+static const int INSTA_WIN_PRICE = 800;
+static const int SWAP1_PRICE = 100;
+static const int SWAP2P_RICE = 200;
+static const int REVEAL_PRICE = 150;
+static const int REDRAW_PRICE = 200;
+static const int SWAP_OPPS_PRICE = 300;
+
 //enum of move type.
 typedef enum {
     FOLD,
     CHECK,
     CALL,
     RAISE,
-    ALL_IN
+    ALL_IN,
+    USE_SPECIAL_CARD
 } MoveType;
+
+//enum of anteater cards
+typedef enum {
+	SWAP1, //swap 1 card with opponent
+	SWAP2, //swap 2 cards with opponent
+	REVEAL, //reveal next community card
+	REDRAW, //redraw one of your cards from the main deck
+	INSTAWIN, // win the game
+    SWAPOPS // swap your opponents cards
+} anteater_shop;
+
 
 //enum of stage.
 typedef enum {
@@ -87,7 +106,7 @@ typedef struct{
 
 //struct of deck, cotains 52 cards and N special cards, 8 bits top to indicate the top card index in the deck.
 typedef struct{
-    Card cards[DECK_SIZE + SPECIAL_CARDS];
+    Card cards[DECK_SIZE];
     uint8_t top;
 } Deck;
 //struct of player, contains 8 bits id, 32 bytes name, 32 bits chips, 32 bits current bet, 8 bits status and 8 bits has_cards.
@@ -98,10 +117,20 @@ typedef struct {
     uint32_t chips;
     uint32_t current_bet;
 
+    anteater_shop antCards[3];
     uint8_t status;
     uint8_t has_cards;
 
 }   Player;
+
+typedef struct {
+    uint8_t playerID;
+    MoveType move;
+    uint32_t amount; // same as chips. It is a duplicate right now. But will combine back with chips in the future.
+    uint8_t target;
+    anteater_shop useSpecialCard;
+} PlayerAction;
+
 
 //struct for rankings of poker hands
 typedef enum {
@@ -132,7 +161,8 @@ typedef struct {
     //uint8_t turn;
     Card community[5];
     uint8_t communityCount;  // how many community cards are revealed
-
+    anteater_shop special_card_prize[6] = {SWAP1_PRICE, SWAP2P_RICE, REVEAL_PRICE, 
+                                        REDRAW_PRICE, INSTAWINAMT, SWAP_OPPS_PRICE};
     uint8_t stage;           // use Stage enum
     uint8_t currentPlayer;
     uint8_t dealerIndex;
@@ -142,9 +172,11 @@ typedef struct {
     uint32_t currentBet;     // bet needed to match
     uint32_t minRaise;
 
+    //non-encode
     bool handPlaying; //for starting new hands after reset
     bool acted[MAX_PLAYERS];
 } GameState;
+
 typedef struct {
     uint8_t playerID;
     MoveType move;
