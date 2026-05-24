@@ -22,6 +22,8 @@ static const int SWAP2P_RICE = 200;
 static const int REVEAL_PRICE = 150;
 static const int REDRAW_PRICE = 200;
 static const int SWAP_OPPS_PRICE = 300;
+static const int PRICES[] = {SWAP1_PRICE, SWAP2P_RICE, REVEAL_PRICE, 
+                                        REDRAW_PRICE, INSTA_WIN_PRICE, SWAP_OPPS_PRICE};
 
 //enum of move type.
 typedef enum {
@@ -153,14 +155,6 @@ typedef struct {
     int handType; // 0-9 (High Card to Royal Flush)
     int score;    // For tie-breaking
 } HighHand;
- typedef enum {
-    SWAP1, //swap 1 card with opponent
-	SWAP2, //swap 2 cards with opponent
-	REVEAL, //reveal next community card
-	REDRAW, //redraw one of your cards from the main deck
-	INSTAWIN, // win the game
-    SWAPOPS // swap your opponents cards
-} Anteater_shop;
 
 //struct that current game state (broadcast to all players)
 // excludes the deck and player cards which are server-side
@@ -170,8 +164,7 @@ typedef struct {
     //uint8_t turn;
     Card community[5];
     uint8_t communityCount;  // how many community cards are revealed
-    anteater_shop special_card_prize[6] = {SWAP1_PRICE, SWAP2P_RICE, REVEAL_PRICE, 
-                                        REDRAW_PRICE, INSTAWINAMT, SWAP_OPPS_PRICE};
+    anteater_shop special_card_prize[6];
     uint8_t stage;           // use Stage enum
     uint8_t currentPlayer;
     uint8_t dealerIndex;
@@ -187,13 +180,5 @@ typedef struct {
     bool acted[MAX_PLAYERS];
   
 } GameState;
-
-typedef struct {
-    uint8_t playerID;
-    MoveType move;
-    uint32_t amount;// same as chips. It is duplicate right now. But will comebine back with chips in the future.
-    uint8_t target;
-    Anteater_shop useSpecialCard;
-} PlayerAction;
 
 #endif
