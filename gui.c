@@ -153,7 +153,7 @@ void appendChat(const char *sender, const char *chatMessage)
     gtk_text_buffer_insert(buf, &last, " : ", -1);
 
     //add message after "Name : "
-    gtk_text_buffer_insert(buf, &last, message, -1);
+    gtk_text_buffer_insert(buf, &last, chatMessage, -1);
     gtk_text_buffer_insert(buf, &last, "\n", -1);
 }
 
@@ -400,7 +400,8 @@ static gboolean poll_server_cb(gpointer data)
 
     int ready = select(C.socket_fd + 1, &read_fds, NULL, NULL, &timeout);
     if (ready > 0 && FD_ISSET(C.socket_fd, &read_fds)) {
-        handle_server_communication(&C);
+        Message msg;
+        handle_server_communication(&C, &msg);
         refresh_ui();
     }
 
@@ -484,7 +485,6 @@ static GtkWidget *build_game_screen(void)
     /* --- opponent row (6 seats across the top) --- */
     GtkWidget *opp_row = build_six_seat_row(&EXT);
     gtk_box_pack_start(GTK_BOX(main_area), opp_row, FALSE, FALSE, 4);
-    }
 
     /* --- felt table area --- */
     GtkWidget *felt = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);

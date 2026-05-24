@@ -318,7 +318,6 @@ GtkWidget *build_shop_button(GuiExtensions *ext)
     /* TODO: g_signal_connect(ext->btn_shop, "clicked",
                               G_CALLBACK(on_shop_clicked), NULL); */
 
-    ext->shop_dialog = NULL;  /* created lazily when user opens shop */
     return ext->btn_shop;
 }
 

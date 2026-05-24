@@ -1,4 +1,5 @@
 #include "com.h"
+#include <string.h>
 
 void write_u8(uint8_t *buffer, uint32_t *offset,uint8_t val)
 {
@@ -136,7 +137,7 @@ uint32_t encode_server_data(uint8_t *buffer, uint32_t *offset, const GameState *
     }
     for (int i=0;i<6;i++)
     {
-        write_u8(buffer, offset, gameState->cardPrice[i]);
+    //    write_u8(buffer, offset, gameState->cardPrice[i]);
     }
     write_u8(buffer, offset, gameState->stage);
     write_u8(buffer, offset, gameState->currentPlayer);
@@ -164,7 +165,7 @@ int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameS
     }
     for (int i=0;i<6;i++)
     {
-        read_u8(buffer, offset, (uint8_t *)&gameState->cardPrice[i]);
+    //    read_u8(buffer, offset, (uint8_t *)&gameState->cardPrice[i]);
     }
      read_u8(buffer, offset, &gameState->stage);
      read_u8(buffer, offset, &gameState->currentPlayer);
