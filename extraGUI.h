@@ -15,6 +15,4 @@ void displayShop();
 
 void displayChat();
 
-
-
 #endif
