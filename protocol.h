@@ -67,7 +67,7 @@ void cleanup_server(ServerState *state);
 
 void broadcast_game_state(ServerState *state);
 void broadcast_chat_message(ServerState *state, uint8_t sender_id, const char *message);
-
+void broadcast_cd_signal(ServerState *state, uint8_t target_id);
 //client functions
 void init_client_state(ClientState *client);
 
@@ -78,6 +78,9 @@ void send_to_server(ClientState *client, const uint8_t *data, uint32_t len);
 int handle_server_communication(ClientState *client, Message *data);
 void send_action(ClientState *client, const PlayerAction *action);
 
+int create_socket(Client *client);
+
+void handle_after_move(ServerState *state);
 
 //shared functions
 void error(const char *msg);

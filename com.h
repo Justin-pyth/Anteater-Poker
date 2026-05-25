@@ -18,7 +18,8 @@ typedef enum {
     MSG_TYPE_CHAT_MESSAGE = 3,
     MSG_TYPE_ERROR_MESSAGE = 4,
     MSG_TYPE_SPECIAL_MESSAGE = 5,
-    MSG_TYPE_READY = 6
+    MSG_TYPE_READY = 6,
+    MSG_CD_SIGNAL= 7// for sending count down signal
 } MessageType;
 typedef struct {
     MessageType type;
@@ -51,7 +52,7 @@ uint32_t encode_error_message(uint8_t *buffer, uint32_t *offset, const char *mes
 int decode_error_message(const uint8_t *buffer, uint32_t *offset, char *message);
 
 // builds [type(2)][length(4)][payload] into buffer, returns total bytes written
-uint32_t prepare_payload(uint8_t *buffer, MessageType type, const Message *in_data);
+uint32_t prepare_payload(uint8_t *buffer, MessageType type, const Message*data);
 
 // parses header, dispatches decode into out_data, returns 0 on success
 int receive_payload(const uint8_t *buffer, uint32_t buf_len, Message *out_data);

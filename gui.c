@@ -2,144 +2,45 @@
 #include "gui_extensions.h"
 static GuiExtensions EXT;
 
-/* -- Suits / Ranks --------------------------------------------------------- */
-static const char *RANK_STR[13] = {
-    "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"
-};
+void on_send_chat_button_clicked(GtkEntry *entry, gpointer data)
+{
+    //get the text from chat box
+    const char *text = gtk_entry_get_text(entry);
+    if(text == NULL || strlen(text) == 0) return;   //return if nothing written
+    if(strcmp(text, "/ready") == 0) //if command = /ready, then ready up instead sending a chat message
+    {
+        sendReadyToServer();
+        appendChat("ADMIN", "READY");
+    }
+    else
+    {   //send a chat message if not a command
+        sendChatToServer(C.my_player_id, text);
+    }
 
-static const char *SUIT_STR[4] = {"♥", "♦", "♣", "♠"};
-static const int SUIT_RED[4] = {1, 1, 0, 0};
+    //empty the entry box
+    gtk_entry_set_text(entry, "");
+}
 
-/* -- Widget references ----------------------------------------------------- */
-typedef struct {
-    /* login screen */
-    GtkWidget *login_screen;
-    GtkWidget *game_screen;
-    GtkWidget *window;
-    GtkWidget *stack;
-    GtkWidget *name_entry;
-    GtkWidget *host_entry;
-    GtkWidget *port_entry;
-    GtkWidget *login_status;
+void sendChatToServer(uint8_t sender_id, const char *chatMessage)
+{
+    if(!C.connected) return; //check if the client is connected
 
-    /* chat screen */
-    GtkWidget *chat_log;
-    GtkWidget *chat_input;
+    //encode into a payload (chat message type)
+    Message msg;
+    msg.type = MSG_TYPE_CHAT_MESSAGE;
+    msg.sender_id = sender_id;
 
-    /* game screen */
-    GtkWidget *pot_label;
-    GtkWidget *stage_label;
-    GtkWidget *log_label;
-    GtkWidget *community_cards[5];
-    GtkWidget *my_cards[2];
-    GtkWidget *deck_count_label;
+    //copy the chat message into the msg.chat
+    strncpy(msg.chat, chatMessage, MAX_PAYLOAD_SIZE-1);
+    msg.chat[MAX_PAYLOAD_SIZE-1] = '\0'; //terminate char
 
-    /* opponent seats: top-left, top-center, top-right */
-    GtkWidget *opp_name[3];
-    GtkWidget *opp_chips[3];
-    GtkWidget *opp_status[3];
-    GtkWidget *opp_frame[3];
+    uint8_t buffer[BUFFER_SIZE];
+    uint32_t len = prepare_payload(buffer, MSG_TYPE_CHAT_MESSAGE, &msg);
 
-    /* action buttons */
-    GtkWidget *btn_fold;
-    GtkWidget *btn_check;
-    GtkWidget *btn_call;
-    GtkWidget *btn_raise;
-    GtkWidget *raise_spin;
+    send_to_server(&C, buffer, len);
 
-    guint net_timer;
-} AppWidgets;
+}
 
-typedef struct {
-    Card card;
-    int face_up;
-} CardDrawData;
-
-static AppWidgets W;
-static ClientState C;
-
-/* --------------------------------------------------------------------------
-   CSS
-   -------------------------------------------------------------------------- */
-static const char *CSS =
-/* window / global */
-"window { background-color: #0d1117; }"
-"label  { color: #e6edf3; font-family: 'Georgia', serif; }"
-
-/* login card */
-"#login-card {"
-"  background-color: #161b22;"
-"  border-radius: 16px;"
-"  border: 1px solid #30363d;"
-"  padding: 40px;"
-"}"
-"#login-title {"
-"  font-size: 30px; font-weight: bold;"
-"  color: #e6c87a; letter-spacing: 4px;"
-"}"
-"#login-sub   { font-size: 13px; color: #8b949e; letter-spacing: 2px; }"
-"#login-suits { font-size: 20px; color: #e6c87a; }"
-"label.field-lbl { font-size: 11px; color: #8b949e; letter-spacing: 1px; }"
-"entry {"
-"  background-color: #0d1117; color: #e6edf3;"
-"  border: 1px solid #30363d; border-radius: 8px;"
-"  padding: 10px 14px; font-family: 'Georgia', serif; font-size: 14px;"
-"}"
-"entry:focus { border-color: #e6c87a; }"
-"#connect-btn {"
-"  background-color: #e6c87a; color: #0d1117; border: none;"
-"  border-radius: 8px; padding: 12px 0;"
-"  font-family: 'Georgia', serif; font-size: 15px; font-weight: bold;"
-"  letter-spacing: 2px;"
-"}"
-"#connect-btn:hover  { background-color: #f0d898; }"
-"#connect-btn:active { background-color: #c9a84c; }"
-"#login-status { font-size: 12px; color: #f85149; }"
-"#offline-btn {"
-"  background-color: #e6c87a; color: #0d1117;"
-"  border: 1px solid #30363d; border-radius: 8px; padding: 10px 0;"
-"  font-family: 'Georgia', serif; font-size: 13px; letter-spacing: 1px;"
-"}"
-"#offline-btn:hover { background-color: #f0d898; color: #0d1117; border-color: #8b949e; }"
-"#divider-label { font-size: 11px; color: #30363d; letter-spacing: 3px; }"
-
-/* game screen */
-"#game-root { background-color: #0d1117; }"
-"#felt {"
-"  background-color: #1a5c35;"
-"  border: 6px solid #5c3210;"
-"  border-radius: 120px;"
-"}"
-"#pot-label   { font-size: 15px; color: #ffd700; font-weight: bold; }"
-"#stage-label { font-size: 12px; color: #a0c8a0; letter-spacing: 2px; }"
-"#log-label   { font-size: 12px; color: #7ab870; }"
-
-/* opponent frames */
-".opp-frame {"
-"  background-color: rgba(0,0,0,0.45);"
-"  border: 1px solid #2d5a3d;"
-"  border-radius: 10px;"
-"  padding: 6px 10px;"
-"}"
-".opp-frame.active-seat {"
-"  border-color: #ffd700;"
-"  background-color: rgba(255,215,0,0.08);"
-"}"
-".opp-name   { font-size: 13px; font-weight: bold; color: #e0f0e0; }"
-".opp-chips  { font-size: 11px; color: #a0c8a0; }"
-".opp-status { font-size: 10px; color: #ffd700; }"
-
-/* action buttons */
-".action-btn {"
-"  border-radius: 8px; font-family: 'Georgia', serif;"
-"  font-size: 13px; font-weight: bold; letter-spacing: 1px;"
-"  padding: 10px 18px; border: 1px solid;"
-"}"
-"#btn-fold  { background-color: #3a1a1a; border-color: #c0392b; color: #e87a7a; }"
-"#btn-check { background-color: #1a2a3a; border-color: #2980b9; color: #7ab8e8; }"
-"#btn-call  { background-color: #1a3a1a; border-color: #27ae60; color: #7ae890; }"
-"#btn-raise { background-color: #3a3a1a; border-color: #f39c12; color: #f0c050; }"
-".action-btn:disabled { opacity: 0.3; }";
 
 void appendChat(const char *sender, const char *chatMessage)
 {
@@ -155,6 +56,20 @@ void appendChat(const char *sender, const char *chatMessage)
     //add message after "Name : "
     gtk_text_buffer_insert(buf, &last, chatMessage, -1);
     gtk_text_buffer_insert(buf, &last, "\n", -1);
+}
+
+void sendReadyToServer()
+{
+    if(!C.connected) return; //check if the client is connected
+
+    //encode the message into [type][length][payload]
+    Message msg;
+    msg.type = MSG_TYPE_READY;
+    uint8_t buffer[BUFFER_SIZE];
+    uint32_t len = prepare_payload(buffer, MSG_TYPE_READY, &msg);
+
+    //send the payload to the server
+    send_to_server(&C, buffer, len);
 }
 
 static int card_is_known(Card card)
@@ -304,7 +219,7 @@ static void refresh_ui(void)
 
     /* opponent seats (now 5 via EXT) */
     int opp_slot = 0;
-    for (int pi = 0; pi < MAX_PLAYERS && opp_slot < EXT_OPP_SEATS; pi++) {
+    for (int pi = 0; pi < MAX_PLAYERS && opp_slot < GUI_OPPONENT_SLOTS; pi++) {
         if (pi == C.my_player_id) continue;
         Player *p = &game->players[pi];
         if (p->status == PLAYER_EMPTY) continue;
@@ -329,11 +244,11 @@ static void refresh_ui(void)
         opp_slot++;
     }
 
-    for (int i = opp_slot; i < EXT_OPP_SEATS; i++) {
-        gtk_label_set_text(GTK_LABEL(EXT.opp_name[i]), "Empty");
-        gtk_label_set_text(GTK_LABEL(EXT.opp_chips[i]), "$0  |  bet $0");
-        gtk_label_set_text(GTK_LABEL(EXT.opp_status[i]), "Waiting");
-        gtk_style_context_remove_class(gtk_widget_get_style_context(EXT.opp_frame[i]), "active-seat");
+    for (int i = opp_slot; i < GUI_OPPONENT_SLOTS; i++) {
+        gtk_label_set_text(GTK_LABEL(W.opp_name[i]), "Empty");
+        gtk_label_set_text(GTK_LABEL(W.opp_chips[i]), "$0  |  bet $0");
+        gtk_label_set_text(GTK_LABEL(W.opp_status[i]), "Waiting");
+        gtk_style_context_remove_class(gtk_widget_get_style_context(W.opp_frame[i]), "active-seat");
     }
 
     /* action buttons: only enabled on my turn */
@@ -352,6 +267,7 @@ static void refresh_ui(void)
     gtk_widget_set_sensitive(W.btn_check, my_turn && can_check);
     gtk_widget_set_sensitive(W.btn_call, my_turn && !can_check);
     gtk_widget_set_sensitive(W.btn_raise, my_turn);
+    gtk_widget_set_sensitive(W.btn_ready, C.connected && !game->handPlaying);
     gtk_widget_set_sensitive(W.raise_spin, my_turn);
 }
 
@@ -377,6 +293,7 @@ static void on_raise(GtkButton *b, gpointer d)
     uint32_t amount = (uint32_t)gtk_spin_button_get_value(GTK_SPIN_BUTTON(W.raise_spin));
     send_gui_move(RAISE, amount);
 }
+static void on_ready(GtkButton *b, gpointer d) { (void)b; (void)d; sendReadyToServer(); }
 
 /* -- Switch to game screen ------------------------------------------------- */
 static void show_game_screen(void)
@@ -399,10 +316,25 @@ static gboolean poll_server_cb(gpointer data)
     FD_SET(C.socket_fd, &read_fds);
 
     int ready = select(C.socket_fd + 1, &read_fds, NULL, NULL, &timeout);
-    if (ready > 0 && FD_ISSET(C.socket_fd, &read_fds)) {
+
+    if (ready > 0 && FD_ISSET(C.socket_fd, &read_fds)) 
+    {
+        //write data into this variable
         Message msg;
-        handle_server_communication(&C, &msg);
-        refresh_ui();
+
+        //provide client fd and write the type into msg
+        if (handle_server_communication(&C, &msg) == 0)
+        {
+            if(msg.type == MSG_TYPE_GAME_STATE)
+            {
+                C.game = msg.gameState;
+                refresh_ui();
+            }
+            else if (msg.type == MSG_TYPE_CHAT_MESSAGE)
+            {
+                appendChat(C.game.players[msg.sender_id].name, msg.chat);
+            }
+        }
     }
 
     return C.connected;
@@ -482,9 +414,49 @@ static GtkWidget *build_game_screen(void)
     gtk_widget_set_margin_end(main_area, 20);
     gtk_box_pack_start(GTK_BOX(root), main_area, TRUE, TRUE, 0);
 
-    /* --- opponent row (6 seats across the top) --- */
-    GtkWidget *opp_row = build_six_seat_row(&EXT);
+    /* --- opponent row --- */
+    GtkWidget *opp_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_widget_set_halign(opp_row, GTK_ALIGN_FILL);
     gtk_box_pack_start(GTK_BOX(main_area), opp_row, FALSE, FALSE, 4);
+
+    for (int i = 0; i < GUI_OPPONENT_SLOTS; i++) {
+        GtkWidget *frame = gtk_event_box_new();
+        GtkStyleContext *ctx = gtk_widget_get_style_context(frame);
+        gtk_style_context_add_class(ctx, "opp-frame");
+        W.opp_frame[i] = frame;
+
+        GtkWidget *col = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+        gtk_widget_set_margin_start(col, 8);
+        gtk_widget_set_margin_end(col, 8);
+        gtk_widget_set_margin_top(col, 6);
+        gtk_widget_set_margin_bottom(col, 6);
+        gtk_container_add(GTK_CONTAINER(frame), col);
+
+        /* two face-down card icons for opponents */
+        GtkWidget *card_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
+        gtk_box_pack_start(GTK_BOX(col), card_row, FALSE, FALSE, 0);
+        gtk_box_pack_start(GTK_BOX(card_row), make_card_widget(28, 40), FALSE, FALSE, 0);
+        gtk_box_pack_start(GTK_BOX(card_row), make_card_widget(28, 40), FALSE, FALSE, 0);
+
+        W.opp_name[i] = gtk_label_new("Empty");
+        gtk_style_context_add_class(gtk_widget_get_style_context(W.opp_name[i]), "opp-name");
+        gtk_widget_set_halign(W.opp_name[i], GTK_ALIGN_START);
+
+        W.opp_chips[i] = gtk_label_new("$0  |  bet $0");
+        gtk_style_context_add_class(gtk_widget_get_style_context(W.opp_chips[i]), "opp-chips");
+        gtk_widget_set_halign(W.opp_chips[i], GTK_ALIGN_START);
+
+        W.opp_status[i] = gtk_label_new("Waiting");
+        gtk_style_context_add_class(gtk_widget_get_style_context(W.opp_status[i]), "opp-status");
+        gtk_widget_set_halign(W.opp_status[i], GTK_ALIGN_START);
+
+        gtk_box_pack_start(GTK_BOX(col), W.opp_name[i], FALSE, FALSE, 0);
+        gtk_box_pack_start(GTK_BOX(col), W.opp_chips[i], FALSE, FALSE, 0);
+        gtk_box_pack_start(GTK_BOX(col), W.opp_status[i], FALSE, FALSE, 0);
+
+        /* distribute evenly */
+        gtk_box_pack_start(GTK_BOX(opp_row), frame, TRUE, TRUE, 6);
+    }
 
     /* --- felt table area --- */
     GtkWidget *felt = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
@@ -546,21 +518,25 @@ static GtkWidget *build_game_screen(void)
     W.btn_check = gtk_button_new_with_label("Check");
     W.btn_call = gtk_button_new_with_label("Call");
     W.btn_raise = gtk_button_new_with_label("Raise");
+    W.btn_ready = gtk_button_new_with_label("Ready");
 
     gtk_widget_set_name(W.btn_fold, "btn-fold");
     gtk_widget_set_name(W.btn_check, "btn-check");
     gtk_widget_set_name(W.btn_call, "btn-call");
     gtk_widget_set_name(W.btn_raise, "btn-raise");
+    gtk_widget_set_name(W.btn_ready, "btn-ready");
 
     gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_fold), "action-btn");
     gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_check), "action-btn");
     gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_call), "action-btn");
     gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_raise), "action-btn");
+    gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_ready), "action-btn");
 
     g_signal_connect(W.btn_fold, "clicked", G_CALLBACK(on_fold), NULL);
     g_signal_connect(W.btn_check, "clicked", G_CALLBACK(on_check), NULL);
     g_signal_connect(W.btn_call, "clicked", G_CALLBACK(on_call), NULL);
     g_signal_connect(W.btn_raise, "clicked", G_CALLBACK(on_raise), NULL);
+    g_signal_connect(W.btn_ready, "clicked", G_CALLBACK(on_ready), NULL);
 
     /* raise spin button */
     GtkAdjustment *adj = gtk_adjustment_new(50, 10, 10000, 10, 50, 0);
@@ -572,7 +548,6 @@ static GtkWidget *build_game_screen(void)
     gtk_box_pack_start(GTK_BOX(btn_row), W.btn_call, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(btn_row), W.raise_spin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(btn_row), W.btn_raise, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(btn_row), build_shop_button(&EXT), FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(root), build_chat_box(&EXT), FALSE, FALSE, 0);
     refresh_ui();

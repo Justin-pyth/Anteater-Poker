@@ -2,12 +2,11 @@
 #ifndef GUI_H
 #define GUI_H
 
-#include <gtk/gtk.h>
-#include <stdlib.h>
+
 #include <string.h>
 #include <sys/select.h>
 #include "protocol.h"
-
+#include "gui_assets.h"
 
 //connect the send chat button and decide what to do
 void on_send_chat_button_clicked(GtkEntry *entry, gpointer data);

@@ -29,19 +29,18 @@ void handle_client_communication(ServerState *state, Client *client)
             // ********************************************
             // game logic goes here
             //recommendation: attempt the move with validation
-        
-            if(tryMove(&state->game, &state->deck, data.action.playerID, data.action.move, data.action.amount))
+            
+            if(state->game.gameOver) //if the game is already over, do not let moves go through
             {
-                if(!state->game.handPlaying && remainingPlayers(&state->game) == 1)
-                {
-                    //final winner stuff
+                broadcast_game_state(state);
+                return;
+            }
 
-                    //TODO: UPDATE GAME STATE WITH WINNER ID AND SET GAMEOVER TO TRUE
-                    resetGame(&state->game);
-                    broadcast_game_state(state);
-                    return;
-                }
-                broadcast_game_state(state); // After processing the action, broadcast the updated game state to all clients
+            if(tryMove(&state->game, &state->deck, data.action.playerID, data.action.move, data.action.amount))
+            {   
+                        
+                handle_after_move(state);
+              
             }
             else
             {
@@ -64,8 +63,61 @@ void handle_client_communication(ServerState *state, Client *client)
         }
            else if (data.type == MSG_TYPE_READY)
         {
-            
-        //implement game logic here
+
+            if (state->game.handPlaying) {
+                broadcast_game_state(state);
+                return;
+            }
+
+            //player sends /ready
+            state->game.players[client->id].status = PLAYER_READY;
+
+            //server counts # of ready vs connected
+            int connectedClients = 0;
+            int readyClients = 0;
+
+            for (int i = 0; i < MAX_PLAYERS; i++) 
+            {
+                if (state->clients[i].connected) 
+                {
+                    connectedClients++;
+
+                if (state->game.players[i].status == PLAYER_READY)
+                    readyClients++;
+                }
+            }
+
+
+            //if everyone readies up, start the hand
+            if((readyClients == connectedClients) && readyClients >= 1)
+            {
+                //if the game is over
+                if(state->game.gameOver)
+                {
+                    //reset it
+                    resetGame(&state->game);
+
+                    //make every connected player ready again
+                    for(int i = 0; i < MAX_PLAYERS; i++)
+                    {
+                        if(state->clients[i].connected)
+                            state->game.players[i].status = PLAYER_READY;
+                        else
+                        {
+                            memset(&state->game.players[i], 0, sizeof(Player));
+                            state->game.players[i].id = i;
+                            state->game.players[i].status = PLAYER_EMPTY;
+                        }
+                    }
+                }
+
+                //fill empty seats with bots
+                addBot(&state->game);
+                newHand(&state->game, &state->deck);    //start new hand
+                broadcast_cd_signal(state, state->game.currentPlayer); //send countdown signal to the next player
+            }
+
+            broadcast_game_state(state);
         }
 
         
@@ -165,17 +217,18 @@ void add_connection(ServerState *state, Client *client)
             state->clients[i].id = i; // Assign the matching 0-based player index
 
             //create a new player on gamestate
-            initPlayer(&state->game.players[i], i, "Player", 1000);
+            initPlayer(&state->game.players[i], i, "Player", INIT_CHIPS);
+            if (state->game.handPlaying) 
+                state->game.players[i].status = PLAYER_SPECTATING;//set to spectating if hand is playing
+            else
+                state->game.players[i].status = PLAYER_CONNECTED; //if the client is a player, then set them as connected instead of bot default(READY)
+
             state->game.playerCount++;
 
             if (client != NULL)
                 *client = state->clients[i];
 
             printf("New client connected: %d\n", state->clients[i].id ); // Print a message indicating a new client has connected
-            if (!state->game.handPlaying && state->game.playerCount >= 1) {
-                addBot(&state->game);
-                newHand(&state->game, &state->deck);
-            }
             broadcast_game_state(state);
             return;
         }
@@ -227,6 +280,19 @@ void broadcast_chat_message(ServerState *state, uint8_t sender_id, const char *m
     strncpy(temp_data.chat, message, MAX_PAYLOAD_SIZE - 1);
     temp_data.chat[MAX_PAYLOAD_SIZE - 1] = '\0'; // Ensure null-termination of the chat message
     uint32_t payload_len = prepare_payload(buffer, MSG_TYPE_CHAT_MESSAGE, &temp_data); // Prepare the payload with the chat message
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (state->clients[i].connected) {
+            send_to_client(&state->clients[i], buffer, payload_len);
+        }
+    }
+}
+void broadcast_cd_signal(ServerState *state, uint8_t target_id)
+{
+    uint8_t buffer[BUFFER_SIZE];
+    Message temp_data;
+    temp_data.sender_id = target_id; // Use sender_id to indicate the target player for the countdown signal
+    temp_data.type = MSG_CD_SIGNAL;
+    uint32_t payload_len = prepare_payload(buffer, MSG_CD_SIGNAL, &temp_data); // Prepare the payload with the countdown signal
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (state->clients[i].connected) {
             send_to_client(&state->clients[i], buffer, payload_len);
@@ -314,4 +380,51 @@ void error(const char *msg)
 {
     perror(msg);
     exit(1);
+}
+//return -1 if game over or invalid, next player id ow.
+void handle_after_move(ServerState *state)
+{   
+    //don't let moves go through if game is already over
+    if(state->game.gameOver)
+    {
+        broadcast_game_state(state);
+        return;
+    }
+
+    //if the game is not active and a move is made
+    if (!state->game.handPlaying)
+    {
+        //check for winner
+        if (remainingPlayers(&state->game) == 1)
+        {
+            for (int i = 0; i < MAX_PLAYERS; i++)
+            {
+                Player *p = &state->game.players[i];
+
+                if (p->chips > 0 &&
+                    p->status != PLAYER_EMPTY &&
+                    p->status != PLAYER_DISCONNECTED &&
+                    p->status != PLAYER_SPECTATING)
+                {
+                    state->game.winnerID = p->id;
+                    break;
+                }
+            }
+            
+            //find the winner above and set gameOver to true
+            state->game.gameOver = 1;
+            broadcast_game_state(state);
+            return;
+        }
+
+        //if there is no winner after the move, then do a new hand
+        newHand(&state->game, &state->deck);
+    }
+
+    //if the game is active, then just broadcast the state, otherwise
+    //have to reset the hand if game is not active
+    
+    broadcast_cd_signal(state, state->game.currentPlayer); //send countdown signal to the next player
+    broadcast_game_state(state);
+
 }
