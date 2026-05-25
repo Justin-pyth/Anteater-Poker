@@ -21,9 +21,9 @@ server: server.o protocol.o game.o rules.o bot.o com.o
 
 client: client.o gui.o gui_helpers.o protocol.o game.o rules.o bot.o com.o
 	$(CC) $(CFLAGS) $^ $(GTK_LIBS) -o $@
+	$(GTK_LIBS) -o $@
 
-
-test_server: test_server.o protocol.o game.o rules.o bot.o com.o
+o protocol.o game.o rules.o bot.o com.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 test_client: test_client.o protocol.o game.o rules.o bot.o com.o
@@ -60,4 +60,10 @@ clean:
 else
 clean:
 	rm -f server client gui test_server test_client tests/test_game tests/flow_demo *.o tests/*.o
+endif
+test_client tests/test_game tests/flow_demo *.o tests/*.o
+endif
+ient tests/test_game tests/flow_demo *.o tests/*.o
+endif
+ient tests/test_game tests/flow_demo *.o tests/*.o
 endif
