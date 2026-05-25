@@ -1,4 +1,5 @@
 #include "com.h"
+#include <string.h>
 
 void write_u8(uint8_t *buffer, uint32_t *offset,uint8_t val)
 {

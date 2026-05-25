@@ -19,11 +19,9 @@ test: tests/test_game tests/flow_demo
 server: server.o protocol.o game.o rules.o bot.o com.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-client: client.o protocol.o game.o rules.o bot.o com.o
-	$(CC) $(CFLAGS) $^ -o $@
-
-gui: gui.o protocol.o game.o rules.o bot.o com.o
+client: client.o gui.o gui_helpers.o protocol.o game.o rules.o bot.o com.o
 	$(CC) $(CFLAGS) $^ $(GTK_LIBS) -o $@
+
 
 test_server: test_server.o protocol.o game.o rules.o bot.o com.o
 	$(CC) $(CFLAGS) $^ -o $@
@@ -39,9 +37,12 @@ tests/flow_demo: tests/flow_demo.o game.o rules.o bot.o
 
 server.o: server.c protocol.h game.h rules.h uds.h bot.h
 protocol.o: protocol.c protocol.h game.h rules.h uds.h com.h
-client.o: client.c protocol.h game.h rules.h uds.h
-gui.o: gui.c protocol.h game.h rules.h uds.h
+client.o: client.c gui.h gui_assets.h
+	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c client.c -o client.o
+gui.o: gui.c gui.h gui_helpers.h gui_assets.h protocol.h com.h uds.h
 	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c gui.c -o gui.o
+gui_helpers.o: gui_helpers.c gui_helpers.h gui_assets.h protocol.h com.h uds.h
+	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c gui_helpers.c -o gui_helpers.o
 game.o: game.c game.h rules.h uds.h
 rules.o: rules.c rules.h uds.h
 bot.o: bot.c bot.h game.h rules.h uds.h

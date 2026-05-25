@@ -1,26 +1,48 @@
-// Declaration of all the different hands in poker
-#ifndef GUI_H
-#define GUI_H
+#ifndef TEMP_GUI_H
+#define TEMP_GUI_H
 
-
-#include <string.h>
-#include <sys/select.h>
-#include "protocol.h"
 #include "gui_assets.h"
+#include "gui_helpers.h"
 
-//connect the send chat button and decide what to do
-void on_send_chat_button_clicked(GtkEntry *entry, gpointer data);
+/* -- Lifecycle ------------------------------------------------------------- */
+void init_gui(int *argc, char ***argv);
 
-//call within on_send
-//prepare message payload and send to server
-void sendChatToServer(uint8_t sender_id, const char *chatMessage);
+/* -- Screen transitions ---------------------------------------------------- */
+void show_game_screen(void);
+void show_login_screen(void);
 
-//in the chat_log, append the chat message
-//to be called after server broadcasts new message to all clients
-void appendChat(const char *sender, const char *chatMessage);
+/* -- Builders -------------------------------------------------------------- */
+GtkWidget *build_game_screen_widget(void);
+GtkWidget *build_login_screen_widget(void);
+void       build_seat_timer(GtkWidget *col, SeatTimer *t,
+                            const char *bar_name, const char *lbl_class);
 
-//call if user types /ready in chat
-void sendReadyToServer();
+/* -- Display --------------------------------------------------------------- */
+void refresh_ui(void);
+void infer_my_player_id(void);
 
+/* -- Chat ------------------------------------------------------------------ */
+void append_chat(const char *sender, const char *msg);
 
-#endif
+/* -- Anteater deck --------------------------------------------------------- */
+void set_anteater_count(int count);
+
+/* -- Server IO ------------------------------------------------------------- */
+gboolean on_server_data(GIOChannel *ch, GIOCondition cond, gpointer data);
+
+/* -- Action callbacks ------------------------------------------------------ */
+void on_fold(GtkButton *b, gpointer d);
+void on_check(GtkButton *b, gpointer d);
+void on_call(GtkButton *b, gpointer d);
+void on_raise(GtkButton *b, gpointer d);
+void on_ready(GtkButton *b, gpointer d);
+
+/* -- Connect / login callbacks --------------------------------------------- */
+void on_play_clicked(GtkButton *b, gpointer d);
+void on_connect_clicked(GtkButton *b, gpointer d);
+
+/* -- Chat callbacks -------------------------------------------------------- */
+void on_send_chat(GtkButton *b, gpointer d);
+void on_chat_activate(GtkEntry *e, gpointer d);
+
+#endif /* TEMP_GUI_H */
