@@ -1,6 +1,6 @@
 #include "gui.h"
 #include "gui_extensions.h"
-static GuiExtensions EXT;
+GuiExtensions EXT;
 
 void on_send_chat_button_clicked(GtkEntry *entry, gpointer data)
 {
@@ -72,31 +72,31 @@ void sendReadyToServer()
     send_to_server(&C, buffer, len);
 }
 
-static int card_is_known(Card card)
+int card_is_known(Card card)
 {
     return card.rank != UNKNOW_R && card.suit != UNKNOW_S;
 }
 
-static int rank_index(uint8_t rank)
+int rank_index(uint8_t rank)
 {
     if (rank < TWO || rank > ACE) return 0;
     return rank - TWO;
 }
 
-static const char *suit_label(uint8_t suit)
+const char *suit_label(uint8_t suit)
 {
     if (suit < HEARTS || suit > SPADES) return "?";
     return SUIT_STR[suit - HEARTS];
 }
 
-static int suit_is_red(uint8_t suit)
+int suit_is_red(uint8_t suit)
 {
     if (suit < HEARTS || suit > SPADES) return 0;
     return SUIT_RED[suit - HEARTS];
 }
 
 /* -- Drawing: a single card ------------------------------------------------ */
-static gboolean draw_card_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
+gboolean draw_card_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
 {
     CardDrawData *d = (CardDrawData *)data;
     int w = gtk_widget_get_allocated_width(widget);
@@ -142,7 +142,7 @@ static gboolean draw_card_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
 }
 
 /* helper to create a card drawing area */
-static GtkWidget *make_card_widget(int w, int h)
+GtkWidget *make_card_widget(int w, int h)
 {
     GtkWidget *da = gtk_drawing_area_new();
     gtk_widget_set_size_request(da, w, h);
@@ -152,7 +152,7 @@ static GtkWidget *make_card_widget(int w, int h)
     return da;
 }
 
-static void set_card_face(GtkWidget *da, Card c, int face_up)
+void set_card_face(GtkWidget *da, Card c, int face_up)
 {
     CardDrawData *d = g_object_get_data(G_OBJECT(da), "card-data");
     if (!d) return;
@@ -161,7 +161,7 @@ static void set_card_face(GtkWidget *da, Card c, int face_up)
     gtk_widget_queue_draw(da);
 }
 
-static void set_card_back(GtkWidget *da)
+void set_card_back(GtkWidget *da)
 {
     CardDrawData *d = g_object_get_data(G_OBJECT(da), "card-data");
     if (!d) return;
@@ -169,7 +169,7 @@ static void set_card_back(GtkWidget *da)
     gtk_widget_queue_draw(da);
 }
 
-static void infer_my_player_id(void)
+void infer_my_player_id(void)
 {
     for (int i = 0; i < MAX_PLAYERS; i++) {
         Player *p = &C.game.players[i];
@@ -181,7 +181,7 @@ static void infer_my_player_id(void)
 }
 
 /* -- UI refresh ------------------------------------------------------------ */
-static void refresh_ui(void)
+void refresh_ui(void)
 {
     GameState *game = &C.game;
     char buf[128];
@@ -192,7 +192,7 @@ static void refresh_ui(void)
     snprintf(buf, sizeof(buf), "Pot:  $%u", game->pot);
     gtk_label_set_text(GTK_LABEL(W.pot_label), buf);
 
-    static const char *stage_names[] = {"PREFLOP", "FLOP", "TURN", "RIVER"};
+    const char *stage_names[] = {"PREFLOP", "FLOP", "TURN", "RIVER"};
     gtk_label_set_text(GTK_LABEL(W.stage_label),
                        game->stage <= RIVER ? stage_names[game->stage] : "WAITING");
 
@@ -272,7 +272,7 @@ static void refresh_ui(void)
 }
 
 /* -- Send moves to the server --------------------------------------------- */
-static void send_gui_move(MoveType move, uint32_t amount)
+void send_gui_move(MoveType move, uint32_t amount)
 {
     if (!C.connected) return;
 
@@ -284,19 +284,19 @@ static void send_gui_move(MoveType move, uint32_t amount)
 }
 
 /* -- Action button callbacks ---------------------------------------------- */
-static void on_fold(GtkButton *b, gpointer d)  { (void)b; (void)d; send_gui_move(FOLD, 0); }
-static void on_check(GtkButton *b, gpointer d) { (void)b; (void)d; send_gui_move(CHECK, 0); }
-static void on_call(GtkButton *b, gpointer d)  { (void)b; (void)d; send_gui_move(CALL, 0); }
-static void on_raise(GtkButton *b, gpointer d)
+void on_fold(GtkButton *b, gpointer d)  { (void)b; (void)d; send_gui_move(FOLD, 0); }
+void on_check(GtkButton *b, gpointer d) { (void)b; (void)d; send_gui_move(CHECK, 0); }
+void on_call(GtkButton *b, gpointer d)  { (void)b; (void)d; send_gui_move(CALL, 0); }
+void on_raise(GtkButton *b, gpointer d)
 {
     (void)b; (void)d;
     uint32_t amount = (uint32_t)gtk_spin_button_get_value(GTK_SPIN_BUTTON(W.raise_spin));
     send_gui_move(RAISE, amount);
 }
-static void on_ready(GtkButton *b, gpointer d) { (void)b; (void)d; sendReadyToServer(); }
+void on_ready(GtkButton *b, gpointer d) { (void)b; (void)d; sendReadyToServer(); }
 
 /* -- Switch to game screen ------------------------------------------------- */
-static void show_game_screen(void)
+void show_game_screen(void)
 {
     gtk_stack_set_visible_child_name(GTK_STACK(W.stack), "game");
     gtk_widget_show_all(W.game_screen);
@@ -305,7 +305,7 @@ static void show_game_screen(void)
 }
 
 /* -- Poll server without blocking GTK ------------------------------------- */
-static gboolean poll_server_cb(gpointer data)
+gboolean poll_server_cb(gpointer data)
 {
     (void)data;
     if (!C.connected) return FALSE;
@@ -341,7 +341,7 @@ static gboolean poll_server_cb(gpointer data)
 }
 
 /* -- Play vs bots callback ------------------------------------------------- */
-static void on_play_clicked(GtkButton *btn, gpointer user_data)
+void on_play_clicked(GtkButton *btn, gpointer user_data)
 {
     (void)btn;
     (void)user_data;
@@ -349,7 +349,7 @@ static void on_play_clicked(GtkButton *btn, gpointer user_data)
 }
 
 /* -- Connect to server callback ------------------------------------------- */
-static void on_connect_clicked(GtkButton *btn, gpointer user_data)
+void on_connect_clicked(GtkButton *btn, gpointer user_data)
 {
     (void)btn;
     (void)user_data;
@@ -388,7 +388,7 @@ static void on_connect_clicked(GtkButton *btn, gpointer user_data)
 }
 
 /* -- Build the game screen ------------------------------------------------- */
-static GtkWidget *build_game_screen(void)
+GtkWidget *build_game_screen(void)
 {
     /* root overlay lets us position felt freely */
     GtkWidget *root = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -555,7 +555,7 @@ static GtkWidget *build_game_screen(void)
 }
 
 /* -- Build the login screen ------------------------------------------------ */
-static GtkWidget *build_login_screen(void)
+GtkWidget *build_login_screen(void)
 {
     GtkWidget *outer = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_widget_set_valign(outer, GTK_ALIGN_CENTER);

@@ -131,7 +131,7 @@ typedef struct {
     int        is_my_timer;   /* 1 = local player, 0 = opponent seat        */
 } TimerCBData;
 
-static gboolean timer_tick_cb(gpointer user_data)
+gboolean timer_tick_cb(gpointer user_data)
 {
     TimerCBData *cb = (TimerCBData *)user_data;
     SeatTimer   *t  = cb->timer;
@@ -329,7 +329,7 @@ GtkWidget *build_shop_button(GuiExtensions *ext)
    ========================================================================= */
 
 /* Internal: send button / Enter key handler */
-static void on_send_chat_clicked(GtkButton *btn, gpointer user_data)
+void on_send_chat_clicked(GtkButton *btn, gpointer user_data)
 {
     (void)btn;
     GuiExtensions *ext = (GuiExtensions *)user_data;
@@ -345,7 +345,7 @@ static void on_send_chat_clicked(GtkButton *btn, gpointer user_data)
     gtk_entry_set_text(GTK_ENTRY(ext->chat_entry), "");
 }
 
-static void on_chat_entry_activate(GtkEntry *entry, gpointer user_data)
+void on_chat_entry_activate(GtkEntry *entry, gpointer user_data)
 {
     (void)entry;
     /* Pressing Enter in the text field triggers the send button */
