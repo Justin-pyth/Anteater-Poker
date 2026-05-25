@@ -174,6 +174,11 @@ void set_card_back(GtkWidget *da)
 
 void infer_my_player_id(void)
 {
+    if (C.game.yourPlayerID < MAX_PLAYERS) {
+        C.my_player_id = C.game.yourPlayerID;
+        return;
+    }
+
     for (int i = 0; i < MAX_PLAYERS; i++) {
         Player *p = &C.game.players[i];
         if (p->has_cards && card_is_known(p->hand[0])) {
@@ -352,6 +357,10 @@ gboolean poll_server_cb(gpointer data)
             else if (msg.type == MSG_TYPE_CHAT_MESSAGE)
             {
                 appendChat(C.game.players[msg.sender_id].name, msg.chat);
+            }
+            else if (msg.type == MSG_TYPE_ERROR_MESSAGE)
+            {
+                gtk_label_set_text(GTK_LABEL(W.log_label), msg.error);
             }
         }
     }

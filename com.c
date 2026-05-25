@@ -142,6 +142,7 @@ uint32_t encode_server_data(uint8_t *buffer, uint32_t *offset, const GameState *
     write_u8(buffer, offset, gameState->stage);
     write_u8(buffer, offset, gameState->currentPlayer);
     write_u8(buffer, offset, gameState->dealerIndex);
+    write_u8(buffer, offset, gameState->yourPlayerID);
     write_u32(buffer, offset, gameState->pot);
     write_u32(buffer, offset, gameState->currentBet);
     write_u32(buffer, offset, gameState->minRaise);
@@ -170,6 +171,7 @@ int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameS
      read_u8(buffer, offset, &gameState->stage);
      read_u8(buffer, offset, &gameState->currentPlayer);
      read_u8(buffer, offset, &gameState->dealerIndex);
+     read_u8(buffer, offset, &gameState->yourPlayerID);
     read_u32(buffer, offset, &gameState->pot);
     read_u32(buffer, offset, &gameState->currentBet);
     read_u32(buffer, offset, &gameState->minRaise);
