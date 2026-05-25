@@ -252,13 +252,15 @@ void refresh_ui(void)
     }
 
     /* action buttons: only enabled on my turn */
-    int my_turn = C.connected && game->handPlaying && game->currentPlayer == C.my_player_id;
+    int my_turn = game->handPlaying && game->currentPlayer == C.my_player_id;
     int can_check = me->current_bet >= game->currentBet;
 
     if (C.connected && game->handPlaying)
         snprintf(buf, sizeof(buf), my_turn ? "Your turn" : "Waiting for player %u", game->currentPlayer);
     else if (C.connected)
         snprintf(buf, sizeof(buf), "Connected. Waiting for hand.");
+    else if (game->handPlaying)
+        snprintf(buf, sizeof(buf), my_turn ? "Your turn  [preview]" : "Waiting for player %u  [preview]", game->currentPlayer);
     else
         snprintf(buf, sizeof(buf), "Not connected.");
     gtk_label_set_text(GTK_LABEL(W.log_label), buf);
@@ -341,11 +343,52 @@ gboolean poll_server_cb(gpointer data)
 }
 
 /* -- Play vs bots callback ------------------------------------------------- */
-void on_play_clicked(GtkButton *btn, gpointer user_data)
+static void on_play_clicked(GtkButton *btn, gpointer user_data)
 {
     (void)btn;
     (void)user_data;
-    gtk_label_set_text(GTK_LABEL(W.login_status), "Offline mode is disabled for server testing.");
+
+    const char *name = gtk_entry_get_text(GTK_ENTRY(W.name_entry));
+    if (strlen(name) == 0) {
+        gtk_label_set_text(GTK_LABEL(W.login_status), "Enter your name first.");
+        return;
+    }
+
+    C.connected    = 0;
+    C.my_player_id = 0;
+
+    GameState *g = &C.game;
+    g->pot            = 150;
+    g->currentBet     = 50;
+    g->playerCount    = 6;
+    g->communityCount = 3;
+    g->stage          = 1;
+    g->handPlaying    = 1;
+    g->currentPlayer  = 0;
+
+    g->community[0].rank = ACE;   g->community[0].suit = HEARTS;
+    g->community[1].rank = KING;  g->community[1].suit = SPADES;
+    g->community[2].rank = QUEEN; g->community[2].suit = DIAMONDS;
+
+    g->players[0].has_cards      = 1;
+    g->players[0].hand[0].rank   = JACK; g->players[0].hand[0].suit = CLUBS;
+    g->players[0].hand[1].rank   = TEN;  g->players[0].hand[1].suit = HEARTS;
+    g->players[0].chips          = 1000;
+    g->players[0].current_bet    = 50;
+    g->players[0].status         = PLAYER_ACTIVE;
+    strncpy(g->players[0].name, name, MAX_NAME_LENTH - 1);
+
+    const char *opp_names[] = {"Alice", "Bob", "Charlie", "Diana", "Eve"};
+    for (int i = 1; i <= 5; i++) {
+        g->players[i].status      = PLAYER_ACTIVE;
+        g->players[i].chips       = 800 + i * 100;
+        g->players[i].current_bet = 50;
+        g->players[i].has_cards   = 1;
+        strncpy(g->players[i].name, opp_names[i-1], MAX_NAME_LENTH - 1);
+    }
+
+    gtk_label_set_text(GTK_LABEL(W.login_status), "");
+    show_game_screen();
 }
 
 /* -- Connect to server callback ------------------------------------------- */
