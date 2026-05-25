@@ -171,6 +171,10 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
 
             break;
         }
+        case USE_SPECIAL_CARD:
+        {
+            //Fill in l8r
+        }
 
     }
 

@@ -2,8 +2,11 @@
 #include "gui_extensions.h"
 GuiExtensions EXT;
 
+int PLAYER_ACTIVE = 1;
+
 void on_send_chat_button_clicked(GtkEntry *entry, gpointer data)
 {
+    (void)data;
     //get the text from chat box
     const char *text = gtk_entry_get_text(entry);
     if(text == NULL || strlen(text) == 0) return;   //return if nothing written
@@ -304,6 +307,20 @@ void show_game_screen(void)
     gtk_widget_show_all(W.game_screen);
     gtk_window_resize(GTK_WINDOW(W.window), 860, 620);
     refresh_ui();
+
+    static void show_game_screen(void)
+{
+    gtk_stack_set_visible_child_name(GTK_STACK(W.stack), "game");
+    gtk_widget_show_all(W.game_screen);
+    gtk_window_resize(GTK_WINDOW(W.window), 860, 620);
+    refresh_ui();
+
+    /* Start preview timers so the timer UI is visible */
+    if (!C.connected) {
+        ext_start_player_timer(&EXT, 0, 30);
+        ext_start_player_timer(&EXT, 1, 20);
+    }
+}
 }
 
 /* -- Poll server without blocking GTK ------------------------------------- */

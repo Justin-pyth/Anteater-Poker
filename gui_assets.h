@@ -143,6 +143,9 @@ static const char *CSS =
 "#btn-call  { background-color: #1a3a1a; border-color: #27ae60; color: #7ae890; }"
 "#btn-raise { background-color: #3a3a1a; border-color: #f39c12; color: #f0c050; }"
 "#btn-ready { background-color: #2b2438; border-color: #9b7ee8; color: #d6c8ff; }"
-".action-btn:disabled { opacity: 0.3; }";
+".action-btn:disabled { opacity: 0.6; }"
+"button label { color: inherit; }"
+"spinbutton { background-color: #1a1a2a; color: #e6edf3; border: 1px solid #30363d; border-radius: 8px; }"
+"spinbutton button { background-color: #2a2a3a; color: #e6edf3; min-width: 16px; }";
 
 #endif
