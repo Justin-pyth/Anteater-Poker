@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.38.2 -->
+<!-- Generated with glade 3.40.0 -->
 <!-- Anteater Poker — Glade 3.x layout (GTK+ 3.0 compatible)          -->
 <!-- Generated from gui.c / client.c / gui_assets.h on 2026-05-25     -->
 <!--                                                                    -->
@@ -1693,24 +1693,6 @@ DECK</property>
                         <property name="expand">False</property>
                         <property name="fill">False</property>
                         <property name="position">5</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkButton" id="btn_ready">
-                        <property name="label">Ready</property>
-                        <property name="name">btn-ready</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                        <property name="receives-default">False</property>
-                        <signal name="clicked" handler="on_ready" swapped="no"/>
-                        <style>
-                          <class name="action-btn"/>
-                        </style>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="position">6</property>
                       </packing>
                     </child>
                     <child>
