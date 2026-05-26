@@ -76,6 +76,13 @@ GtkWidget *make_card_widget(int w, int h)
     return da;
 }
 
+void init_card_widget(GtkWidget *da)
+{
+    CardDrawData *d = g_new0(CardDrawData, 1);
+    g_object_set_data_full(G_OBJECT(da), "card-data", d, g_free);
+    g_signal_connect(da, "draw", G_CALLBACK(draw_card_cb), d);
+}
+
 void set_card_face(GtkWidget *da, Card c, int face_up)
 {
     CardDrawData *d = g_object_get_data(G_OBJECT(da), "card-data");

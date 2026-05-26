@@ -20,7 +20,7 @@ server: server.o protocol.o game.o rules.o bot.o com.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 client: client.o gui.o gui_helpers.o protocol.o game.o rules.o bot.o com.o
-	$(CC) $(CFLAGS) $^ $(GTK_LIBS) -o $@
+	$(CC) $(CFLAGS) $^ $(GTK_LIBS) -rdynamic -o $@
 
 
 test_server: test_server.o protocol.o game.o rules.o bot.o com.o
@@ -60,4 +60,4 @@ clean:
 else
 clean:
 	rm -f server client gui test_server test_client tests/test_game tests/flow_demo *.o tests/*.o
-endifgit add
+endif

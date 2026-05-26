@@ -49,6 +49,8 @@ gboolean on_server_data(GIOChannel *ch, GIOCondition cond, gpointer data)
         refresh_ui();
     } else if (msg.type == MSG_TYPE_CHAT_MESSAGE) {
         append_chat(C.game.players[msg.sender_id].name, msg.chat);
+    } else if (msg.type == MSG_TYPE_ERROR_MESSAGE) {
+        gtk_label_set_text(GTK_LABEL(W.log_label), msg.error);
     } else if (msg.type == MSG_CD_SIGNAL) {
         uint8_t target = msg.sender_id;
         /* stop all running timers first */
@@ -73,6 +75,11 @@ gboolean on_server_data(GIOChannel *ch, GIOCondition cond, gpointer data)
 /* -- Player ID inference --------------------------------------------------- */
 void infer_my_player_id(void)
 {
+    if (C.game.yourPlayerID < MAX_PLAYERS) {
+        C.my_player_id = C.game.yourPlayerID;
+        return;
+    }
+
     for (int i = 0; i < MAX_PLAYERS; i++) {
         Player *p = &C.game.players[i];
         if (p->has_cards && card_is_known(p->hand[0])) { C.my_player_id = i; return; }
@@ -205,8 +212,8 @@ void on_chat_activate(GtkEntry *e, gpointer d)
 /* -- Screen transitions ---------------------------------------------------- */
 void show_game_screen(void)
 {
-    gtk_stack_set_visible_child_name(GTK_STACK(W.stack), "game");
     gtk_widget_show_all(W.game_screen);
+    gtk_stack_set_visible_child_name(GTK_STACK(W.stack), "game");
     gtk_window_resize(GTK_WINDOW(W.window), 900, 660);
     refresh_ui();
 }
@@ -254,252 +261,3 @@ void on_connect_clicked(GtkButton *b, gpointer d)
     show_game_screen();
 }
 
-/* -- Build: opponent seat timer row helper --------------------------------- */
-void build_seat_timer(GtkWidget *col, SeatTimer *t, const char *bar_name, const char *lbl_class)
-{
-    GtkWidget *row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-    gtk_box_pack_start(GTK_BOX(col), row, FALSE, FALSE, 2);
-
-    t->bar = gtk_progress_bar_new();
-    if (bar_name) gtk_widget_set_name(t->bar, bar_name);
-    else gtk_style_context_add_class(gtk_widget_get_style_context(t->bar), "seat-timer-bar");
-    gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(t->bar), 0.0);
-    gtk_widget_set_hexpand(t->bar, TRUE);
-    gtk_widget_hide(t->bar);
-    gtk_box_pack_start(GTK_BOX(row), t->bar, TRUE, TRUE, 0);
-
-    t->label = gtk_label_new("");
-    if (lbl_class) gtk_style_context_add_class(gtk_widget_get_style_context(t->label), lbl_class);
-    gtk_box_pack_start(GTK_BOX(row), t->label, FALSE, FALSE, 0);
-
-    t->timer_id     = 0;
-    t->seconds_left = 0;
-    t->turn_seconds = TURN_SECONDS;
-}
-
-/* -- Build: game screen ---------------------------------------------------- */
-GtkWidget *build_game_screen_widget(void)
-{
-    GtkWidget *root = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_widget_set_name(root, "game-root");
-
-    /* top bar */
-    GtkWidget *topbar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
-    gtk_widget_set_margin_start(topbar, 20);
-    gtk_widget_set_margin_end(topbar, 20);
-    gtk_widget_set_margin_top(topbar, 10);
-    gtk_box_pack_start(GTK_BOX(root), topbar, FALSE, FALSE, 0);
-    GtkWidget *title = gtk_label_new("ANTEATER POKER");
-    gtk_widget_set_name(title, "login-title");
-    gtk_box_pack_start(GTK_BOX(topbar), title, FALSE, FALSE, 0);
-    W.deck_count_label = gtk_label_new("Players: 0");
-    gtk_box_pack_end(GTK_BOX(topbar), W.deck_count_label, FALSE, FALSE, 0);
-
-    /* main area */
-    GtkWidget *main_area = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
-    gtk_widget_set_margin_start(main_area, 20);
-    gtk_widget_set_margin_end(main_area, 20);
-    gtk_box_pack_start(GTK_BOX(root), main_area, TRUE, TRUE, 0);
-
-    /* opponent row */
-    GtkWidget *opp_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-    gtk_widget_set_halign(opp_row, GTK_ALIGN_FILL);
-    gtk_box_pack_start(GTK_BOX(main_area), opp_row, FALSE, FALSE, 4);
-
-    for (int i = 0; i < GUI_OPPONENT_SLOTS; i++) {
-        GtkWidget *frame = gtk_event_box_new();
-        gtk_style_context_add_class(gtk_widget_get_style_context(frame), "opp-frame");
-        W.opp_frame[i] = frame;
-
-        GtkWidget *col = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
-        gtk_widget_set_margin_start(col, 8); gtk_widget_set_margin_end(col, 8);
-        gtk_widget_set_margin_top(col, 6);   gtk_widget_set_margin_bottom(col, 6);
-        gtk_container_add(GTK_CONTAINER(frame), col);
-
-        GtkWidget *card_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 4);
-        gtk_box_pack_start(GTK_BOX(col), card_row, FALSE, FALSE, 0);
-        gtk_box_pack_start(GTK_BOX(card_row), make_card_widget(28, 40), FALSE, FALSE, 0);
-        gtk_box_pack_start(GTK_BOX(card_row), make_card_widget(28, 40), FALSE, FALSE, 0);
-
-        W.opp_name[i] = gtk_label_new("Empty");
-        gtk_style_context_add_class(gtk_widget_get_style_context(W.opp_name[i]), "opp-name");
-        gtk_widget_set_halign(W.opp_name[i], GTK_ALIGN_START);
-
-        W.opp_chips[i] = gtk_label_new("$0  |  bet $0");
-        gtk_style_context_add_class(gtk_widget_get_style_context(W.opp_chips[i]), "opp-chips");
-        gtk_widget_set_halign(W.opp_chips[i], GTK_ALIGN_START);
-
-        W.opp_status[i] = gtk_label_new("Waiting");
-        gtk_style_context_add_class(gtk_widget_get_style_context(W.opp_status[i]), "opp-status");
-        gtk_widget_set_halign(W.opp_status[i], GTK_ALIGN_START);
-
-        gtk_box_pack_start(GTK_BOX(col), W.opp_name[i],   FALSE, FALSE, 0);
-        gtk_box_pack_start(GTK_BOX(col), W.opp_chips[i],  FALSE, FALSE, 0);
-        gtk_box_pack_start(GTK_BOX(col), W.opp_status[i], FALSE, FALSE, 0);
-
-        build_seat_timer(col, &W.opp_timer[i], NULL, "seat-timer-label");
-
-        gtk_box_pack_start(GTK_BOX(opp_row), frame, TRUE, TRUE, 6);
-    }
-
-    /* felt + anteater side panel */
-    GtkWidget *table_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-    gtk_box_pack_start(GTK_BOX(main_area), table_row, TRUE, TRUE, 0);
-
-    GtkWidget *felt = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
-    gtk_widget_set_name(felt, "felt");
-    gtk_widget_set_margin_start(felt, 40); gtk_widget_set_margin_end(felt, 40);
-    gtk_widget_set_vexpand(felt, TRUE);
-    gtk_widget_set_valign(felt, GTK_ALIGN_CENTER);
-    gtk_box_pack_start(GTK_BOX(table_row), felt, TRUE, TRUE, 0);
-
-    W.stage_label = gtk_label_new("WAITING");
-    gtk_widget_set_name(W.stage_label, "stage-label");
-    gtk_box_pack_start(GTK_BOX(felt), W.stage_label, FALSE, FALSE, 4);
-
-    W.pot_label = gtk_label_new("Pot: $0");
-    gtk_widget_set_name(W.pot_label, "pot-label");
-    gtk_box_pack_start(GTK_BOX(felt), W.pot_label, FALSE, FALSE, 0);
-
-    GtkWidget *comm_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
-    gtk_widget_set_halign(comm_row, GTK_ALIGN_CENTER);
-    gtk_box_pack_start(GTK_BOX(felt), comm_row, FALSE, FALSE, 8);
-    for (int i = 0; i < 5; i++) {
-        W.community_cards[i] = make_card_widget(48, 68);
-        gtk_box_pack_start(GTK_BOX(comm_row), W.community_cards[i], FALSE, FALSE, 0);
-    }
-
-    W.log_label = gtk_label_new("Not connected.");
-    gtk_widget_set_name(W.log_label, "log-label");
-    gtk_box_pack_start(GTK_BOX(felt), W.log_label, FALSE, FALSE, 4);
-
-    /* anteater side deck panel */
-    W.anteater_panel = gtk_box_new(GTK_ORIENTATION_VERTICAL, 8);
-    gtk_widget_set_name(W.anteater_panel, "anteater-panel");
-    gtk_widget_set_size_request(W.anteater_panel, 110, -1);
-    GtkWidget *ant_title = gtk_label_new("ANTEATER\nDECK");
-    gtk_widget_set_name(ant_title, "anteater-title");
-    gtk_label_set_justify(GTK_LABEL(ant_title), GTK_JUSTIFY_CENTER);
-    gtk_box_pack_start(GTK_BOX(W.anteater_panel), ant_title, FALSE, FALSE, 0);
-    W.anteater_count_label = gtk_label_new("Anteater:\n0 cards");
-    gtk_widget_set_name(W.anteater_count_label, "anteater-count");
-    gtk_box_pack_start(GTK_BOX(W.anteater_panel), W.anteater_count_label, FALSE, FALSE, 0);
-    W.btn_draw_anteater = gtk_button_new_with_label("Draw");
-    gtk_widget_set_name(W.btn_draw_anteater, "btn-draw-anteater");
-    gtk_widget_set_sensitive(W.btn_draw_anteater, FALSE);
-    gtk_box_pack_start(GTK_BOX(W.anteater_panel), W.btn_draw_anteater, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(table_row), W.anteater_panel, FALSE, FALSE, 0);
-
-    /* my hand */
-    GtkWidget *hand_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
-    gtk_widget_set_halign(hand_box, GTK_ALIGN_CENTER);
-    gtk_box_pack_start(GTK_BOX(main_area), hand_box, FALSE, FALSE, 4);
-    GtkWidget *hand_lbl = gtk_label_new("Your hand");
-    gtk_style_context_add_class(gtk_widget_get_style_context(hand_lbl), "opp-chips");
-    gtk_box_pack_start(GTK_BOX(hand_box), hand_lbl, FALSE, FALSE, 0);
-    GtkWidget *hand_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-    gtk_widget_set_halign(hand_row, GTK_ALIGN_CENTER);
-    gtk_box_pack_start(GTK_BOX(hand_box), hand_row, FALSE, FALSE, 0);
-    W.my_cards[0] = make_card_widget(58, 82);
-    W.my_cards[1] = make_card_widget(58, 82);
-    gtk_box_pack_start(GTK_BOX(hand_row), W.my_cards[0], FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(hand_row), W.my_cards[1], FALSE, FALSE, 0);
-
-    /* my timer */
-    GtkWidget *my_timer_col = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_widget_set_halign(my_timer_col, GTK_ALIGN_CENTER);
-    gtk_widget_set_size_request(my_timer_col, 200, -1);
-    gtk_box_pack_start(GTK_BOX(main_area), my_timer_col, FALSE, FALSE, 0);
-    build_seat_timer(my_timer_col, &W.my_timer, "my-timer-bar", "my-timer-label");
-
-    /* action buttons */
-    GtkWidget *btn_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-    gtk_widget_set_halign(btn_row, GTK_ALIGN_CENTER);
-    gtk_widget_set_margin_bottom(btn_row, 8);
-    gtk_box_pack_start(GTK_BOX(main_area), btn_row, FALSE, FALSE, 4);
-
-    W.btn_fold  = gtk_button_new_with_label("Fold");
-    W.btn_check = gtk_button_new_with_label("Check");
-    W.btn_call  = gtk_button_new_with_label("Call");
-    W.btn_raise = gtk_button_new_with_label("Raise");
-    W.btn_ready = gtk_button_new_with_label("Ready");
-    W.btn_shop  = gtk_button_new_with_label("Shop");
-
-    gtk_widget_set_name(W.btn_fold,  "btn-fold");
-    gtk_widget_set_name(W.btn_check, "btn-check");
-    gtk_widget_set_name(W.btn_call,  "btn-call");
-    gtk_widget_set_name(W.btn_raise, "btn-raise");
-    gtk_widget_set_name(W.btn_ready, "btn-ready");
-    gtk_widget_set_name(W.btn_shop,  "btn-shop");
-
-    const char *ab = "action-btn";
-    gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_fold),  ab);
-    gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_check), ab);
-    gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_call),  ab);
-    gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_raise), ab);
-    gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_ready), ab);
-    gtk_style_context_add_class(gtk_widget_get_style_context(W.btn_shop),  ab);
-
-    g_signal_connect(W.btn_fold,  "clicked", G_CALLBACK(on_fold),  NULL);
-    g_signal_connect(W.btn_check, "clicked", G_CALLBACK(on_check), NULL);
-    g_signal_connect(W.btn_call,  "clicked", G_CALLBACK(on_call),  NULL);
-    g_signal_connect(W.btn_raise, "clicked", G_CALLBACK(on_raise), NULL);
-    g_signal_connect(W.btn_ready, "clicked", G_CALLBACK(on_ready), NULL);
-
-    GtkAdjustment *adj = gtk_adjustment_new(50, 10, 10000, 10, 50, 0);
-    W.raise_spin = gtk_spin_button_new(adj, 10, 0);
-    gtk_widget_set_size_request(W.raise_spin, 80, -1);
-
-    gtk_box_pack_start(GTK_BOX(btn_row), W.btn_fold,   FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(btn_row), W.btn_check,  FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(btn_row), W.btn_call,   FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(btn_row), W.raise_spin, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(btn_row), W.btn_raise,  FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(btn_row), W.btn_ready,  FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(btn_row), W.btn_shop,   FALSE, FALSE, 0);
-
-    /* chat box */
-    GtkWidget *chat_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
-    gtk_widget_set_name(chat_box, "chat-box");
-    gtk_widget_set_size_request(chat_box, -1, 140);
-    gtk_widget_set_margin_start(chat_box, 12);
-    gtk_widget_set_margin_end(chat_box, 12);
-    gtk_widget_set_margin_bottom(chat_box, 8);
-    gtk_box_pack_start(GTK_BOX(root), chat_box, FALSE, FALSE, 0);
-
-    GtkWidget *chat_title = gtk_label_new("CHAT");
-    gtk_widget_set_name(chat_title, "chat-title");
-    gtk_widget_set_halign(chat_title, GTK_ALIGN_START);
-    gtk_box_pack_start(GTK_BOX(chat_box), chat_title, FALSE, FALSE, 0);
-
-    GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll),
-        GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-    gtk_widget_set_vexpand(scroll, TRUE);
-    gtk_box_pack_start(GTK_BOX(chat_box), scroll, TRUE, TRUE, 0);
-
-    W.chat_log = gtk_text_view_new();
-    gtk_widget_set_name(W.chat_log, "chat-log");
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(W.chat_log), FALSE);
-    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(W.chat_log), FALSE);
-    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(W.chat_log), GTK_WRAP_WORD_CHAR);
-    gtk_container_add(GTK_CONTAINER(scroll), W.chat_log);
-
-    GtkWidget *input_row = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    gtk_box_pack_start(GTK_BOX(chat_box), input_row, FALSE, FALSE, 0);
-
-    W.chat_entry = gtk_entry_new();
-    gtk_widget_set_name(W.chat_entry, "chat-entry");
-    gtk_entry_set_placeholder_text(GTK_ENTRY(W.chat_entry), "Type a message or /ready…");
-    gtk_widget_set_hexpand(W.chat_entry, TRUE);
-    g_signal_connect(W.chat_entry, "activate", G_CALLBACK(on_chat_activate), NULL);
-    gtk_box_pack_start(GTK_BOX(input_row), W.chat_entry, TRUE, TRUE, 0);
-
-    W.btn_send_chat = gtk_button_new_with_label("Send");
-    gtk_widget_set_name(W.btn_send_chat, "btn-send-chat");
-    g_signal_connect(W.btn_send_chat, "clicked", G_CALLBACK(on_send_chat), NULL);
-    gtk_box_pack_start(GTK_BOX(input_row), W.btn_send_chat, FALSE, FALSE, 0);
-
-    refresh_ui();
-    return root;
-}

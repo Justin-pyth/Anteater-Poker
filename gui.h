@@ -11,12 +11,6 @@ void init_gui(int *argc, char ***argv);
 void show_game_screen(void);
 void show_login_screen(void);
 
-/* -- Builders -------------------------------------------------------------- */
-GtkWidget *build_game_screen_widget(void);
-GtkWidget *build_login_screen_widget(void);
-void       build_seat_timer(GtkWidget *col, SeatTimer *t,
-                            const char *bar_name, const char *lbl_class);
-
 /* -- Display --------------------------------------------------------------- */
 void refresh_ui(void);
 void infer_my_player_id(void);

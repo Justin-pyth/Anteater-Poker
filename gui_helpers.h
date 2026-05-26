@@ -15,6 +15,7 @@ int         card_is_known(Card card);
 
 /* -- Card drawing ---------------------------------------------------------- */
 GtkWidget *make_card_widget(int w, int h);
+void       init_card_widget(GtkWidget *da);
 void       set_card_face(GtkWidget *da, Card c, int face_up);
 void       set_card_back(GtkWidget *da);
 
