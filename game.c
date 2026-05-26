@@ -29,7 +29,7 @@ void initPlayer(Player *p, uint8_t id, const char* name, uint32_t chips)
 
     p->chips = chips;
     p->has_cards = 0;
-    p->status = PLAYER_READY;
+    p->status = PLAYER_READY; //for bots by default
 
     //copy the name into the player struct
     strncpy(p->name, name, MAX_NAME_LENTH - 1);
@@ -253,6 +253,26 @@ void resetHand(GameState* gs)
     
 }
 
+void resetGame(GameState* gs)
+{
+    resetHand(gs);
+    
+    //reset gameover
+    gs->gameOver = 0;
+    gs->winnerID = MAX_PLAYERS+1;
+
+    for (int i = 0; i < MAX_PLAYERS; i++) 
+    {
+        Player* p = &gs->players[i];
+
+        if (p->status == PLAYER_EMPTY || p->status == PLAYER_DISCONNECTED)
+            continue;
+
+        p->chips = INIT_CHIPS;
+        p->status = PLAYER_CONNECTED;
+    }
+}
+
 // initBlinds() moved to rules.c
 
 void newHand(GameState* gs, Deck* deck)
@@ -262,6 +282,10 @@ void newHand(GameState* gs, Deck* deck)
 
     //set to Preflop stage
     gs->stage = PREFLOP; gs->handPlaying = true;
+
+    //reset gameover
+    gs->gameOver = 0;
+    gs->winnerID = MAX_PLAYERS+1;//aka invalid id (no winner yet)
 
     //set current player after blinds
     initBlinds(gs);
@@ -369,4 +393,36 @@ bool tryMove(GameState* gs, Deck* deck, uint8_t playerID, MoveType move, uint32_
     processMove(gs, deck, playerID);
 
     return true;
+}
+
+int remainingPlayers(const GameState* gs)
+{
+    int count = 0; //players w/ chips
+
+    for(int i = 0; i < MAX_PLAYERS; i++)
+    {
+        const Player* p = &gs->players[i];
+
+        //skip inactive players
+        if(p->status == PLAYER_DISCONNECTED || p->status == PLAYER_EMPTY || p->status == PLAYER_SPECTATING) continue;
+
+        if(p->chips > 0)
+            count ++;
+    }
+
+    return count;
+}
+
+int countStatus(const GameState* gs, PlayerStatus status)
+{
+    int count = 0;
+
+    for(int i = 0; i < MAX_PLAYERS; i++)
+    {
+        const Player* p = &gs->players[i];
+        if(p->status == status)
+            count++;
+    }
+    
+    return count;
 }

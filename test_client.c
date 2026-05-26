@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
     }
     client.socket_fd = sockfd;
     client.connected = 1;
-    client.my_player_id = 1;
+    client.my_player_id = 0;
     printf("Connected to server.\n");
 
     // main menu — stays up between mode sessions

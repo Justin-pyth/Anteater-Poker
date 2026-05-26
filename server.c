@@ -45,10 +45,28 @@ int main(int argc, char *argv[])
                 }
             }
         }
-        int activity = select(max_fd + 1, &read_fds, NULL, NULL, NULL); // Wait for activity on the sockets
+        struct timeval timeout;
+        struct timeval *timeout_ptr = NULL;
+
+        if (state.game.handPlaying && isBot(state.game.players[state.game.currentPlayer].name)) 
+        {
+            //wait 1.0 seconds
+            timeout.tv_sec = 1;
+            timeout.tv_usec = 0;
+            timeout_ptr = &timeout; //set when bot's turn
+        }
+
+        //integrate bot's timeout into select, aka when its a bot's turn wait 1 second to display to gui
+        //if its a player's turn, then you don't need delay
+        int activity = select(max_fd + 1, &read_fds, NULL, NULL, timeout_ptr); // Wait for activity on the sockets
         if (activity < 0) {
             perror("select error");
             continue; // Continue to the next iteration of the loop if select fails
+        }
+        if (activity == 0) {
+            if (doOneBotTurn(&state.game, &state.deck))
+                handle_after_move(&state);
+            continue;
         }
         if (FD_ISSET(state.listen_fd, &read_fds)) {
             // If there is activity on the listening socket, it means a new client is trying to connect
