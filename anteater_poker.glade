@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.40.0 -->
+<!-- Generated with glade 3.38.2 -->
 <!-- Anteater Poker — Glade 3.x layout (GTK+ 3.0 compatible)          -->
 <!-- Generated from gui.c / client.c / gui_assets.h on 2026-05-25     -->
 <!--                                                                    -->
@@ -21,6 +21,7 @@
 <!--      page-increment=50 — edit via the Adjustment property.        -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
+  <!-- interface-css-provider-path anteater_poker.css -->
   <object class="GtkAdjustment" id="raise_adj">
     <property name="lower">10</property>
     <property name="upper">10000</property>
@@ -32,8 +33,6 @@
     <property name="can-focus">False</property>
     <property name="title">Anteater Poker</property>
     <property name="window-position">center</property>
-    <property name="default-width">420</property>
-    <property name="default-height">520</property>
     <signal name="destroy" handler="gtk_main_quit" swapped="no"/>
     <child>
       <object class="GtkStack" id="stack">
@@ -319,8 +318,6 @@
               <object class="GtkBox" id="main_area">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="margin-start">20</property>
-                <property name="margin-end">20</property>
                 <property name="orientation">vertical</property>
                 <property name="spacing">8</property>
                 <child>
@@ -1111,13 +1108,110 @@
                     <property name="can-focus">False</property>
                     <property name="spacing">8</property>
                     <child>
+                      <object class="GtkBox" id="chat_box">
+                        <property name="name">chat-box</property>
+                        <property name="height-request">156</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="hexpand">True</property>
+                        <property name="vexpand">True</property>
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">4</property>
+                        <child>
+                          <object class="GtkLabel" id="chat_title_lbl">
+                            <property name="name">chat-title</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="halign">start</property>
+                            <property name="label">CHAT</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkScrolledWindow" id="chat_scroll">
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="hexpand">True</property>
+                            <property name="vexpand">True</property>
+                            <property name="hscrollbar-policy">never</property>
+                            <child>
+                              <object class="GtkTextView" id="chat_log">
+                                <property name="name">chat-log</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="editable">False</property>
+                                <property name="wrap-mode">word-char</property>
+                                <property name="cursor-visible">False</property>
+                              </object>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkBox" id="chat_input_row">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="spacing">6</property>
+                            <child>
+                              <object class="GtkEntry" id="chat_entry">
+                                <property name="name">chat-entry</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="hexpand">True</property>
+                                <property name="placeholder-text">Type a message or /ready…</property>
+                                <signal name="activate" handler="on_chat_activate" swapped="no"/>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="btn_send_chat">
+                                <property name="label">Send</property>
+                                <property name="name">btn-send-chat</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="receives-default">False</property>
+                                <signal name="clicked" handler="on_send_chat" swapped="no"/>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
                       <object class="GtkBox" id="felt">
                         <property name="name">felt</property>
+                        <property name="width-request">170</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="valign">center</property>
-                        <property name="margin-start">40</property>
-                        <property name="margin-end">40</property>
+                        <property name="hexpand">True</property>
                         <property name="vexpand">True</property>
                         <property name="orientation">vertical</property>
                         <property name="spacing">8</property>
@@ -1152,7 +1246,10 @@
                           <object class="GtkBox" id="comm_row">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="halign">center</property>
+                            <property name="margin-start">65</property>
+                            <property name="margin-end">65</property>
+                            <property name="hexpand">True</property>
+                            <property name="vexpand">True</property>
                             <property name="spacing">8</property>
                             <child>
                               <object class="GtkDrawingArea" id="community_card_0">
@@ -1245,7 +1342,7 @@
                       <packing>
                         <property name="expand">True</property>
                         <property name="fill">True</property>
-                        <property name="position">0</property>
+                        <property name="position">1</property>
                       </packing>
                     </child>
                     <child>
@@ -1254,6 +1351,8 @@
                         <property name="width-request">110</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
+                        <property name="hexpand">True</property>
+                        <property name="vexpand">True</property>
                         <property name="orientation">vertical</property>
                         <property name="spacing">8</property>
                         <child>
@@ -1304,7 +1403,7 @@ DECK</property>
                       <packing>
                         <property name="expand">False</property>
                         <property name="fill">False</property>
-                        <property name="position">1</property>
+                        <property name="position">2</property>
                       </packing>
                     </child>
                   </object>
@@ -1315,52 +1414,88 @@ DECK</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkBox" id="hand_box">
+                  <object class="GtkBox">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">center</property>
-                    <property name="orientation">vertical</property>
-                    <property name="spacing">6</property>
+                    <property name="hexpand">False</property>
                     <child>
-                      <object class="GtkLabel" id="hand_lbl">
+                      <object class="GtkLabel" id="ammount_to_call">
+                        <property name="name">ammount_to_call</property>
+                        <property name="width-request">52</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="label">Your hand</property>
+                        <property name="halign">start</property>
+                        <property name="margin-start">14</property>
+                        <property name="margin-end">4</property>
+                        <property name="hexpand">True</property>
+                        <property name="label" translatable="yes">ammount to call</property>
                         <style>
-                          <class name="opp-chips"/>
+                          <class name="ammount_to_raise"/>
                         </style>
                       </object>
                       <packing>
                         <property name="expand">False</property>
-                        <property name="fill">False</property>
+                        <property name="fill">True</property>
                         <property name="position">0</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkBox" id="hand_row">
+                      <object class="GtkBox" id="hand_box">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="halign">center</property>
-                        <property name="spacing">10</property>
+                        <property name="margin-start">49</property>
+                        <property name="margin-end">12</property>
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">6</property>
                         <child>
-                          <object class="GtkDrawingArea" id="my_card_0">
-                            <property name="width-request">58</property>
-                            <property name="height-request">82</property>
+                          <object class="GtkLabel" id="hand_lbl">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
+                            <property name="label">Your hand</property>
+                            <style>
+                              <class name="opp-chips"/>
+                            </style>
                           </object>
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">False</property>
-                            <property name="position">0</property>
+                            <property name="position">1</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkDrawingArea" id="my_card_1">
-                            <property name="width-request">58</property>
-                            <property name="height-request">82</property>
+                          <object class="GtkBox" id="hand_row">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
+                            <property name="halign">center</property>
+                            <property name="spacing">10</property>
+                            <child>
+                              <object class="GtkDrawingArea" id="my_card_0">
+                                <property name="width-request">58</property>
+                                <property name="height-request">82</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkDrawingArea" id="my_card_1">
+                                <property name="width-request">58</property>
+                                <property name="height-request">82</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1372,14 +1507,27 @@ DECK</property>
                       <packing>
                         <property name="expand">False</property>
                         <property name="fill">False</property>
+                        <property name="padding">4</property>
                         <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="player_ammount">
+                        <property name="name">player_ammount</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">your ammount:</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
                       </packing>
                     </child>
                   </object>
                   <packing>
                     <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="padding">4</property>
+                    <property name="fill">True</property>
                     <property name="position">2</property>
                   </packing>
                 </child>
@@ -1504,6 +1652,7 @@ DECK</property>
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>
                         <property name="receives-default">False</property>
+                        <signal name="clicked" handler="on_allin" swapped="no"/>
                         <style>
                           <class name="action-btn"/>
                         </style>
@@ -1594,101 +1743,7 @@ DECK</property>
               </packing>
             </child>
             <child>
-              <object class="GtkBox" id="chat_box">
-                <property name="name">chat-box</property>
-                <property name="height-request">140</property>
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="margin-start">12</property>
-                <property name="margin-end">12</property>
-                <property name="margin-bottom">8</property>
-                <property name="orientation">vertical</property>
-                <property name="spacing">4</property>
-                <child>
-                  <object class="GtkLabel" id="chat_title_lbl">
-                    <property name="name">chat-title</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="halign">start</property>
-                    <property name="label">CHAT</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkScrolledWindow" id="chat_scroll">
-                    <property name="visible">True</property>
-                    <property name="can-focus">True</property>
-                    <property name="vexpand">True</property>
-                    <property name="hscrollbar-policy">never</property>
-                    <child>
-                      <object class="GtkTextView" id="chat_log">
-                        <property name="name">chat-log</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                        <property name="editable">False</property>
-                        <property name="wrap-mode">word-char</property>
-                        <property name="cursor-visible">False</property>
-                      </object>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkBox" id="chat_input_row">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="spacing">6</property>
-                    <child>
-                      <object class="GtkEntry" id="chat_entry">
-                        <property name="name">chat-entry</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                        <property name="hexpand">True</property>
-                        <property name="placeholder-text">Type a message or /ready…</property>
-                        <signal name="activate" handler="on_chat_activate" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="expand">True</property>
-                        <property name="fill">True</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkButton" id="btn_send_chat">
-                        <property name="label">Send</property>
-                        <property name="name">btn-send-chat</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                        <property name="receives-default">False</property>
-                        <signal name="clicked" handler="on_send_chat" swapped="no"/>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="position">1</property>
-                      </packing>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">2</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">2</property>
-              </packing>
+              <placeholder/>
             </child>
           </object>
           <packing>
