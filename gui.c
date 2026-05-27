@@ -192,7 +192,6 @@ void on_send_chat(GtkButton *b, gpointer d)
         append_chat("ADMIN", "You are ready.");
     } else {
         sendChatToServer(text);
-        append_chat(C.game.players[C.my_player_id].name, text);
     }
     gtk_entry_set_text(GTK_ENTRY(W.chat_entry), "");
 }
