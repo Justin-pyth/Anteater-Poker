@@ -180,12 +180,6 @@ void on_raise(GtkButton *b, gpointer d)
     uint32_t amount = (uint32_t)gtk_spin_button_get_value(GTK_SPIN_BUTTON(W.raise_spin));
     send_gui_move(RAISE, amount);
 }
-void on_ready(GtkButton *b, gpointer d)
-{
-    (void)b; (void)d;
-    sendReadyToServer();
-    append_chat("ADMIN", "You are ready.");
-}
 
 /* -- Chat callbacks -------------------------------------------------------- */
 void on_send_chat(GtkButton *b, gpointer d)

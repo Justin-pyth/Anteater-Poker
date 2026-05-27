@@ -29,7 +29,7 @@ void on_fold(GtkButton *b, gpointer d);
 void on_check(GtkButton *b, gpointer d);
 void on_call(GtkButton *b, gpointer d);
 void on_raise(GtkButton *b, gpointer d);
-void on_ready(GtkButton *b, gpointer d);
+void on_allin(GtkButton *b, gpointer d);
 
 /* -- Connect / login callbacks --------------------------------------------- */
 void on_play_clicked(GtkButton *b, gpointer d);

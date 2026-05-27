@@ -59,7 +59,6 @@ typedef struct {
     GtkWidget *btn_check;
     GtkWidget *btn_call;
     GtkWidget *btn_raise;
-    GtkWidget *btn_ready;
     GtkWidget *raise_spin;
 
     /* shop */
