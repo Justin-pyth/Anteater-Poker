@@ -1420,7 +1420,7 @@ DECK</property>
                     <property name="halign">center</property>
                     <property name="hexpand">False</property>
                     <child>
-                      <object class="GtkLabel" id="ammount_to_call">
+                      <object class="GtkLabel" id="label_call_amnt">
                         <property name="name">ammount_to_call</property>
                         <property name="width-request">52</property>
                         <property name="visible">True</property>
@@ -1429,7 +1429,7 @@ DECK</property>
                         <property name="margin-start">14</property>
                         <property name="margin-end">4</property>
                         <property name="hexpand">True</property>
-                        <property name="label" translatable="yes">ammount to call</property>
+                        <property name="label" translatable="yes">Call: </property>
                         <style>
                           <class name="ammount_to_raise"/>
                         </style>
@@ -1512,11 +1512,11 @@ DECK</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkLabel" id="player_ammount">
+                      <object class="GtkLabel" id="label_your_stack">
                         <property name="name">player_ammount</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="label" translatable="yes">your ammount:</property>
+                        <property name="label" translatable="yes">Stack: </property>
                       </object>
                       <packing>
                         <property name="expand">False</property>
