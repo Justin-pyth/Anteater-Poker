@@ -166,7 +166,6 @@ void refresh_ui(void)
     gtk_widget_set_sensitive(W.btn_check, my_turn && can_check);
     gtk_widget_set_sensitive(W.btn_call,  my_turn && !can_check);
     gtk_widget_set_sensitive(W.btn_raise, my_turn);
-    gtk_widget_set_sensitive(W.btn_ready, C.connected && !game->handPlaying);
     gtk_widget_set_sensitive(W.raise_spin, my_turn);
 }
 
@@ -174,6 +173,7 @@ void refresh_ui(void)
 void on_fold (GtkButton *b, gpointer d) { (void)b;(void)d; send_gui_move(FOLD,  0); }
 void on_check(GtkButton *b, gpointer d) { (void)b;(void)d; send_gui_move(CHECK, 0); }
 void on_call (GtkButton *b, gpointer d) { (void)b;(void)d; send_gui_move(CALL,  0); }
+void on_allin(GtkButton *b, gpointer d) { (void)b;(void)d; send_gui_move(ALL_IN, 0); }
 void on_raise(GtkButton *b, gpointer d)
 {
     (void)b; (void)d;
