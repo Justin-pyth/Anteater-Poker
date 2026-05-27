@@ -43,6 +43,8 @@ void init_gui(int *argc, char ***argv)
     W.chat_log       = GET("chat_log");
     W.chat_entry     = GET("chat_entry");
     W.btn_send_chat  = GET("btn_send_chat");
+    W.label_call_amnt = GET("label_call_amnt");
+    W.label_your_stack = GET("label_your_stack");
 
     for (int i = 0; i < 5; i++) {
         char id[32];

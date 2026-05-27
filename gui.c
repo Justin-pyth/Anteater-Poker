@@ -109,6 +109,13 @@ void refresh_ui(void)
     }
 
     Player *me = &game->players[C.my_player_id];
+
+    snprintf(buf, sizeof(buf), "Call: $%u", game->currentBet - me->current_bet);
+    gtk_label_set_text(GTK_LABEL(W.label_call_amnt), buf);
+
+    snprintf(buf, sizeof(buf), "Stack: $%u", me->chips);
+    gtk_label_set_text(GTK_LABEL(W.label_your_stack), buf);
+
     if (me->has_cards) {
         set_card_face(W.my_cards[0], me->hand[0], card_is_known(me->hand[0]));
         set_card_face(W.my_cards[1], me->hand[1], card_is_known(me->hand[1]));

@@ -43,6 +43,8 @@ typedef struct {
     GtkWidget *deck_count_label;
     GtkWidget *community_cards[5];
     GtkWidget *my_cards[2];
+    GtkWidget *label_call_amnt;
+    GtkWidget *label_your_stack;
 
     /* opponent seats */
     GtkWidget *opp_frame [GUI_OPPONENT_SLOTS];
