@@ -85,7 +85,7 @@ extern ClientState C;
 static const char * __attribute__((unused)) CSS =
 /* global */
 "window { background-color: #0d1117; }"
-"label  { color: #e6edf3; font-family: 'Georgia', serif; }"
+"label  { color: #000000; font-family: 'Georgia', serif; }"
 
 /* login */
 "#login-card { background-color: #161b22; border-radius: 16px;"
