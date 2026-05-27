@@ -171,7 +171,7 @@ int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameS
      read_u8(buffer, offset, &gameState->stage);
      read_u8(buffer, offset, &gameState->currentPlayer);
      read_u8(buffer, offset, &gameState->dealerIndex);
-     read_u8(buffer, offset, gameState->yourPlayerID);
+     read_u8(buffer, offset, &gameState->yourPlayerID);
     read_u32(buffer, offset, &gameState->pot);
     read_u32(buffer, offset, &gameState->currentBet);
     read_u32(buffer, offset, &gameState->minRaise);
