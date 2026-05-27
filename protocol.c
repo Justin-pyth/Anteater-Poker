@@ -63,7 +63,7 @@ void handle_client_communication(ServerState *state, Client *client)
         }
            else if (data.type == MSG_TYPE_READY)
         {
-
+            //don't allow a ready to occur while gaming is playing
             if (state->game.handPlaying) {
                 broadcast_game_state(state);
                 return;
@@ -75,7 +75,6 @@ void handle_client_communication(ServerState *state, Client *client)
             //server counts # of ready vs connected
             int connectedClients = 0;
             int readyClients = 0;
-
             for (int i = 0; i < MAX_PLAYERS; i++) 
             {
                 if (state->clients[i].connected) 
@@ -96,18 +95,18 @@ void handle_client_communication(ServerState *state, Client *client)
                 {
                     //reset it
                     resetGame(&state->game);
+                }
 
-                    //make every connected player ready again
-                    for(int i = 0; i < MAX_PLAYERS; i++)
+                //make every connected player ready again
+                for(int i = 0; i < MAX_PLAYERS; i++)
+                {
+                    if(state->clients[i].connected)
+                        state->game.players[i].status = PLAYER_READY;
+                    else
                     {
-                        if(state->clients[i].connected)
-                            state->game.players[i].status = PLAYER_READY;
-                        else
-                        {
-                            memset(&state->game.players[i], 0, sizeof(Player));
-                            state->game.players[i].id = i;
-                            state->game.players[i].status = PLAYER_EMPTY;
-                        }
+                        memset(&state->game.players[i], 0, sizeof(Player));
+                        state->game.players[i].id = i;
+                        state->game.players[i].status = PLAYER_EMPTY;
                     }
                 }
 
