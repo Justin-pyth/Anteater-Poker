@@ -8,7 +8,7 @@ endif
 GTK_CFLAGS := $(shell pkg-config --cflags gtk+-3.0 2>$(NULL))
 GTK_LIBS := $(shell pkg-config --libs gtk+-3.0 2>$(NULL))
 
-.PHONY: all test clean
+.PHONY: all test clean run
 
 all: server client
 
@@ -60,4 +60,6 @@ clean:
 else
 clean:
 	rm -f server client gui test_server test_client tests/test_game tests/flow_demo *.o tests/*.o
+
+run: clean all ./server
 endif
