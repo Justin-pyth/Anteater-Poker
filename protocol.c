@@ -265,6 +265,7 @@ void broadcast_game_state(ServerState *state)
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (state->clients[i].connected) {
             temp_data.gameState = state->game; // Create a temporary copy of the game state
+            temp_data.gameState.yourPlayerID = state->clients[i].id;
             hide_card_info_for_others(&temp_data.gameState, state->clients[i].id); //
             temp_data.type = MSG_TYPE_GAME_STATE;
             uint32_t payload_len = prepare_payload(buffer, MSG_TYPE_GAME_STATE, &temp_data);

@@ -145,7 +145,7 @@ typedef struct {
     uint8_t stage;           // use Stage enum
     uint8_t currentPlayer;
     uint8_t dealerIndex;
-    //uint8_t yourIndex;
+    uint8_t yourPlayerID;
 
     uint32_t pot;
     uint32_t currentBet;     // bet needed to match
