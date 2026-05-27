@@ -60,6 +60,6 @@ clean:
 else
 clean:
 	rm -f server client gui test_server test_client tests/test_game tests/flow_demo *.o tests/*.o
+endif
 
 run: clean all ./server
-endif
