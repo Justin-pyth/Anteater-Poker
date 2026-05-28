@@ -311,28 +311,32 @@ void advance(GameState* gs, Deck* deck)
     {
         case PREFLOP:
         {
-            gs->community[gs->communityCount++] = deal(deck);
-            gs->community[gs->communityCount++] = deal(deck);
-            gs->community[gs->communityCount++] = deal(deck);
+            gs->community[0] = deal(deck);
+            gs->community[1] = deal(deck);
+            gs->community[2] = deal(deck);
+            gs->communityCount = 3; 
             gs->stage = FLOP;
             break;
         }
         case FLOP:
         {
-            gs->community[gs->communityCount++] = deal(deck);
+            gs->community[3] = deal(deck);
+            gs->communityCount = 4; 
             gs->stage = TURN;
             break;
         }
         case TURN:
         {
-            gs->community[gs->communityCount++] = deal(deck);
+            gs->community[4] = deal(deck);
+            gs->communityCount = 5; 
             gs->stage = RIVER;
             break;
         }
         case RIVER:
         {
-            award(gs);
-            resetHand(gs);
+            award(gs);          // Evaluates hands and adds chips to winners
+            gs->gameOver = 1;   // Force flags gameOver to True
+            gs->handPlaying = false; // The hand is concluded
             return;
         }
     }

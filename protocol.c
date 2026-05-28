@@ -254,16 +254,22 @@ void send_to_client(Client *client, const uint8_t *data, uint32_t len)
         client->connected = 0;
     }
 }
-void hide_card_info_for_others(GameState *game, uint8_t player_id)
+void hide_card_info_for_others(GameState *client_state, uint8_t recipient_id)
 {
-    if (!game->handPlaying) return;
-
     for (int i = 0; i < MAX_PLAYERS; i++) {
-        if (game->players[i].id != player_id) {
-            game->players[i].hand[0].rank = UNKNOW_R;
-            game->players[i].hand[0].suit = UNKNOW_S;
-            game->players[i].hand[1].rank = UNKNOW_R;
-            game->players[i].hand[1].suit = UNKNOW_S;
+        // Find everyone who is NOT the person receiving this network packet
+        if (client_state->players[i].id != recipient_id) {
+            
+            // Only hide cards for players who are actively playing or folded during the live hand.
+            // If they are empty or spectating, their cards don't matter.
+            uint8_t status = client_state->players[i].status;
+            if (status == PLAYER_PLAYING || status == PLAYER_FOLDED || status == PLAYER_ALL_IN) {
+                for (int c = 0; c < HAND_SIZE; c++) {
+                    client_state->players[i].hand[c].suit = UNKNOW_S;
+                    client_state->players[i].hand[c].rank = UNKNOW_R;
+                    client_state->players[i].hand[c].value = 0;
+                }
+            }
         }
     }
 }
@@ -273,9 +279,14 @@ void broadcast_game_state(ServerState *state)
     Message temp_data;
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (state->clients[i].connected) {
-            temp_data.gameState = state->game; // Create a temporary copy of the game state
+            temp_data.gameState = state->game; 
             temp_data.gameState.yourPlayerID = state->clients[i].id;
-            hide_card_info_for_others(&temp_data.gameState, state->clients[i].id); //
+            
+            //hide if not showdown
+            if (!state->game.gameOver) {
+                hide_card_info_for_others(&temp_data.gameState, state->clients[i].id); 
+            }
+            
             temp_data.type = MSG_TYPE_GAME_STATE;
             uint32_t payload_len = prepare_payload(buffer, MSG_TYPE_GAME_STATE, &temp_data);
             send_to_client(&state->clients[i], buffer, payload_len);
@@ -434,6 +445,28 @@ void handle_after_move(ServerState *state)
         start_new_hand(state);
         return;
     }
+
+    /*FOR ALLIN RUNOUT: requires some [bool revealed] in gameState, not that important
+    
+    //count the number of players that can bet
+    int canBet = 0;
+    for(int i = 0; i < MAX_PLAYERS; i++) {
+        if(state->game.players[i].status == PLAYER_PLAYING) {
+            canBet++;
+        }
+    }
+    
+    //if everyone goes all-in force their cards to show
+    if (canBet <= 1 && state->game.handPlaying) {
+        for(int i = 0; i < MAX_PLAYERS; i++) {
+            if(state->game.players[i].status == PLAYER_ALL_IN || state->game.players[i].status == PLAYER_PLAYING) {
+                state->game.hand_revealed[i] = true;
+            }
+        }
+    }
+
+    */
+
 
     //if the game is active, then just broadcast the state, otherwise
     //have to reset the hand if game is not active
