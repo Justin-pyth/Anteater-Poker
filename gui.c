@@ -215,7 +215,7 @@ void on_send_chat(GtkButton *b, gpointer d)
     if (!text || text[0] == '\0') return;
     if (strcmp(text, "/ready") == 0) {
         sendReadyToServer();
-        append_chat("ADMIN", "You are ready.");
+        append_chat("SERVER", "You are ready.");
     } else {
         sendChatToServer(text);
     }

@@ -231,6 +231,13 @@ void add_connection(ServerState *state, Client *client)
 
             printf("New client connected: %d\n", state->clients[i].id ); // Print a message indicating a new client has connected
             broadcast_game_state(state);
+
+            
+            char prompt[128];
+            snprintf(prompt, sizeof(prompt),
+            "Welcome to Anteater Poker! Type /ready to ready up.");
+            broadcast_chat_message(state, MAX_PLAYERS, prompt);
+            
             return;
         }
     }
