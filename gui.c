@@ -32,31 +32,24 @@ void set_anteater_count(int count)
     gtk_label_set_text(GTK_LABEL(W.anteater_count_label), buf);
 }
 
-/* -- Server IO callback (replaces poll_server_cb) -------------------------- */
-gboolean on_server_data(GIOChannel *ch, GIOCondition cond, gpointer data)
+
+/* -- Dispatch one parsed message ------------------------------------------- */
+static void dispatch_message(Message *msg)
 {
-    (void)ch; (void)data;
-    if (cond & (G_IO_HUP | G_IO_ERR)) { C.connected = 0; return FALSE; }
-
-    Message msg;
-    if (handle_server_communication(&C, &msg) != 0) {
-        C.connected = 0;
-        return FALSE;
-    }
-
-    if (msg.type == MSG_TYPE_GAME_STATE) {
-        C.game = msg.gameState;
+    if (msg->type == MSG_TYPE_GAME_STATE) {
+        C.game = msg->gameState;
         refresh_ui();
-    } else if (msg.type == MSG_TYPE_CHAT_MESSAGE) {
-        append_chat(C.game.players[msg.sender_id].name, msg.chat);
-    } else if (msg.type == MSG_TYPE_ERROR_MESSAGE) {
-        gtk_label_set_text(GTK_LABEL(W.log_label), msg.error);
-    } else if (msg.type == MSG_CD_SIGNAL) {
-        uint8_t target = msg.sender_id;
-        /* stop all running timers first */
+    } else if (msg->type == MSG_TYPE_CHAT_MESSAGE) {
+        if (msg->sender_id >= MAX_PLAYERS)
+            append_chat("SERVER", msg->chat);
+        else
+            append_chat(C.game.players[msg->sender_id].name, msg->chat);
+    } else if (msg->type == MSG_TYPE_ERROR_MESSAGE) {
+        gtk_label_set_text(GTK_LABEL(W.log_label), msg->error);
+    } else if (msg->type == MSG_CD_SIGNAL) {
+        uint8_t target = msg->sender_id;
         stop_my_timer();
         for (int i = 0; i < GUI_OPPONENT_SLOTS; i++) stop_player_timer(i);
-
         if (target == C.my_player_id) {
             start_my_timer(TURN_SECONDS);
         } else {
@@ -68,6 +61,32 @@ gboolean on_server_data(GIOChannel *ch, GIOCondition cond, gpointer data)
                 slot++;
             }
         }
+    }
+}
+
+/* -- Server IO callback ---------------------------------------------------- */
+gboolean on_server_data(GIOChannel *ch, GIOCondition cond, gpointer data)
+{
+    (void)ch; (void)data;
+    if (cond & (G_IO_HUP | G_IO_ERR)) { C.connected = 0; return FALSE; }
+
+    //read the available bytes and perform the message's actions one by one
+    uint8_t buf[BUFFER_SIZE * 4];
+    ssize_t n = recv(C.socket_fd, buf, sizeof(buf), 0);
+    if (n <= 0) { C.connected = 0; return FALSE; }
+
+    uint32_t pos = 0;
+    while (pos + PROTOCOL_HEADER_SIZE <= (uint32_t)n) {
+        //look at the payload length from the header (bytes 2–5)
+        uint32_t plen = ((uint32_t)buf[pos+2] << 24) | ((uint32_t)buf[pos+3] << 16) |
+                        ((uint32_t)buf[pos+4] << 8)  |  (uint32_t)buf[pos+5];
+        uint32_t total = PROTOCOL_HEADER_SIZE + plen;
+        if (pos + total > (uint32_t)n) break; //incomplete message
+
+        Message msg;
+        if (receive_payload(buf + pos, total, &msg) == 0)
+            dispatch_message(&msg);
+        pos += total;
     }
     return TRUE;
 }
