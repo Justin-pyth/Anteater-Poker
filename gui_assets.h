@@ -122,6 +122,8 @@ static const char * __attribute__((unused)) CSS =
 "#pot-label   { font-size: 15px; color: #ffd700; font-weight: bold; }"
 "#stage-label { font-size: 12px; color: #a0c8a0; letter-spacing: 2px; }"
 "#log-label   { font-size: 12px; color: #7ab870; }"
+"#label_your_stack, #big_stack_label { color: #f2c94c; font-weight: bold; }"
+"#label_call_amnt, #big_toCall_label { color: #5bdcff; font-weight: bold; }"
 
 /* opponent frames */
 ".opp-frame { background-color: rgba(0,0,0,0.45);"
