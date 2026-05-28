@@ -63,7 +63,7 @@ void handle_client_communication(ServerState *state, Client *client)
         }
            else if (data.type == MSG_TYPE_READY)
         {
-
+            //don't allow a ready to occur while gaming is playing
             if (state->game.handPlaying) {
                 broadcast_game_state(state);
                 return;
@@ -75,7 +75,6 @@ void handle_client_communication(ServerState *state, Client *client)
             //server counts # of ready vs connected
             int connectedClients = 0;
             int readyClients = 0;
-
             for (int i = 0; i < MAX_PLAYERS; i++) 
             {
                 if (state->clients[i].connected) 
@@ -96,25 +95,27 @@ void handle_client_communication(ServerState *state, Client *client)
                 {
                     //reset it
                     resetGame(&state->game);
+                }
 
-                    //make every connected player ready again
-                    for(int i = 0; i < MAX_PLAYERS; i++)
+                //make every connected player ready again
+                for(int i = 0; i < MAX_PLAYERS; i++)
+                {
+                    if(state->clients[i].connected)
+                        state->game.players[i].status = PLAYER_READY;
+                    else
                     {
-                        if(state->clients[i].connected)
-                            state->game.players[i].status = PLAYER_READY;
-                        else
-                        {
-                            memset(&state->game.players[i], 0, sizeof(Player));
-                            state->game.players[i].id = i;
-                            state->game.players[i].status = PLAYER_EMPTY;
-                        }
+                        memset(&state->game.players[i], 0, sizeof(Player));
+                        state->game.players[i].id = i;
+                        state->game.players[i].status = PLAYER_EMPTY;
                     }
                 }
 
                 //fill empty seats with bots
                 addBot(&state->game);
                 newHand(&state->game, &state->deck);    //start new hand
+                broadcast_game_state(state);
                 broadcast_cd_signal(state, state->game.currentPlayer); //send countdown signal to the next player
+                return;
             }
 
             broadcast_game_state(state);
@@ -265,6 +266,7 @@ void broadcast_game_state(ServerState *state)
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (state->clients[i].connected) {
             temp_data.gameState = state->game; // Create a temporary copy of the game state
+            temp_data.gameState.yourPlayerID = state->clients[i].id;
             hide_card_info_for_others(&temp_data.gameState, state->clients[i].id); //
             temp_data.type = MSG_TYPE_GAME_STATE;
             uint32_t payload_len = prepare_payload(buffer, MSG_TYPE_GAME_STATE, &temp_data);
@@ -418,13 +420,37 @@ void handle_after_move(ServerState *state)
         }
 
         //if there is no winner after the move, then do a new hand
-        newHand(&state->game, &state->deck);
+        start_new_hand(state);
+        return;
     }
 
     //if the game is active, then just broadcast the state, otherwise
     //have to reset the hand if game is not active
-    
-    broadcast_cd_signal(state, state->game.currentPlayer); //send countdown signal to the next player
     broadcast_game_state(state);
+    broadcast_cd_signal(state, state->game.currentPlayer); //send countdown signal to the next player
 
+
+}
+
+void start_new_hand(ServerState *state)
+{
+    // Full reset only if game was over
+    if (state->game.gameOver)
+        resetGame(&state->game);
+
+    // Always re-sync player slots with connection state
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (state->clients[i].connected && state->game.players[i].chips > 0)
+            state->game.players[i].status = PLAYER_READY;
+        else if (!state->clients[i].connected) {
+            memset(&state->game.players[i], 0, sizeof(Player));
+            state->game.players[i].id = i;
+            state->game.players[i].status = PLAYER_EMPTY;
+        }
+    }
+
+    addBot(&state->game);
+    newHand(&state->game, &state->deck);
+    broadcast_game_state(state);
+    broadcast_cd_signal(state, state->game.currentPlayer);
 }

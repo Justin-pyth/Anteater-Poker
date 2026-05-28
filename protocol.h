@@ -81,6 +81,7 @@ void send_action(ClientState *client, const PlayerAction *action);
 int create_socket(Client *client);
 
 void handle_after_move(ServerState *state);
+void start_new_hand(ServerState *state);
 
 //shared functions
 void error(const char *msg);
