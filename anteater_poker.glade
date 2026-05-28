@@ -1414,81 +1414,92 @@ DECK</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkBox" id="yourInfo_Box">
+                  <object class="GtkEventBox" id="yourInfo_Box">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="halign">center</property>
-                    <property name="hexpand">False</property>
                     <child>
-                      <object class="GtkLabel" id="label_call_amnt">
-                        <property name="name">ammount_to_call</property>
-                        <property name="width-request">52</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="halign">start</property>
-                        <property name="margin-start">14</property>
-                        <property name="margin-end">4</property>
-                        <property name="hexpand">True</property>
-                        <property name="label" translatable="yes">Call: </property>
-                        <style>
-                          <class name="ammount_to_raise"/>
-                        </style>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkBox" id="hand_box">
+                      <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="halign">center</property>
-                        <property name="margin-start">49</property>
-                        <property name="margin-end">12</property>
-                        <property name="orientation">vertical</property>
-                        <property name="spacing">6</property>
+                        <property name="hexpand">False</property>
                         <child>
-                          <object class="GtkLabel" id="hand_lbl">
+                          <object class="GtkLabel" id="label_call_amnt">
+                            <property name="name">ammount_to_call</property>
+                            <property name="width-request">52</property>
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="label">Your hand</property>
+                            <property name="halign">start</property>
+                            <property name="margin-start">14</property>
+                            <property name="margin-end">4</property>
+                            <property name="hexpand">True</property>
+                            <property name="label" translatable="yes">Call: </property>
                             <style>
-                              <class name="opp-chips"/>
+                              <class name="ammount_to_raise"/>
                             </style>
                           </object>
                           <packing>
                             <property name="expand">False</property>
-                            <property name="fill">False</property>
-                            <property name="position">1</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkBox" id="hand_row">
+                          <object class="GtkBox" id="hand_box">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="halign">center</property>
-                            <property name="spacing">10</property>
+                            <property name="margin-start">49</property>
+                            <property name="margin-end">12</property>
+                            <property name="orientation">vertical</property>
+                            <property name="spacing">6</property>
                             <child>
-                              <object class="GtkDrawingArea" id="my_card_0">
-                                <property name="width-request">58</property>
-                                <property name="height-request">82</property>
+                              <object class="GtkLabel" id="hand_lbl">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
+                                <property name="label">Your hand</property>
+                                <style>
+                                  <class name="opp-chips"/>
+                                </style>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">False</property>
-                                <property name="position">0</property>
+                                <property name="position">1</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkDrawingArea" id="my_card_1">
-                                <property name="width-request">58</property>
-                                <property name="height-request">82</property>
+                              <object class="GtkBox" id="hand_row">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
+                                <property name="halign">center</property>
+                                <property name="spacing">10</property>
+                                <child>
+                                  <object class="GtkDrawingArea" id="my_card_0">
+                                    <property name="width-request">58</property>
+                                    <property name="height-request">82</property>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkDrawingArea" id="my_card_1">
+                                    <property name="width-request">58</property>
+                                    <property name="height-request">82</property>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -1500,29 +1511,24 @@ DECK</property>
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">False</property>
+                            <property name="padding">4</property>
                             <property name="position">1</property>
                           </packing>
                         </child>
+                        <child>
+                          <object class="GtkLabel" id="label_your_stack">
+                            <property name="name">player_ammount</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">Stack: </property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
                       </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="padding">4</property>
-                        <property name="position">1</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkLabel" id="label_your_stack">
-                        <property name="name">player_ammount</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="label" translatable="yes">Stack: </property>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">True</property>
-                        <property name="position">2</property>
-                      </packing>
                     </child>
                   </object>
                   <packing>
