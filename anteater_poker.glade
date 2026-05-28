@@ -1426,6 +1426,7 @@ DECK</property>
                         <property name="can-focus">False</property>
                         <property name="halign">center</property>
                         <property name="hexpand">False</property>
+                        <property name="homogeneous">True</property>
                         <child>
                           <object class="GtkBox">
                             <property name="visible">True</property>
@@ -1437,9 +1438,10 @@ DECK</property>
                                 <property name="name">big_toCall_label</property>
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
-                                <property name="margin-left">8</property>
-                                <property name="margin-right">8</property>
-                                <property name="label" translatable="yes">TO CALL:</property>
+                                <property name="label" translatable="yes">TO CALL</property>
+                                <attributes>
+                                  <attribute name="weight" value="ultraheavy"/>
+                                </attributes>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -1556,10 +1558,11 @@ DECK</property>
                                 <property name="name">big_stack_label</property>
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
-                                <property name="margin-left">10</property>
-                                <property name="margin-right">10</property>
-                                <property name="label" translatable="yes">STACK:</property>
+                                <property name="label" translatable="yes">STACK</property>
                                 <property name="justify">center</property>
+                                <attributes>
+                                  <attribute name="weight" value="ultraheavy"/>
+                                </attributes>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
