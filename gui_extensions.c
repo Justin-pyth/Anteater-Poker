@@ -9,6 +9,7 @@
  */
 
 #include "gui_extensions.h"
+#include "gui_helpers.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -141,8 +142,11 @@ gboolean timer_tick_cb(gpointer user_data)
         gtk_widget_hide(t->bar);
         gtk_label_set_text(GTK_LABEL(t->label), "");
         t->timer_id = 0;
+        /* Auto-fold if this is the local player's timer */
+        if (cb->is_my_timer) {
+            send_gui_move(FOLD, 0);
+        }
         g_free(cb);
-        /* TODO: call your timeout / auto-fold handler here */
         return G_SOURCE_REMOVE;
     }
 

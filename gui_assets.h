@@ -14,6 +14,7 @@ typedef struct {
     guint      timer_id;
     gint       seconds_left;
     gint       turn_seconds;
+    gboolean   is_my_timer;
 } SeatTimer;
 
 /* -- Card draw helper ------------------------------------------------------- */
@@ -51,6 +52,7 @@ typedef struct {
     GtkWidget *opp_name  [GUI_OPPONENT_SLOTS];
     GtkWidget *opp_chips [GUI_OPPONENT_SLOTS];
     GtkWidget *opp_status[GUI_OPPONENT_SLOTS];
+    GtkWidget *opp_cards[GUI_OPPONENT_SLOTS][2];
     SeatTimer  opp_timer [GUI_OPPONENT_SLOTS];
 
     /* local player timer */

@@ -351,7 +351,8 @@ bool resolveNoAct(GameState* gs, Deck* deck)
         advance(gs, deck);
 
     award(gs);
-    resetHand(gs);
+    gs->handPlaying = false;
+    gs->currentPlayer = MAX_PLAYERS;
     return true;
 }
 
@@ -365,7 +366,8 @@ void processMove(GameState* gs, Deck* deck, uint8_t playerID)
     if(count == 1)
     {
         gs->players[activeIDs[0]].chips += gs->pot;
-        resetHand(gs);
+        gs->handPlaying = false;
+        gs->currentPlayer = MAX_PLAYERS;
         return;
     }
 

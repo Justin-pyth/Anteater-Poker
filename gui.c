@@ -162,6 +162,20 @@ void refresh_ui(void)
         else if (pi == game->currentPlayer && game->handPlaying) st = "Acting";
         gtk_label_set_text(GTK_LABEL(W.opp_status[opp_slot]), st);
 
+        if (p->has_cards) {
+            if (card_is_known(p->hand[0]))
+                set_card_face(W.opp_cards[opp_slot][0], p->hand[0], 1);
+            else
+                set_card_back(W.opp_cards[opp_slot][0]);
+            if (card_is_known(p->hand[1]))
+                set_card_face(W.opp_cards[opp_slot][1], p->hand[1], 1);
+            else
+                set_card_back(W.opp_cards[opp_slot][1]);
+        } else {
+            set_card_back(W.opp_cards[opp_slot][0]);
+            set_card_back(W.opp_cards[opp_slot][1]);
+        }
+
         GtkStyleContext *ctx = gtk_widget_get_style_context(W.opp_frame[opp_slot]);
         if (pi == game->currentPlayer && game->handPlaying)
             gtk_style_context_add_class(ctx, "active-seat");

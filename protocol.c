@@ -256,15 +256,16 @@ void send_to_client(Client *client, const uint8_t *data, uint32_t len)
 }
 void hide_card_info_for_others(GameState *game, uint8_t player_id)
 {
+    if (!game->handPlaying) return;
+
     for (int i = 0; i < MAX_PLAYERS; i++) {
-        if (game->players[i].id != player_id)
-           { game->players[i].hand[0].rank = UNKNOW_R;
+        if (game->players[i].id != player_id) {
+            game->players[i].hand[0].rank = UNKNOW_R;
             game->players[i].hand[0].suit = UNKNOW_S;
             game->players[i].hand[1].rank = UNKNOW_R;
             game->players[i].hand[1].suit = UNKNOW_S;
-            }
-           }
-    
+        }
+    }
 }
 void broadcast_game_state(ServerState *state)
 {
@@ -426,7 +427,10 @@ void handle_after_move(ServerState *state)
             return;
         }
 
-        //if there is no winner after the move, then do a new hand
+        //if there is no winner after the move, broadcast the final hand state so
+        //clients can see cards, then pause briefly before starting a new hand.
+        broadcast_game_state(state);
+        sleep(3);
         start_new_hand(state);
         return;
     }
