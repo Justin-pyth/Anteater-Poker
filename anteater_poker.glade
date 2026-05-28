@@ -1415,8 +1415,11 @@ DECK</property>
                 </child>
                 <child>
                   <object class="GtkEventBox" id="yourInfo_Box">
+                    <property name="name">yourInfo_Box</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
+                    <property name="halign">center</property>
+                    <property name="hexpand">False</property>
                     <child>
                       <object class="GtkBox">
                         <property name="visible">True</property>
