@@ -1428,7 +1428,7 @@ DECK</property>
                         <property name="hexpand">False</property>
                         <child>
                           <object class="GtkLabel" id="label_call_amnt">
-                            <property name="name">ammount_to_call</property>
+                            <property name="name">label_call_amnt</property>
                             <property name="width-request">52</property>
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
@@ -1520,7 +1520,7 @@ DECK</property>
                         </child>
                         <child>
                           <object class="GtkLabel" id="label_your_stack">
-                            <property name="name">player_ammount</property>
+                            <property name="name">label_your_stack</property>
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
                             <property name="label" translatable="yes">Stack: </property>
