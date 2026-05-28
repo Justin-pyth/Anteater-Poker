@@ -1427,19 +1427,46 @@ DECK</property>
                         <property name="halign">center</property>
                         <property name="hexpand">False</property>
                         <child>
-                          <object class="GtkLabel" id="label_call_amnt">
-                            <property name="name">label_call_amnt</property>
-                            <property name="width-request">52</property>
+                          <object class="GtkBox">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="halign">start</property>
-                            <property name="margin-start">14</property>
-                            <property name="margin-end">4</property>
-                            <property name="hexpand">True</property>
-                            <property name="label" translatable="yes">Call: </property>
-                            <style>
-                              <class name="ammount_to_raise"/>
-                            </style>
+                            <property name="orientation">vertical</property>
+                            <property name="homogeneous">True</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="name">big_toCall_label</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <property name="margin-left">8</property>
+                                <property name="margin-right">8</property>
+                                <property name="label" translatable="yes">TO CALL:</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="label_call_amnt">
+                                <property name="name">label_call_amnt</property>
+                                <property name="width-request">52</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <property name="margin-start">14</property>
+                                <property name="margin-end">4</property>
+                                <property name="hexpand">True</property>
+                                <property name="label" translatable="yes">0</property>
+                                <style>
+                                  <class name="ammount_to_raise"/>
+                                </style>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1519,11 +1546,40 @@ DECK</property>
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="label_your_stack">
-                            <property name="name">label_your_stack</property>
+                          <object class="GtkBox">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">Stack: </property>
+                            <property name="orientation">vertical</property>
+                            <property name="homogeneous">True</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="name">big_stack_label</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <property name="margin-left">10</property>
+                                <property name="margin-right">10</property>
+                                <property name="label" translatable="yes">STACK:</property>
+                                <property name="justify">center</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="label_your_stack">
+                                <property name="name">label_your_stack</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <property name="label" translatable="yes">0</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">True</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
                           </object>
                           <packing>
                             <property name="expand">False</property>
