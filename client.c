@@ -35,6 +35,7 @@ void init_gui(int *argc, char ***argv)
     W.btn_check        = GET("btn_check");
     W.btn_call         = GET("btn_call");
     W.btn_raise        = GET("btn_raise");
+    W.btn_allin        = GET("btn_ALLIN");
     W.btn_shop         = GET("btn_shop");
     W.raise_spin       = GET("raise_spin");
     W.anteater_panel        = GET("anteater_panel");

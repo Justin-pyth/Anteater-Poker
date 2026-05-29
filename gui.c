@@ -207,6 +207,7 @@ void refresh_ui(void)
     gtk_widget_set_sensitive(W.btn_call,  my_turn && !can_check);
     gtk_widget_set_sensitive(W.btn_raise, my_turn);
     gtk_widget_set_sensitive(W.raise_spin, my_turn);
+    gtk_widget_set_sensitive(W.btn_allin, my_turn);
 }
 
 /* -- Action button callbacks ----------------------------------------------- */

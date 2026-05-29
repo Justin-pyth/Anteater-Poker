@@ -61,6 +61,7 @@ typedef struct {
     /* action buttons */
     GtkWidget *btn_fold;
     GtkWidget *btn_check;
+    GtkWidget *btn_allin;
     GtkWidget *btn_call;
     GtkWidget *btn_raise;
     GtkWidget *raise_spin;
