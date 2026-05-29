@@ -29,6 +29,1398 @@
     <property name="step-increment">10</property>
     <property name="page-increment">50</property>
   </object>
+  <object class="GtkWindow">
+    <property name="can-focus">False</property>
+    <property name="default-width">1920</property>
+    <property name="default-height">1080</property>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="vexpand">True</property>
+                <child>
+                  <object class="GtkOverlay">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="margin-left">10</property>
+                    <property name="margin-right">10</property>
+                    <property name="hexpand">True</property>
+                    <child>
+                      <object class="GtkBox" id="felt1">
+                        <property name="name">felt</property>
+                        <property name="width-request">800</property>
+                        <property name="height-request">400</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="valign">center</property>
+                        <property name="hexpand">True</property>
+                        <property name="vexpand">True</property>
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">8</property>
+                        <child>
+                          <object class="GtkLabel" id="stage_label1">
+                            <property name="name">stage-label</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label">WAITING</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="padding">4</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="pot_label1">
+                            <property name="name">pot-label</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label">Pot: $0</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkBox" id="comm_row1">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="margin-left">65</property>
+                            <property name="margin-right">65</property>
+                            <property name="margin-start">65</property>
+                            <property name="margin-end">65</property>
+                            <property name="hexpand">True</property>
+                            <property name="vexpand">True</property>
+                            <property name="spacing">8</property>
+                            <child>
+                              <object class="GtkDrawingArea" id="community_card_5">
+                                <property name="width-request">48</property>
+                                <property name="height-request">68</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkDrawingArea" id="community_card_6">
+                                <property name="width-request">48</property>
+                                <property name="height-request">68</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkDrawingArea" id="community_card_7">
+                                <property name="width-request">48</property>
+                                <property name="height-request">68</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">2</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkDrawingArea" id="community_card_8">
+                                <property name="width-request">48</property>
+                                <property name="height-request">68</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">3</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkDrawingArea" id="community_card_9">
+                                <property name="width-request">48</property>
+                                <property name="height-request">68</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">4</property>
+                              </packing>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="padding">8</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="log_label1">
+                            <property name="name">log-label</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label">Not connected.</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="padding">4</property>
+                            <property name="position">3</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="index">-1</property>
+                      </packing>
+                    </child>
+                    <child type="overlay">
+                      <object class="GtkFixed">
+                        <property name="name">table_fixed</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="opacity">0.10</property>
+                        <child>
+                          <object class="GtkEventBox" id="opp_frame_5">
+                            <property name="width-request">100</property>
+                            <property name="height-request">80</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <property name="margin-left">8</property>
+                                <property name="margin-right">8</property>
+                                <property name="margin-start">8</property>
+                                <property name="margin-end">8</property>
+                                <property name="margin-top">6</property>
+                                <property name="margin-bottom">6</property>
+                                <property name="orientation">vertical</property>
+                                <property name="spacing">2</property>
+                                <child>
+                                  <object class="GtkBox" id="opp_card_row_5">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="opp_card_0a4">
+                                        <property name="width-request">28</property>
+                                        <property name="height-request">40</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="opp_card_0b4">
+                                        <property name="width-request">28</property>
+                                        <property name="height-request">40</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_name_5">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">Empty</property>
+                                    <style>
+                                      <class name="opp-name"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_chips_5">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">$0  |  bet $0</property>
+                                    <style>
+                                      <class name="opp-chips"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_status_5">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">Waiting</property>
+                                    <style>
+                                      <class name="opp-status"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">3</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkBox" id="opp_timer_row_5">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkProgressBar" id="opp_timer_bar_5">
+                                        <property name="can-focus">False</property>
+                                        <property name="hexpand">True</property>
+                                        <style>
+                                          <class name="seat-timer-bar"/>
+                                        </style>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="opp_timer_lbl_5">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <style>
+                                          <class name="seat-timer-label"/>
+                                        </style>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="padding">2</property>
+                                    <property name="position">4</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                            <style>
+                              <class name="opp-frame"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="x">100</property>
+                            <property name="y">10</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkEventBox" id="opp_frame_6">
+                            <property name="width-request">100</property>
+                            <property name="height-request">80</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <child>
+                              <object class="GtkBox" id="opp_col_5">
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <property name="margin-left">8</property>
+                                <property name="margin-right">8</property>
+                                <property name="margin-start">8</property>
+                                <property name="margin-end">8</property>
+                                <property name="margin-top">6</property>
+                                <property name="margin-bottom">6</property>
+                                <property name="orientation">vertical</property>
+                                <property name="spacing">2</property>
+                                <child>
+                                  <object class="GtkBox" id="opp_card_row_6">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="opp_card_1a3">
+                                        <property name="width-request">28</property>
+                                        <property name="height-request">40</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="opp_card_1b3">
+                                        <property name="width-request">28</property>
+                                        <property name="height-request">40</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_name_6">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">Empty</property>
+                                    <style>
+                                      <class name="opp-name"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_chips_6">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">$0  |  bet $0</property>
+                                    <style>
+                                      <class name="opp-chips"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_status_6">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">Waiting</property>
+                                    <style>
+                                      <class name="opp-status"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">3</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkBox" id="opp_timer_row_6">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkProgressBar" id="opp_timer_bar_6">
+                                        <property name="can-focus">False</property>
+                                        <property name="hexpand">True</property>
+                                        <style>
+                                          <class name="seat-timer-bar"/>
+                                        </style>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="opp_timer_lbl_6">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <style>
+                                          <class name="seat-timer-label"/>
+                                        </style>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="padding">2</property>
+                                    <property name="position">4</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                            <style>
+                              <class name="opp-frame"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="x">500</property>
+                            <property name="y">10</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkEventBox" id="opp_frame_7">
+                            <property name="width-request">100</property>
+                            <property name="height-request">80</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <child>
+                              <object class="GtkBox" id="opp_col_6">
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <property name="margin-left">8</property>
+                                <property name="margin-right">8</property>
+                                <property name="margin-start">8</property>
+                                <property name="margin-end">8</property>
+                                <property name="margin-top">6</property>
+                                <property name="margin-bottom">6</property>
+                                <property name="orientation">vertical</property>
+                                <property name="spacing">2</property>
+                                <child>
+                                  <object class="GtkBox" id="opp_card_row_7">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="opp_card_2a4">
+                                        <property name="width-request">28</property>
+                                        <property name="height-request">40</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="opp_card_2b4">
+                                        <property name="width-request">28</property>
+                                        <property name="height-request">40</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_name_7">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">Empty</property>
+                                    <style>
+                                      <class name="opp-name"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_chips_7">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">$0  |  bet $0</property>
+                                    <style>
+                                      <class name="opp-chips"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_status_7">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">Waiting</property>
+                                    <style>
+                                      <class name="opp-status"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">3</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkBox" id="opp_timer_row_7">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkProgressBar" id="opp_timer_bar_7">
+                                        <property name="can-focus">False</property>
+                                        <property name="hexpand">True</property>
+                                        <style>
+                                          <class name="seat-timer-bar"/>
+                                        </style>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="opp_timer_lbl_7">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <style>
+                                          <class name="seat-timer-label"/>
+                                        </style>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="padding">2</property>
+                                    <property name="position">4</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                            <style>
+                              <class name="opp-frame"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="x">625</property>
+                            <property name="y">140</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkEventBox" id="opp_frame_8">
+                            <property name="width-request">100</property>
+                            <property name="height-request">80</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <child>
+                              <object class="GtkBox" id="opp_col_7">
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <property name="margin-left">8</property>
+                                <property name="margin-right">8</property>
+                                <property name="margin-start">8</property>
+                                <property name="margin-end">8</property>
+                                <property name="margin-top">6</property>
+                                <property name="margin-bottom">6</property>
+                                <property name="orientation">vertical</property>
+                                <property name="spacing">2</property>
+                                <child>
+                                  <object class="GtkBox" id="opp_card_row_8">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="opp_card_3a3">
+                                        <property name="width-request">28</property>
+                                        <property name="height-request">40</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="opp_card_3b3">
+                                        <property name="width-request">28</property>
+                                        <property name="height-request">40</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_name_8">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">Empty</property>
+                                    <style>
+                                      <class name="opp-name"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_chips_8">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">$0  |  bet $0</property>
+                                    <style>
+                                      <class name="opp-chips"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_status_8">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">Waiting</property>
+                                    <style>
+                                      <class name="opp-status"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">3</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkBox" id="opp_timer_row_8">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkProgressBar" id="opp_timer_bar_8">
+                                        <property name="can-focus">False</property>
+                                        <property name="hexpand">True</property>
+                                        <style>
+                                          <class name="seat-timer-bar"/>
+                                        </style>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="opp_timer_lbl_8">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <style>
+                                          <class name="seat-timer-label"/>
+                                        </style>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="padding">2</property>
+                                    <property name="position">4</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                            <style>
+                              <class name="opp-frame"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="y">140</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkEventBox" id="opp_frame_9">
+                            <property name="width-request">100</property>
+                            <property name="height-request">80</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <child>
+                              <object class="GtkBox" id="opp_col_8">
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                                <property name="margin-left">8</property>
+                                <property name="margin-right">8</property>
+                                <property name="margin-start">8</property>
+                                <property name="margin-end">8</property>
+                                <property name="margin-top">6</property>
+                                <property name="margin-bottom">6</property>
+                                <property name="orientation">vertical</property>
+                                <property name="spacing">2</property>
+                                <child>
+                                  <object class="GtkBox" id="opp_card_row_9">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="opp_card_4a3">
+                                        <property name="width-request">28</property>
+                                        <property name="height-request">40</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="opp_card_4b3">
+                                        <property name="width-request">28</property>
+                                        <property name="height-request">40</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_name_9">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">Empty</property>
+                                    <style>
+                                      <class name="opp-name"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_chips_9">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">$0  |  bet $0</property>
+                                    <style>
+                                      <class name="opp-chips"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel" id="opp_status_9">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="halign">start</property>
+                                    <property name="label">Waiting</property>
+                                    <style>
+                                      <class name="opp-status"/>
+                                    </style>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">3</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkBox" id="opp_timer_row_9">
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkProgressBar" id="opp_timer_bar_9">
+                                        <property name="can-focus">False</property>
+                                        <property name="hexpand">True</property>
+                                        <style>
+                                          <class name="seat-timer-bar"/>
+                                        </style>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="opp_timer_lbl_9">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <style>
+                                          <class name="seat-timer-label"/>
+                                        </style>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="padding">2</property>
+                                    <property name="position">4</property>
+                                  </packing>
+                                </child>
+                              </object>
+                            </child>
+                            <style>
+                              <class name="opp-frame"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="x">500</property>
+                            <property name="y">270</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox" id="btn_row1">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="halign">center</property>
+                <property name="margin-bottom">8</property>
+                <property name="spacing">10</property>
+                <child>
+                  <object class="GtkButton" id="btn_fold1">
+                    <property name="label">Fold</property>
+                    <property name="name">btn-fold</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">False</property>
+                    <style>
+                      <class name="action-btn"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btn_check1">
+                    <property name="label">Check</property>
+                    <property name="name">btn-check</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">False</property>
+                    <style>
+                      <class name="action-btn"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btn_call1">
+                    <property name="label">Call</property>
+                    <property name="name">btn-call</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">False</property>
+                    <style>
+                      <class name="action-btn"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btn_ALLIN1">
+                    <property name="label">ALLIN</property>
+                    <property name="name">btn-ALLIN</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">False</property>
+                    <style>
+                      <class name="action-btn"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSpinButton" id="raise_spin1">
+                    <property name="width-request">80</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="text" translatable="yes">50</property>
+                    <property name="adjustment">raise_adj</property>
+                    <property name="climb-rate">10</property>
+                    <property name="value">50</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">4</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btn_raise1">
+                    <property name="label">Raise</property>
+                    <property name="name">btn-raise</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">False</property>
+                    <style>
+                      <class name="action-btn"/>
+                    </style>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">5</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btn_shop1">
+                    <property name="label">Shop</property>
+                    <property name="name">btn-shop</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">False</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">7</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="padding">4</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEventBox" id="yourInfo_Box1">
+                <property name="name">yourInfo_Box</property>
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="halign">start</property>
+                <property name="hexpand">False</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="halign">center</property>
+                    <property name="hexpand">False</property>
+                    <property name="homogeneous">True</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="orientation">vertical</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="name">big_toCall_label</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">TO CALL</property>
+                            <attributes>
+                              <attribute name="weight" value="ultraheavy"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="label_call_amnt1">
+                            <property name="name">label_call_amnt</property>
+                            <property name="width-request">52</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="margin-left">14</property>
+                            <property name="margin-right">4</property>
+                            <property name="margin-start">14</property>
+                            <property name="margin-end">4</property>
+                            <property name="hexpand">True</property>
+                            <property name="label" translatable="yes">0</property>
+                            <style>
+                              <class name="ammount_to_raise"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox" id="hand_box1">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="halign">center</property>
+                        <property name="margin-left">49</property>
+                        <property name="margin-right">12</property>
+                        <property name="margin-start">49</property>
+                        <property name="margin-end">12</property>
+                        <property name="orientation">vertical</property>
+                        <property name="spacing">6</property>
+                        <child>
+                          <object class="GtkLabel" id="hand_lbl1">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label">Your hand</property>
+                            <style>
+                              <class name="opp-chips"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkBox" id="hand_row1">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="halign">center</property>
+                            <property name="spacing">10</property>
+                            <child>
+                              <object class="GtkDrawingArea" id="my_card_2">
+                                <property name="width-request">58</property>
+                                <property name="height-request">82</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">0</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkDrawingArea" id="my_card_3">
+                                <property name="width-request">58</property>
+                                <property name="height-request">82</property>
+                                <property name="visible">True</property>
+                                <property name="can-focus">False</property>
+                              </object>
+                              <packing>
+                                <property name="expand">False</property>
+                                <property name="fill">False</property>
+                                <property name="position">1</property>
+                              </packing>
+                            </child>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="padding">4</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="orientation">vertical</property>
+                        <property name="homogeneous">True</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="name">big_stack_label</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">STACK</property>
+                            <property name="justify">center</property>
+                            <attributes>
+                              <attribute name="weight" value="ultraheavy"/>
+                            </attributes>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="label_your_stack1">
+                            <property name="name">label_your_stack</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">0</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="chat_box2">
+            <property name="name">chat-box</property>
+            <property name="height-request">156</property>
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="halign">center</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">4</property>
+            <child>
+              <object class="GtkLabel" id="chat_title_lbl2">
+                <property name="name">chat-title</property>
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="halign">start</property>
+                <property name="label">CHAT</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScrolledWindow" id="chat_scroll2">
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
+                <property name="hscrollbar-policy">never</property>
+                <child>
+                  <object class="GtkTextView" id="chat_log2">
+                    <property name="name">chat-log</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="editable">False</property>
+                    <property name="wrap-mode">word-char</property>
+                    <property name="cursor-visible">False</property>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkBox" id="chat_input_row2">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="spacing">6</property>
+                <child>
+                  <object class="GtkEntry" id="chat_entry2">
+                    <property name="name">chat-entry</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="hexpand">True</property>
+                    <property name="placeholder-text">Type a message or /ready…</property>
+                  </object>
+                  <packing>
+                    <property name="expand">True</property>
+                    <property name="fill">True</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkButton" id="btn_send_chat2">
+                    <property name="label">Send</property>
+                    <property name="name">btn-send-chat</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">False</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">False</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
   <object class="GtkWindow" id="window">
     <property name="can-focus">False</property>
     <property name="title">Anteater Poker</property>
@@ -262,58 +1654,6 @@
             <property name="name">game-root</property>
             <property name="visible">True</property>
             <property name="can-focus">False</property>
-            <property name="orientation">vertical</property>
-            <child>
-              <object class="GtkBox" id="topbar">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="margin-start">20</property>
-                <property name="margin-end">20</property>
-                <property name="margin-top">10</property>
-                <property name="spacing">16</property>
-                <child>
-                  <object class="GtkLabel" id="game_title_lbl">
-                    <property name="name">login-title</property>
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="label">ANTEATER POKER</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="topbar_spacer">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                  </object>
-                  <packing>
-                    <property name="expand">True</property>
-                    <property name="fill">True</property>
-                    <property name="position">1</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkLabel" id="deck_count_label">
-                    <property name="visible">True</property>
-                    <property name="can-focus">False</property>
-                    <property name="label">Players: 0</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">2</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">False</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
             <child>
               <object class="GtkBox" id="main_area">
                 <property name="visible">True</property>
@@ -1108,155 +2448,27 @@
                     <property name="can-focus">False</property>
                     <property name="spacing">8</property>
                     <child>
-                      <object class="GtkBox" id="chat_box">
-                        <property name="name">chat-box</property>
-                        <property name="height-request">156</property>
+                      <object class="GtkOverlay">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="hexpand">True</property>
-                        <property name="vexpand">True</property>
-                        <property name="orientation">vertical</property>
-                        <property name="spacing">4</property>
                         <child>
-                          <object class="GtkLabel" id="chat_title_lbl">
-                            <property name="name">chat-title</property>
+                          <object class="GtkBox" id="felt">
+                            <property name="name">felt</property>
+                            <property name="width-request">800</property>
+                            <property name="height-request">400</property>
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="halign">start</property>
-                            <property name="label">CHAT</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">False</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkScrolledWindow" id="chat_scroll">
-                            <property name="visible">True</property>
-                            <property name="can-focus">True</property>
+                            <property name="valign">center</property>
                             <property name="hexpand">True</property>
                             <property name="vexpand">True</property>
-                            <property name="hscrollbar-policy">never</property>
-                            <child>
-                              <object class="GtkTextView" id="chat_log">
-                                <property name="name">chat-log</property>
-                                <property name="visible">True</property>
-                                <property name="can-focus">True</property>
-                                <property name="editable">False</property>
-                                <property name="wrap-mode">word-char</property>
-                                <property name="cursor-visible">False</property>
-                              </object>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">True</property>
-                            <property name="fill">True</property>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkBox" id="chat_input_row">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="spacing">6</property>
-                            <child>
-                              <object class="GtkEntry" id="chat_entry">
-                                <property name="name">chat-entry</property>
-                                <property name="visible">True</property>
-                                <property name="can-focus">True</property>
-                                <property name="hexpand">True</property>
-                                <property name="placeholder-text">Type a message or /ready…</property>
-                                <signal name="activate" handler="on_chat_activate" swapped="no"/>
-                              </object>
-                              <packing>
-                                <property name="expand">True</property>
-                                <property name="fill">True</property>
-                                <property name="position">0</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="btn_send_chat">
-                                <property name="label">Send</property>
-                                <property name="name">btn-send-chat</property>
-                                <property name="visible">True</property>
-                                <property name="can-focus">True</property>
-                                <property name="receives-default">False</property>
-                                <signal name="clicked" handler="on_send_chat" swapped="no"/>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">1</property>
-                              </packing>
-                            </child>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">False</property>
-                            <property name="position">2</property>
-                          </packing>
-                        </child>
-                      </object>
-                      <packing>
-                        <property name="expand">False</property>
-                        <property name="fill">False</property>
-                        <property name="position">0</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <object class="GtkBox" id="felt">
-                        <property name="name">felt</property>
-                        <property name="width-request">170</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                        <property name="valign">center</property>
-                        <property name="hexpand">True</property>
-                        <property name="vexpand">True</property>
-                        <property name="orientation">vertical</property>
-                        <property name="spacing">8</property>
-                        <child>
-                          <object class="GtkLabel" id="stage_label">
-                            <property name="name">stage-label</property>
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="label">WAITING</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">False</property>
-                            <property name="padding">4</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="pot_label">
-                            <property name="name">pot-label</property>
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="label">Pot: $0</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">False</property>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkBox" id="comm_row">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="margin-start">65</property>
-                            <property name="margin-end">65</property>
-                            <property name="hexpand">True</property>
-                            <property name="vexpand">True</property>
+                            <property name="orientation">vertical</property>
                             <property name="spacing">8</property>
                             <child>
-                              <object class="GtkDrawingArea" id="community_card_0">
-                                <property name="width-request">48</property>
-                                <property name="height-request">68</property>
+                              <object class="GtkLabel" id="stage_label">
+                                <property name="name">stage-label</property>
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
+                                <property name="label">WAITING</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -1265,11 +2477,11 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkDrawingArea" id="community_card_1">
-                                <property name="width-request">48</property>
-                                <property name="height-request">68</property>
+                              <object class="GtkLabel" id="pot_label">
+                                <property name="name">pot-label</property>
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
+                                <property name="label">Pot: $0</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
@@ -1278,71 +2490,121 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkDrawingArea" id="community_card_2">
-                                <property name="width-request">48</property>
-                                <property name="height-request">68</property>
+                              <object class="GtkBox" id="comm_row">
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
+                                <property name="halign">center</property>
+                                <property name="margin-left">65</property>
+                                <property name="margin-right">65</property>
+                                <property name="margin-start">65</property>
+                                <property name="margin-end">65</property>
+                                <property name="hexpand">True</property>
+                                <property name="vexpand">True</property>
+                                <property name="spacing">8</property>
+                                <child>
+                                  <object class="GtkDrawingArea" id="community_card_0">
+                                    <property name="width-request">48</property>
+                                    <property name="height-request">68</property>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">0</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkDrawingArea" id="community_card_1">
+                                    <property name="width-request">48</property>
+                                    <property name="height-request">68</property>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">1</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkDrawingArea" id="community_card_2">
+                                    <property name="width-request">48</property>
+                                    <property name="height-request">68</property>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">2</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkDrawingArea" id="community_card_3">
+                                    <property name="width-request">48</property>
+                                    <property name="height-request">68</property>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">3</property>
+                                  </packing>
+                                </child>
+                                <child>
+                                  <object class="GtkDrawingArea" id="community_card_4">
+                                    <property name="width-request">48</property>
+                                    <property name="height-request">68</property>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                  </object>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">4</property>
+                                  </packing>
+                                </child>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">False</property>
+                                <property name="padding">8</property>
                                 <property name="position">2</property>
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkDrawingArea" id="community_card_3">
-                                <property name="width-request">48</property>
-                                <property name="height-request">68</property>
+                              <object class="GtkLabel" id="log_label">
+                                <property name="name">log-label</property>
                                 <property name="visible">True</property>
                                 <property name="can-focus">False</property>
+                                <property name="label">Not connected.</property>
                               </object>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">False</property>
+                                <property name="padding">4</property>
                                 <property name="position">3</property>
                               </packing>
                             </child>
-                            <child>
-                              <object class="GtkDrawingArea" id="community_card_4">
-                                <property name="width-request">48</property>
-                                <property name="height-request">68</property>
-                                <property name="visible">True</property>
-                                <property name="can-focus">False</property>
-                              </object>
-                              <packing>
-                                <property name="expand">False</property>
-                                <property name="fill">False</property>
-                                <property name="position">4</property>
-                              </packing>
-                            </child>
                           </object>
                           <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">False</property>
-                            <property name="padding">8</property>
-                            <property name="position">2</property>
+                            <property name="index">-1</property>
                           </packing>
                         </child>
-                        <child>
-                          <object class="GtkLabel" id="log_label">
-                            <property name="name">log-label</property>
+                        <child type="overlay">
+                          <object class="GtkFixed">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="label">Not connected.</property>
+                            <property name="opacity">0.10</property>
                           </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">False</property>
-                            <property name="padding">4</property>
-                            <property name="position">3</property>
-                          </packing>
                         </child>
                       </object>
                       <packing>
-                        <property name="expand">True</property>
+                        <property name="expand">False</property>
                         <property name="fill">True</property>
-                        <property name="position">1</property>
+                        <property name="position">0</property>
                       </packing>
                     </child>
                     <child>
@@ -1793,7 +3055,126 @@ DECK</property>
               </packing>
             </child>
             <child>
-              <placeholder/>
+              <object class="GtkBox">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="orientation">vertical</property>
+                <property name="baseline-position">top</property>
+                <child>
+                  <object class="GtkLabel" id="deck_count_label">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="label">Players: 0</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkBox" id="chat_box">
+                    <property name="name">chat-box</property>
+                    <property name="height-request">156</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="hexpand">True</property>
+                    <property name="vexpand">True</property>
+                    <property name="orientation">vertical</property>
+                    <property name="spacing">4</property>
+                    <child>
+                      <object class="GtkLabel" id="chat_title_lbl">
+                        <property name="name">chat-title</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="halign">start</property>
+                        <property name="label">CHAT</property>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkScrolledWindow" id="chat_scroll">
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <property name="hexpand">True</property>
+                        <property name="vexpand">True</property>
+                        <property name="hscrollbar-policy">never</property>
+                        <child>
+                          <object class="GtkTextView" id="chat_log">
+                            <property name="name">chat-log</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="editable">False</property>
+                            <property name="wrap-mode">word-char</property>
+                            <property name="cursor-visible">False</property>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">True</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox" id="chat_input_row">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="spacing">6</property>
+                        <child>
+                          <object class="GtkEntry" id="chat_entry">
+                            <property name="name">chat-entry</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="hexpand">True</property>
+                            <property name="placeholder-text">Type a message or /ready…</property>
+                            <signal name="activate" handler="on_chat_activate" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="btn_send_chat">
+                            <property name="label">Send</property>
+                            <property name="name">btn-send-chat</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="receives-default">False</property>
+                            <signal name="clicked" handler="on_send_chat" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">False</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">False</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">2</property>
+              </packing>
             </child>
           </object>
           <packing>

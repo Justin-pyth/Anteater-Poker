@@ -189,3 +189,8 @@ progressbar.timer-red    progress { background-color: #c0392b; }
   padding: 6px 14px;
 }
 #btn-send-chat:hover { background-color: #f0d898; }
+
+
+#table_fixed {
+    background-color: transparent;
+}
