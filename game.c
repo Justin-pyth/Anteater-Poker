@@ -218,6 +218,7 @@ void award(GameState* gs)
         gs->players[winnerIDs[i]].chips += split;
     gs->players[winnerIDs[0]].chips += remainder; //may change, just give to first winner for now
 
+    gs->winnerID = (winnerCount == 1) ? winnerIDs[0] : (MAX_PLAYERS + 1);
     gs->pot = 0; //reset pot
 }
 
@@ -247,7 +248,9 @@ void resetHand(GameState* gs)
     memset(gs->community, 0, sizeof(gs->community));
     gs->communityCount = 0;
 
-    gs->dealerIndex = nextActive(gs, gs->dealerIndex, true); //new dealer
+    int newDealer = nextActive(gs, gs->dealerIndex, true); //new dealer
+    if(newDealer != -1)
+        gs->dealerIndex = newDealer;
 
     gs->pot = 0;
     gs->currentBet = 0;
@@ -373,6 +376,7 @@ void processMove(GameState* gs, Deck* deck, uint8_t playerID)
     if(count == 1)
     {
         gs->players[activeIDs[0]].chips += gs->pot; //pay the pot
+        gs->winnerID = activeIDs[0];
         gs->pot = 0; //reset pot
         gs->handPlaying = false;
         gs->currentPlayer = MAX_PLAYERS;

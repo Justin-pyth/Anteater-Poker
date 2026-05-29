@@ -173,20 +173,14 @@ int findActive(const GameState* gs, int activeIDs[], bool inclAllIn)
 
 int nextActive(const GameState* gs, int curr, bool inclReady)
 {
-    //move to next player in a circle
-    int next = (curr + 1) % MAX_PLAYERS;
-    while(next != curr)
+    for(int step = 1; step <= MAX_PLAYERS; step++)
     {
+        int next = (((curr + step) % MAX_PLAYERS) + MAX_PLAYERS) % MAX_PLAYERS;
+
         //if the player is active, return index
         if(gs->players[next].status == PLAYER_PLAYING || (inclReady && gs->players[next].status == PLAYER_READY))
             return next;
-
-        //otherwise check the next player
-        next = (next + 1) % MAX_PLAYERS;
     }
-
-    if(gs->players[curr].status == PLAYER_PLAYING || (inclReady && gs->players[curr].status == PLAYER_READY))
-        return curr;
 
     return -1; //return if no one found
 }
