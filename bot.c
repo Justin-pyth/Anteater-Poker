@@ -1,6 +1,6 @@
 #include "bot.h"
 
-void addBot(GameState* gs)
+void addBot(GameState* gs, bool shuffle)
 {
 
     char botNames[MAX_PLAYERS][MAX_NAME_LENTH] = {"Alvin", "Randy", "Betty",
@@ -8,15 +8,18 @@ void addBot(GameState* gs)
     int botNameIndex = 0;
 
     //shuffle bot array
-    for(int i = MAX_PLAYERS-1; i>0; i--)
+    if(shuffle)
     {
-        int j = rand() % (i+1);
+        for(int i = MAX_PLAYERS-1; i>0; i--)
+        {
+            int j = rand() % (i+1);
 
-        //do random swaps to shuffle name bot name array
-        char temp[MAX_NAME_LENTH];
-        strcpy(temp, botNames[i]);
-        strcpy(botNames[i], botNames[j]);
-        strcpy(botNames[j], temp);
+            //do random swaps to shuffle name bot name array
+            char temp[MAX_NAME_LENTH];
+            strcpy(temp, botNames[i]);
+            strcpy(botNames[i], botNames[j]);
+            strcpy(botNames[j], temp);
+        }
     }
 
     //check for empty seats, if empty occupy with a random bot

@@ -36,15 +36,17 @@ static void print_game_state(const ClientState *client)
 }
 
 // encode and send a PlayerAction to the server
-static void send_action(ClientState *client, MoveType move, uint32_t amount)
+static void send_test_action(ClientState *client, MoveType move, uint32_t amount)
 {
-    PlayerAction action;
-    action.playerID = client->my_player_id;
-    action.move = move;
-    action.amount = amount;
+    Message message;
+    memset(&message, 0, sizeof(message));
+    message.type = MSG_TYPE_PLAYER_ACTION;
+    message.action.playerID = client->my_player_id;
+    message.action.move = move;
+    message.action.amount = amount;
 
     uint8_t buffer[BUFFER_SIZE];
-    uint32_t len = prepare_payload(buffer, MSG_TYPE_PLAYER_ACTION, &action);
+    uint32_t len = prepare_payload(buffer, MSG_TYPE_PLAYER_ACTION, &message);
     send_to_server(client, buffer, len);
     printf("Sent: move=%d amount=%u\n", move, amount);
 }
@@ -83,13 +85,17 @@ static void run_auto_mode(ClientState *client)
 
         // server sent a new game state — print it and send next move
         if (FD_ISSET(client->socket_fd, &read_fds)) {
-            handle_server_communication(client);
+            Message message;
+            if (handle_server_communication(client, &message) != 0) break;
+            if (message.type != MSG_TYPE_GAME_STATE) continue;
+            client->game = message.gameState;
+            client->my_player_id = message.gameState.yourPlayerID;
             if (!client->connected) break;
             print_game_state(client);
 
             MoveType move = cycle[idx % cycle_len];
             uint32_t amount = (move == RAISE) ? client->game.minRaise : 0;
-            send_action(client, move, amount);
+            send_test_action(client, move, amount);
             idx++;
             printf("(Type 3 + Enter to exit auto mode)\n");
         }
@@ -116,7 +122,11 @@ static void run_manual_mode(ClientState *client)
 
         // new game state arrived — print it and prompt for a move
         if (FD_ISSET(client->socket_fd, &read_fds)) {
-            handle_server_communication(client);
+            Message message;
+            if (handle_server_communication(client, &message) != 0) break;
+            if (message.type != MSG_TYPE_GAME_STATE) continue;
+            client->game = message.gameState;
+            client->my_player_id = message.gameState.yourPlayerID;
             if (!client->connected) break;
             print_game_state(client);
             printf("Move (0=FOLD 1=CHECK 2=CALL 3=RAISE 4=ALL_IN 5=Exit): ");
@@ -140,7 +150,7 @@ static void run_manual_mode(ClientState *client)
                 fflush(stdout);
                 if (scanf("%u", &amount) != 1) amount = 0;
             }
-            send_action(client, (MoveType)choice, amount);
+            send_test_action(client, (MoveType)choice, amount);
         }
     }
 }

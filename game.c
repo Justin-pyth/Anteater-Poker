@@ -171,6 +171,8 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
 
             break;
         }
+        case USE_SPECIAL_CARD:
+            break;
 
     }
 
@@ -215,6 +217,8 @@ void award(GameState* gs)
     for(int i = 0 ; i < winnerCount ; i++)
         gs->players[winnerIDs[i]].chips += split;
     gs->players[winnerIDs[0]].chips += remainder; //may change, just give to first winner for now
+
+    gs->pot = 0; //reset pot
 }
 
 void resetHand(GameState* gs)
@@ -335,7 +339,6 @@ void advance(GameState* gs, Deck* deck)
         case RIVER:
         {
             award(gs);          // Evaluates hands and adds chips to winners
-            gs->gameOver = 1;   // Force flags gameOver to True
             gs->handPlaying = false; // The hand is concluded
             return;
         }
@@ -369,7 +372,8 @@ void processMove(GameState* gs, Deck* deck, uint8_t playerID)
     //check if everyone except 1 folded (or left)
     if(count == 1)
     {
-        gs->players[activeIDs[0]].chips += gs->pot;
+        gs->players[activeIDs[0]].chips += gs->pot; //pay the pot
+        gs->pot = 0; //reset pot
         gs->handPlaying = false;
         gs->currentPlayer = MAX_PLAYERS;
         return;
@@ -409,8 +413,8 @@ int remainingPlayers(const GameState* gs)
     {
         const Player* p = &gs->players[i];
 
-        //skip inactive players
-        if(p->status == PLAYER_DISCONNECTED || p->status == PLAYER_EMPTY || p->status == PLAYER_SPECTATING) continue;
+        //skip inactive seats
+        if(p->status == PLAYER_DISCONNECTED || p->status == PLAYER_EMPTY) continue;
 
         if(p->chips > 0)
             count ++;

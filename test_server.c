@@ -114,11 +114,11 @@ int main(void)
                 }
 
                 // decode the payload and print what was received
-                MessageType type;
-                PlayerAction action;
-                if (receive_payload(buffer, (uint32_t)n, &type, &action) == 0) {
+                Message message;
+                if (receive_payload(buffer, (uint32_t)n, &message) == 0 &&
+                    message.type == MSG_TYPE_PLAYER_ACTION) {
                     printf("Action from client %d: move=%d amount=%u\n",
-                           state.clients[i].id, action.move, action.amount);
+                           state.clients[i].id, message.action.move, message.action.amount);
                 } else {
                     fprintf(stderr, "ERROR decoding action from client %d\n", state.clients[i].id);
                 }
