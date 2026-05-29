@@ -230,7 +230,6 @@ void on_send_chat(GtkButton *b, gpointer d)
     if (!text || text[0] == '\0') return;
     if (strcmp(text, "/ready") == 0) {
         sendReadyToServer();
-        append_chat("SERVER", "You are ready.");
     } else {
         sendChatToServer(text);
     }
@@ -284,6 +283,7 @@ void on_connect_clicked(GtkButton *b, gpointer d)
     C.socket_fd    = sockfd;
     C.connected    = 1;
     C.my_player_id = 0;
+    sendNameToServer(name);
 
     if (W.net_source) { g_source_remove(W.net_source); W.net_source = 0; }
     GIOChannel *ch = g_io_channel_unix_new(sockfd);
@@ -293,5 +293,5 @@ void on_connect_clicked(GtkButton *b, gpointer d)
 
     gtk_label_set_text(GTK_LABEL(W.login_status), "");
     show_game_screen();
+    append_chat("SERVER", "Type /ready to ready up.");
 }
-

@@ -18,7 +18,8 @@ typedef enum {
     MSG_TYPE_ERROR_MESSAGE = 4,
     MSG_TYPE_SPECIAL_MESSAGE = 5,
     MSG_TYPE_READY = 6,
-    MSG_CD_SIGNAL= 7// for sending count down signal
+    MSG_CD_SIGNAL= 7,// for sending count down signal
+    MSG_TYPE_JOIN = 8
 } MessageType;
 typedef struct {
     MessageType type;
@@ -58,5 +59,4 @@ int receive_payload(const uint8_t *buffer, uint32_t buf_len, Message *out_data);
 
 
 #endif
-
 

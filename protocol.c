@@ -73,7 +73,25 @@ void handle_client_communication(ServerState *state, Client *client)
             
             broadcast_chat_message(state, data.sender_id, data.chat);
         }
-           else if (data.type == MSG_TYPE_READY)
+        else if (data.type == MSG_TYPE_JOIN)
+        {
+            char name[MAX_NAME_LENTH];
+            int i;
+            //iterate until u hit terminator character while creating name char by char
+            for (i = 0; i < MAX_NAME_LENTH - 1 && data.chat[i] != '\0'; i++)
+                name[i] = data.chat[i];
+            name[i] = '\0';//add terminator char
+
+            strcpy(state->clients[client->id].name, name);
+            strcpy(state->game.players[client->id].name, name);
+
+            //welcome message
+            char welcome[MAX_PAYLOAD_SIZE];
+            snprintf(welcome, sizeof(welcome), "Welcome to Anteater Poker %s!", name);
+            broadcast_chat_message(state, MAX_PLAYERS, welcome);
+            broadcast_game_state(state);
+        }
+        else if (data.type == MSG_TYPE_READY)
         {
             //don't allow a ready to occur while gaming is playing
             if (state->game.handPlaying) {
@@ -83,6 +101,12 @@ void handle_client_communication(ServerState *state, Client *client)
 
             //player sends /ready
             state->game.players[client->id].status = PLAYER_READY;
+
+            //whenever someone readies, send a public broadcast
+            const char *name = state->game.players[client->id].name;
+            char msg[MAX_PAYLOAD_SIZE];
+            snprintf(msg, sizeof(msg), "%s is ready!", name);
+            broadcast_chat_message(state, MAX_PLAYERS, msg);
 
             //server counts # of ready vs connected
             int connectedClients = 0;
@@ -244,11 +268,6 @@ void add_connection(ServerState *state, Client *client)
             printf("New client connected: %d\n", state->clients[i].id ); // Print a message indicating a new client has connected
             broadcast_game_state(state);
 
-            
-            char prompt[128];
-            snprintf(prompt, sizeof(prompt),
-            "Welcome to Anteater Poker! Type /ready to ready up.");
-            broadcast_chat_message(state, MAX_PLAYERS, prompt);
             
             return;
         }

@@ -186,6 +186,19 @@ void sendReadyToServer(void)
     send_to_server(&C, buffer, len);
 }
 
+void sendNameToServer(const char *name)
+{
+    if (!C.connected || !name) return;
+    Message msg;
+    msg.type      = MSG_TYPE_JOIN;
+    msg.sender_id = C.my_player_id;
+    strncpy(msg.chat, name, MAX_NAME_LENTH - 1);
+    msg.chat[MAX_NAME_LENTH - 1] = '\0';
+    uint8_t buffer[BUFFER_SIZE];
+    uint32_t len = prepare_payload(buffer, MSG_TYPE_JOIN, &msg);
+    send_to_server(&C, buffer, len);
+}
+
 void sendChatToServer(const char *text)
 {
     if (!C.connected) return;

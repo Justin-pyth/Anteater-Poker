@@ -32,6 +32,7 @@ void stop_my_timer(void);
 /* -- Network send helpers -------------------------------------------------- */
 void send_gui_move(MoveType move, uint32_t amount);
 void sendReadyToServer(void);
+void sendNameToServer(const char *name);
 void sendChatToServer(const char *text);
 
 #endif /* TEMP_GUI_HELPERS_H */

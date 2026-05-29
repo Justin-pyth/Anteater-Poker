@@ -259,6 +259,7 @@ uint32_t prepare_payload(uint8_t *buffer, MessageType type, const Message*data)
             encode_client_data(buffer, &offset, &data->action);
             break;
         case MSG_TYPE_CHAT_MESSAGE:
+        case MSG_TYPE_JOIN:
             encode_chat_message(buffer, &offset, data->sender_id, data->chat);
             break;
         case MSG_TYPE_ERROR_MESSAGE:
@@ -304,6 +305,7 @@ int receive_payload(const uint8_t *buffer, uint32_t buf_len,  Message *out_data)
     case MSG_TYPE_PLAYER_ACTION:
         return decode_client_data(buffer, &offset, &out_data->action);
     case MSG_TYPE_CHAT_MESSAGE:
+    case MSG_TYPE_JOIN:
         return decode_chat_message(buffer, &offset, &out_data->sender_id, out_data->chat);//future implementation
     case MSG_TYPE_ERROR_MESSAGE:
         return decode_error_message(buffer, &offset, out_data->error);//future implementation
