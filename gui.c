@@ -159,7 +159,7 @@ void refresh_ui(void)
         else if (p->status == PLAYER_ALL_IN)        st = "All in";
         else if (p->status == PLAYER_DISCONNECTED)  st = "Disconnected";
         else if (p->status == PLAYER_SPECTATING)    st = "Spectating";
-        else if (pi == game->currentPlayer && game->handPlaying) st = "Acting";
+        else if (p->status == PLAYER_PLAYING && pi == game->currentPlayer && game->handPlaying) st = "Acting";
         gtk_label_set_text(GTK_LABEL(W.opp_status[opp_slot]), st);
 
         if (p->has_cards) {
@@ -177,7 +177,7 @@ void refresh_ui(void)
         }
 
         GtkStyleContext *ctx = gtk_widget_get_style_context(W.opp_frame[opp_slot]);
-        if (pi == game->currentPlayer && game->handPlaying)
+        if (p->status == PLAYER_PLAYING && pi == game->currentPlayer && game->handPlaying)
             gtk_style_context_add_class(ctx, "active-seat");
         else
             gtk_style_context_remove_class(ctx, "active-seat");

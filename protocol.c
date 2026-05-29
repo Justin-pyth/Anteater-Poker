@@ -99,6 +99,18 @@ void handle_client_communication(ServerState *state, Client *client)
                 return;
             }
 
+            //if any player sends a ready message, check for disconnected players and set them as empty
+            for (int i = 0; i < MAX_PLAYERS; i++)
+            {
+                if (!state->clients[i].connected &&
+                    state->game.players[i].status == PLAYER_DISCONNECTED)
+                {
+                    memset(&state->game.players[i], 0, sizeof(Player));
+                    state->game.players[i].id = i;
+                    state->game.players[i].status = PLAYER_EMPTY;
+                }
+            }
+
             //player sends /ready
             state->game.players[client->id].status = PLAYER_READY;
 

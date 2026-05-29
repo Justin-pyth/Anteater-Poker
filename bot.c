@@ -5,7 +5,6 @@ void addBot(GameState* gs, bool shuffle)
 
     char botNames[MAX_PLAYERS][MAX_NAME_LENTH] = {"Alvin", "Randy", "Betty",
                                         "Colleen", "Minnie", "Dumbo"};
-    int botNameIndex = 0;
 
     //shuffle bot array
     if(shuffle)
@@ -23,12 +22,29 @@ void addBot(GameState* gs, bool shuffle)
     }
 
     //check for empty seats, if empty occupy with a random bot
-    for(int seat = 0; seat < MAX_PLAYERS && botNameIndex < MAX_PLAYERS; seat++)
+    for(int seat = 0; seat < MAX_PLAYERS; seat++)
     {
         if(gs->players[seat].status == PLAYER_EMPTY)
         {
-            initPlayer(&gs->players[seat], seat, botNames[botNameIndex], INIT_CHIPS);
-            botNameIndex++;
+            for(int botNameIndex = 0; botNameIndex < MAX_PLAYERS; botNameIndex++)
+            {
+                bool nameInUse = false;
+                for(int existingSeat = 0; existingSeat < MAX_PLAYERS; existingSeat++)
+                {
+                    if(existingSeat == seat) continue;
+                    if(strcmp(gs->players[existingSeat].name, botNames[botNameIndex]) == 0)
+                    {
+                        nameInUse = true;
+                        break;
+                    }
+                }
+
+                if(!nameInUse)
+                {
+                    initPlayer(&gs->players[seat], seat, botNames[botNameIndex], INIT_CHIPS);
+                    break;
+                }
+            }
         }
     }
 }
