@@ -129,10 +129,10 @@ void refresh_ui(void)
 
     Player *me = &game->players[C.my_player_id];
 
-    snprintf(buf, sizeof(buf), "Call: $%u", game->currentBet - me->current_bet);
+    snprintf(buf, sizeof(buf), "$%u", game->currentBet - me->current_bet);
     gtk_label_set_text(GTK_LABEL(W.label_call_amnt), buf);
 
-    snprintf(buf, sizeof(buf), "Stack: $%u", me->chips);
+    snprintf(buf, sizeof(buf), "$%u", me->chips);
     gtk_label_set_text(GTK_LABEL(W.label_your_stack), buf);
 
     if (me->has_cards) {
