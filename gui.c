@@ -8,15 +8,36 @@ AppWidgets W;
 ClientState C;
 
 /* -- Chat display ---------------------------------------------------------- */
-void append_chat(const char *sender, const char *msg)
+void append_chat(const char *sender, const char *msg, const char *tag_name)
 {
     if (!W.chat_log) return;
     GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(W.chat_log));
+
+    //give different color text (server vs player)
+    if (!gtk_text_tag_table_lookup(gtk_text_buffer_get_tag_table(buf), "server"))
+    {
+        gtk_text_buffer_create_tag(buf, "server", "foreground", "#4B5563", "style", PANGO_STYLE_ITALIC, NULL);
+    }
+    if (!gtk_text_tag_table_lookup(gtk_text_buffer_get_tag_table(buf), "server_alert"))
+    {
+        gtk_text_buffer_create_tag(buf, "server_alert", "foreground", "#B45309", NULL);
+    } 
+    if (!gtk_text_tag_table_lookup(gtk_text_buffer_get_tag_table(buf), "player"))
+    {
+        gtk_text_buffer_create_tag(buf, "player", "foreground", "#000000", NULL);
+    }
+
     GtkTextIter end;
     gtk_text_buffer_get_end_iter(buf, &end);
     char line[512];
     snprintf(line, sizeof(line), "%s: %s\n", sender ? sender : "?", msg ? msg : "");
-    gtk_text_buffer_insert(buf, &end, line, -1);
+
+    //make the sender name bold, rest of the text unbolded
+    gtk_text_buffer_insert_with_tags_by_name(buf, &end, sender, -1, "bold", tag_name, NULL);
+    gtk_text_buffer_insert_with_tags_by_name(buf, &end, ": ", -1, tag_name, NULL);
+    gtk_text_buffer_insert_with_tags_by_name(buf, &end, msg, -1, tag_name, NULL);
+    gtk_text_buffer_insert_with_tags_by_name(buf, &end, "\n", -1, tag_name, NULL);
+
     gtk_text_buffer_get_end_iter(buf, &end);
     GtkTextMark *mark = gtk_text_buffer_get_mark(buf, "insert");
     gtk_text_buffer_move_mark(buf, mark, &end);
@@ -41,9 +62,9 @@ static void dispatch_message(Message *msg)
         refresh_ui();
     } else if (msg->type == MSG_TYPE_CHAT_MESSAGE) {
         if (msg->sender_id >= MAX_PLAYERS)
-            append_chat("SERVER", msg->chat);
+            append_chat("SERVER", msg->chat, "server");
         else
-            append_chat(C.game.players[msg->sender_id].name, msg->chat);
+            append_chat(C.game.players[msg->sender_id].name, msg->chat, "player");
     } else if (msg->type == MSG_TYPE_ERROR_MESSAGE) {
         gtk_label_set_text(GTK_LABEL(W.log_label), msg->error);
     } else if (msg->type == MSG_CD_SIGNAL) {
@@ -293,5 +314,5 @@ void on_connect_clicked(GtkButton *b, gpointer d)
 
     gtk_label_set_text(GTK_LABEL(W.login_status), "");
     show_game_screen();
-    append_chat("SERVER", "Type /ready to ready up.");
+    append_chat("SERVER", "Type /ready to ready up.", "server_alert");
 }
