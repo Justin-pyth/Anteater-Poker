@@ -280,20 +280,16 @@ int reconstructDeck(const GameState* gs, const Card* hand, Deck* deck)
     return i;
 }
 
-bool doOneBotTurn(GameState* gs, Deck* deck)
+bool doOneBotTurn(GameState* gs, Deck* deck, uint8_t *botID, MoveType *move, uint32_t *amount)
 {
     if(!gs->handPlaying || !isBot(gs->players[gs->currentPlayer].name))
         return false;
 
-    uint8_t botID;
-    MoveType move;
-    uint32_t amount;
-
     //get the bot's move
-    botMove(gs, deck, &botID, &move, &amount);
+    botMove(gs, deck, botID, move, amount);
 
     //see if its a valid move and apply it
-    return tryMove(gs, deck, botID, move, amount);
+    return tryMove(gs, deck, *botID, *move, *amount);
 }
 
 void doBotTurn(GameState* gs, Deck* deck)
@@ -302,7 +298,7 @@ void doBotTurn(GameState* gs, Deck* deck)
     while(gs->handPlaying && isBot(gs->players[gs->currentPlayer].name))
     {
         //try the move, if its invalid stop
-        if(!doOneBotTurn(gs, deck))
-            break;
+        //if(!doOneBotTurn(gs, deck))
+            //break;
     }
 }

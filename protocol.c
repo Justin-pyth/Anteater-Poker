@@ -38,7 +38,7 @@ void handle_client_communication(ServerState *state, Client *client)
 
             if(tryMove(&state->game, &state->deck, data.action.playerID, data.action.move, data.action.amount))
             {   
-                        
+                broadcast_move(state, data.action.playerID, data.action.move, data.action.amount);
                 handle_after_move(state);
               
             }
@@ -499,12 +499,25 @@ void handle_after_move(ServerState *state)
             
             //find the winner above and set gameOver to true
             state->game.gameOver = 1;
+            if (state->game.winnerID < MAX_PLAYERS) {
+                char msg[MAX_PAYLOAD_SIZE];
+                snprintf(msg, sizeof(msg), "%s wins the game!",
+                         state->game.players[state->game.winnerID].name);
+                broadcast_chat_message(state, MAX_PLAYERS, msg);
+            }
             broadcast_game_state(state);
             return;
         }
 
         //if there is no winner after the move, broadcast the final hand state so
         //clients can see cards, then pause briefly before starting a new hand.
+        if (state->game.winnerID < MAX_PLAYERS) 
+        {
+            char msg[MAX_PAYLOAD_SIZE];
+            snprintf(msg, sizeof(msg), "%s wins the hand.",
+                     state->game.players[state->game.winnerID].name);
+            broadcast_chat_message(state, MAX_PLAYERS, msg);
+        }
         broadcast_game_state(state);
         sleep(3);
         start_new_hand(state);
@@ -570,6 +583,37 @@ void start_new_hand(ServerState *state)
 
     addBot(&state->game, false);
     newHand(&state->game, &state->deck);
+    broadcast_chat_message(state, MAX_PLAYERS, "Starting next hand.");
     broadcast_game_state(state);
     broadcast_cd_signal(state, state->game.currentPlayer);
+}
+
+void broadcast_move(ServerState *state, uint8_t playerID, MoveType move, uint32_t amount)
+{
+    const char *name = state->game.players[playerID].name;
+    char moveMsg[MAX_PAYLOAD_SIZE];
+
+    switch (move)
+    {
+        case FOLD:
+            snprintf(moveMsg, sizeof(moveMsg), "%s folded.", name);
+            break;
+        case CHECK:
+            snprintf(moveMsg, sizeof(moveMsg), "%s checked.", name);
+            break;
+        case CALL:
+            snprintf(moveMsg, sizeof(moveMsg), "%s called.", name);
+            break;
+        case RAISE:
+            snprintf(moveMsg, sizeof(moveMsg), "%s raised by $%u.", name, amount);
+            break;
+        case ALL_IN:
+            snprintf(moveMsg, sizeof(moveMsg), "%s went all in.", name);
+            break;
+        default:
+            snprintf(moveMsg, sizeof(moveMsg), "%s made a move.", name);
+            break;
+    }
+
+    broadcast_chat_message(state, MAX_PLAYERS, moveMsg);
 }

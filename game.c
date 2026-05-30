@@ -354,7 +354,8 @@ bool resolveNoAct(GameState* gs, Deck* deck)
 {
     int activeIDs[MAX_PLAYERS];
 
-    if(findActive(gs, activeIDs, false) > 0)
+    //when fewer than two players can still make betting decisions, betting is over.
+    if(findActive(gs, activeIDs, false) > 1)
         return false;
 
     while(gs->stage != RIVER)

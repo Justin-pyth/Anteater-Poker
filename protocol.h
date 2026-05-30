@@ -83,6 +83,7 @@ int create_socket(Client *client);
 
 void handle_after_move(ServerState *state);
 void start_new_hand(ServerState *state);
+void broadcast_move(ServerState *state, uint8_t playerID, MoveType move, uint32_t amount);
 
 //shared functions
 void error(const char *msg);

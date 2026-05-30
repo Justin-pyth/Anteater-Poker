@@ -64,8 +64,15 @@ int main(int argc, char *argv[])
             continue; // Continue to the next iteration of the loop if select fails
         }
         if (activity == 0) {
-            if (doOneBotTurn(&state.game, &state.deck))
+            uint8_t botID;
+            MoveType move;
+            uint32_t amount;
+
+            if (doOneBotTurn(&state.game, &state.deck, &botID, &move, &amount))
+            {
+                broadcast_move(&state, botID, move, amount);
                 handle_after_move(&state);
+            }
             continue;
         }
         if (FD_ISSET(state.listen_fd, &read_fds)) {
