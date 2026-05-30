@@ -62,6 +62,7 @@ void send_to_client(Client *client, const uint8_t *data, uint32_t len);
 
 
 void remove_client(ServerState *state, Client *client);
+void handle_player_disconnect(ServerState *state, Client *client);
 
 void cleanup_server(ServerState *state);
 

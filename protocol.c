@@ -15,23 +15,11 @@ void handle_client_communication(ServerState *state, Client *client)
     ssize_t n = read(client->client_fd, buffer, sizeof(buffer));
     if (n < 0) {
         perror("ERROR reading from socket");
-        uint8_t playerID = client->id;
-        bool wasPlaying = state->game.handPlaying;
-        remove_client(state, client);
-        if (wasPlaying) {
-            processMove(&state->game, &state->deck, playerID);
-            handle_after_move(state);
-        }
+        handle_player_disconnect(state, client);
         return;
     }
     if (n==0){
-        uint8_t playerID = client->id;
-        bool wasPlaying = state->game.handPlaying;
-        remove_client(state, client);
-        if (wasPlaying) {
-            processMove(&state->game, &state->deck, playerID);
-            handle_after_move(state);
-        }
+        handle_player_disconnect(state, client);
         return;
     }
     Message data;
@@ -111,13 +99,17 @@ void handle_client_communication(ServerState *state, Client *client)
                 }
             }
 
-            //player sends /ready
-            state->game.players[client->id].status = PLAYER_READY;
+            //player sends /ready (set busted players as spectatating)
+            if (state->game.players[client->id].chips > 0)
+                state->game.players[client->id].status = PLAYER_READY;
+            else
+                state->game.players[client->id].status = PLAYER_SPECTATING;
 
             //whenever someone readies, send a public broadcast
             const char *name = state->game.players[client->id].name;
             char msg[MAX_PAYLOAD_SIZE];
-            snprintf(msg, sizeof(msg), "%s is ready!", name);
+            //is ready if not busted, otherwise spectating
+            snprintf(msg, sizeof(msg), "%s %s", name, state->game.players[client->id].status == PLAYER_READY ? "is ready!" : "is spectating.");
             broadcast_chat_message(state, MAX_PLAYERS, msg);
 
             //server counts # of ready vs connected
@@ -127,10 +119,14 @@ void handle_client_communication(ServerState *state, Client *client)
             {
                 if (state->clients[i].connected) 
                 {
-                    connectedClients++;
+                    //dont count spectating players as ready
+                    if (state->game.players[i].status != PLAYER_SPECTATING)
+                    {
+                        connectedClients++;
 
-                if (state->game.players[i].status == PLAYER_READY)
-                    readyClients++;
+                        if (state->game.players[i].status == PLAYER_READY)
+                            readyClients++;
+                    }
                 }
             }
 
@@ -393,6 +389,35 @@ void remove_client(ServerState *state, Client *client)
     client->sock_fd = -1;
     client->connected = 0; // Mark the client as not connected
 }
+
+void handle_player_disconnect(ServerState *state, Client *client)
+{
+    uint8_t playerID = client->id;
+    bool wasPlaying = state->game.handPlaying; //track if the hand was active
+    bool wasCurrent = wasPlaying && state->game.currentPlayer == playerID; //track the current player
+
+    remove_client(state, client);
+
+    //if the game wasn't active, then just broadcast the player leaving
+    if (!wasPlaying) 
+    {
+        broadcast_game_state(state);
+        return;
+    }
+
+    //if the game was active
+    int activeIDs[MAX_PLAYERS];
+    int activeCount = findActive(&state->game, activeIDs, true);
+    if (activeCount <= 1 || wasCurrent) // and the player who left was the current player
+    {   //handle their move
+        processMove(&state->game, &state->deck, playerID);
+        handle_after_move(state);
+        return;
+    }
+    //if the hand was playing, then just broadcast
+    broadcast_game_state(state);
+}
+
 void cleanup_server(ServerState *state)
 {
     for (int i = 0; i < MAX_CLIENTS; i++) {
