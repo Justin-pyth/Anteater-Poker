@@ -524,27 +524,18 @@ void handle_after_move(ServerState *state)
         return;
     }
 
-    /*FOR ALLIN RUNOUT: requires some [bool revealed] in gameState, not that important
-    
-    //count the number of players that can bet
-    int canBet = 0;
-    for(int i = 0; i < MAX_PLAYERS; i++) {
-        if(state->game.players[i].status == PLAYER_PLAYING) {
-            canBet++;
-        }
-    }
-    
-    //if everyone goes all-in force their cards to show
-    if (canBet <= 1 && state->game.handPlaying) {
-        for(int i = 0; i < MAX_PLAYERS; i++) {
-            if(state->game.players[i].status == PLAYER_ALL_IN || state->game.players[i].status == PLAYER_PLAYING) {
-                state->game.hand_revealed[i] = true;
-            }
-        }
-    }
 
+
+    //if runout condition, set runout as pending
+    //runout condition is when hand is active and the number of active (non all in) players are <= 1
+    /*
+    if(isRunout(&state->game))
+    {
+        state->runout_pending = 1;
+        broadcast_game_state(state);
+        return;
+    }
     */
-
 
     //if the game is active, then just broadcast the state, otherwise
     //have to reset the hand if game is not active

@@ -236,7 +236,7 @@ void resetHand(GameState* gs)
         else p->status = PLAYER_READY;
         
         //reset bets and cards
-        p->current_bet = 0; p->has_cards = 0;
+        p->current_bet = 0; p->has_cards = 0; p->place = 0;
         memset(&p->hand, 0, sizeof(p->hand));
 
         gs->acted[i] = false;
@@ -255,6 +255,8 @@ void resetHand(GameState* gs)
     gs->pot = 0;
     gs->currentBet = 0;
     gs->minRaise = 0;
+    gs->smallBlindIndex = 0;
+    gs->bigBlindIndex = 0;
 
     gs->handPlaying = false;
     
@@ -294,6 +296,9 @@ void newHand(GameState* gs, Deck* deck)
     gs->gameOver = 0;
     gs->winnerID = MAX_PLAYERS+1;//aka invalid id (no winner yet)
 
+    //set last actor
+    gs->lastActor = MAX_PLAYERS;
+
     //set current player after blinds
     initBlinds(gs);
     resolveNoAct(gs, deck);
@@ -304,7 +309,7 @@ void newHand(GameState* gs, Deck* deck)
 void advance(GameState* gs, Deck* deck)
 {
     gs->currentBet = 0;
-    gs->minRaise = BIG_BLIND;
+    gs->minRaise = gs->bigBlind ? gs->bigBlind : BIG_BLIND;
     
     for(int i = 0 ; i < MAX_PLAYERS; i++)
     {
@@ -367,11 +372,34 @@ bool resolveNoAct(GameState* gs, Deck* deck)
     return true;
 }
 
+bool resolveNoActStep(GameState* gs, Deck* deck)
+{
+    int activeIDs[MAX_PLAYERS];
+
+    //when fewer than two players can still make betting decisions, betting is over.
+    if(findActive(gs, activeIDs, false) > 1)
+        return false;
+
+    //try dealing 1 stage at a time
+    if(gs->stage != RIVER)
+    {
+        advance(gs, deck);
+        return true;
+    }
+
+    //if at last stage, then return true and award
+    award(gs);
+    gs->handPlaying = false;
+    gs->currentPlayer = MAX_PLAYERS;
+    return true;
+}
+
 
 void processMove(GameState* gs, Deck* deck, uint8_t playerID)
 {
     int activeIDs[MAX_PLAYERS];
     int count = findActive(gs, activeIDs, true);
+    gs->lastActor = playerID; //entry
 
     //check if everyone except 1 folded (or left)
     if(count == 1)
@@ -440,4 +468,11 @@ int countStatus(const GameState* gs, PlayerStatus status)
     }
     
     return count;
+}
+
+bool isRunout(const GameState *gs)
+{
+    int activeIDs[MAX_PLAYERS];
+
+    return (gs->handPlaying && findActive(gs, activeIDs, false) <= 1);
 }

@@ -50,6 +50,7 @@ bool resolveNoAct(GameState* gs, Deck* deck); //to fix edge case where no player
 int remainingPlayers(const GameState* gs); //gets # of remaining players w/ chips
 
 int countStatus(const GameState* gs, PlayerStatus status); //return the number of players that are X status
+bool isRunout(const GameState *gs);
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     The flow of a move will be:
         -client uses sendMove() to the server
