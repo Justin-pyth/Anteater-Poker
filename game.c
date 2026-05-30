@@ -259,7 +259,8 @@ void resetHand(GameState* gs)
     gs->bigBlindIndex = 0;
 
     gs->handPlaying = false;
-    
+    gs->phase = HAND_IDLE;
+
 }
 
 void resetGame(GameState* gs)
@@ -284,6 +285,117 @@ void resetGame(GameState* gs)
 
 // initBlinds() moved to rules.c
 
+/* ============================================================
+    HAND FSM  (phase transitions)
+
+    A hand moves through: BETTING -> (RUNOUT) -> COMPLETE.
+    processMove() is the single transition taken after each move;
+    runoutStep() is ticked by the server to pace the all-in reveal.
+   ============================================================ */
+
+// players still contesting the pot (not folded): PLAYING + ALL_IN
+static int contesting(const GameState* gs)
+{
+    int ids[MAX_PLAYERS];
+    return findActive(gs, ids, true);
+}
+
+// players who can still make a betting decision: PLAYING only (all-in can't act)
+static int ableToBet(const GameState* gs)
+{
+    int ids[MAX_PLAYERS];
+    return findActive(gs, ids, false);
+}
+
+// deal the next community street and open a fresh betting round.
+// never deals past the river; does NOT pick the next actor (caller decides).
+static void dealStreet(GameState* gs, Deck* deck)
+{
+    gs->currentBet = 0;
+    gs->minRaise = gs->bigBlind ? gs->bigBlind : BIG_BLIND;
+
+    for(int i = 0; i < MAX_PLAYERS; i++)
+    {
+        gs->acted[i] = false;
+        gs->players[i].current_bet = 0;
+    }
+
+    switch(gs->stage)
+    {
+        case PREFLOP:
+            gs->community[0] = deal(deck);
+            gs->community[1] = deal(deck);
+            gs->community[2] = deal(deck);
+            gs->communityCount = 3;
+            gs->stage = FLOP;
+            break;
+        case FLOP:
+            gs->community[3] = deal(deck);
+            gs->communityCount = 4;
+            gs->stage = TURN;
+            break;
+        case TURN:
+            gs->community[4] = deal(deck);
+            gs->communityCount = 5;
+            gs->stage = RIVER;
+            break;
+        case RIVER:
+            break; //no street past the river; showdown is handled separately
+    }
+}
+
+// single hand-teardown path: pot cleared, hand parked in COMPLETE for the server.
+static void endHand(GameState* gs)
+{
+    gs->pot = 0;
+    gs->handPlaying = false;
+    gs->currentPlayer = MAX_PLAYERS;
+    gs->phase = HAND_COMPLETE;
+}
+
+// everyone but one player folded -> that player wins the pot uncontested.
+static void endHandFold(GameState* gs)
+{
+    int ids[MAX_PLAYERS];
+    findActive(gs, ids, true); //exactly one contestant remains
+    uint8_t winner = ids[0];
+
+    gs->players[winner].chips += gs->pot;
+    gs->winnerID = winner;
+    endHand(gs);
+}
+
+// final street reached -> evaluate hands and pay the winner(s).
+static void endHandShowdown(GameState* gs)
+{
+    award(gs); //sets winnerID, pays chips, zeroes pot
+    endHand(gs);
+}
+
+// enter the paced all-in runout; the server ticks runoutStep() from here.
+static void beginRunout(GameState* gs)
+{
+    gs->phase = HAND_RUNOUT;
+    gs->currentPlayer = MAX_PLAYERS; //no one acts during a runout
+}
+
+// betting round is settled: go to showdown, deal the next street, or run it out.
+static void settleBettingRound(GameState* gs, Deck* deck)
+{
+    if(gs->stage == RIVER)        //no streets left -> showdown
+    {
+        endHandShowdown(gs);
+        return;
+    }
+    if(ableToBet(gs) > 1)         //2+ players can still bet -> next street, keep betting
+    {
+        dealStreet(gs, deck);
+        gs->currentPlayer = nextActive(gs, gs->dealerIndex, false);
+        return;
+    }
+    beginRunout(gs);              //<=1 can act but streets remain -> paced runout
+}
+
 void newHand(GameState* gs, Deck* deck)
 {
     shuffle(deck);
@@ -291,6 +403,7 @@ void newHand(GameState* gs, Deck* deck)
 
     //set to Preflop stage
     gs->stage = PREFLOP; gs->handPlaying = true;
+    gs->phase = HAND_BETTING;
 
     //reset gameover
     gs->gameOver = 0;
@@ -299,132 +412,60 @@ void newHand(GameState* gs, Deck* deck)
     //set last actor
     gs->lastActor = MAX_PLAYERS;
 
-    //set current player after blinds
+    //post blinds and set the first player to act
     initBlinds(gs);
-    resolveNoAct(gs, deck);
+
+    //blinds alone can already decide the hand (only one contestant, or everyone
+    //forced all-in by the blinds) -> route through the same settle path as a move
+    if(contesting(gs) == 1)
+        endHandFold(gs);
+    else if(allPlayersWent(gs))
+        settleBettingRound(gs, deck);
 }
 
 // allPlayersWent() moved to rules.c
 
-void advance(GameState* gs, Deck* deck)
-{
-    gs->currentBet = 0;
-    gs->minRaise = gs->bigBlind ? gs->bigBlind : BIG_BLIND;
-    
-    for(int i = 0 ; i < MAX_PLAYERS; i++)
-    {
-        Player *p = &gs->players[i];
-
-        gs->acted[i] = false;
-        p->current_bet = 0;
-    }
-
-    switch (gs->stage)
-    {
-        case PREFLOP:
-        {
-            gs->community[0] = deal(deck);
-            gs->community[1] = deal(deck);
-            gs->community[2] = deal(deck);
-            gs->communityCount = 3; 
-            gs->stage = FLOP;
-            break;
-        }
-        case FLOP:
-        {
-            gs->community[3] = deal(deck);
-            gs->communityCount = 4; 
-            gs->stage = TURN;
-            break;
-        }
-        case TURN:
-        {
-            gs->community[4] = deal(deck);
-            gs->communityCount = 5; 
-            gs->stage = RIVER;
-            break;
-        }
-        case RIVER:
-        {
-            award(gs);          // Evaluates hands and adds chips to winners
-            gs->handPlaying = false; // The hand is concluded
-            return;
-        }
-    }
-
-    gs->currentPlayer = nextActive(gs, gs->dealerIndex, false);
-}
-
-bool resolveNoAct(GameState* gs, Deck* deck)
-{
-    int activeIDs[MAX_PLAYERS];
-
-    //when fewer than two players can still make betting decisions, betting is over.
-    if(findActive(gs, activeIDs, false) > 1)
-        return false;
-
-    while(gs->stage != RIVER)
-        advance(gs, deck);
-
-    award(gs);
-    gs->handPlaying = false;
-    gs->currentPlayer = MAX_PLAYERS;
-    return true;
-}
-
-bool resolveNoActStep(GameState* gs, Deck* deck)
-{
-    int activeIDs[MAX_PLAYERS];
-
-    //when fewer than two players can still make betting decisions, betting is over.
-    if(findActive(gs, activeIDs, false) > 1)
-        return false;
-
-    //try dealing 1 stage at a time
-    if(gs->stage != RIVER)
-    {
-        advance(gs, deck);
-        return true;
-    }
-
-    //if at last stage, then return true and award
-    award(gs);
-    gs->handPlaying = false;
-    gs->currentPlayer = MAX_PLAYERS;
-    return true;
-}
-
-
+// FSM transition taken after a move has been applied (or a current player left).
 void processMove(GameState* gs, Deck* deck, uint8_t playerID)
 {
-    int activeIDs[MAX_PLAYERS];
-    int count = findActive(gs, activeIDs, true);
-    gs->lastActor = playerID; //entry
+    gs->lastActor = playerID;
 
-    //check if everyone except 1 folded (or left)
-    if(count == 1)
+    //everyone else folded -> uncontested pot
+    if(contesting(gs) == 1)
     {
-        gs->players[activeIDs[0]].chips += gs->pot; //pay the pot
-        gs->winnerID = activeIDs[0];
-        gs->pot = 0; //reset pot
-        gs->handPlaying = false;
-        gs->currentPlayer = MAX_PLAYERS;
+        endHandFold(gs);
         return;
     }
 
-    if(resolveNoAct(gs, deck))
-        return;
-
-    //if everyone went, then advance to next stage
-    if(allPlayersWent(gs))
+    //betting round not settled yet -> hand off to the next player who can act.
+    //(this is what gives an opponent the chance to call/fold an all-in instead
+    // of being run out on automatically.)
+    if(!allPlayersWent(gs))
     {
-        advance(gs, deck);
+        gs->currentPlayer = nextActive(gs, playerID, false);
         return;
     }
 
-    //next player's turn if normal move and nothing else occurs
-    gs->currentPlayer = nextActive(gs, playerID, false);
+    //betting round settled -> showdown / next street / runout
+    settleBettingRound(gs, deck);
+}
 
+// Ticked by the server while phase == HAND_RUNOUT to pace the all-in reveal:
+// reveals one more street per call, then runs the showdown. Returns true while
+// more reveals remain, false once the hand is decided.
+bool runoutStep(GameState* gs, Deck* deck)
+{
+    if(gs->phase != HAND_RUNOUT)
+        return false;
+
+    if(gs->stage == RIVER)   //all community cards out -> showdown, runout done
+    {
+        endHandShowdown(gs);
+        return false;
+    }
+
+    dealStreet(gs, deck);    //reveal one more street
+    return true;
 }
 
 bool tryMove(GameState* gs, Deck* deck, uint8_t playerID, MoveType move, uint32_t amount)
@@ -470,9 +511,3 @@ int countStatus(const GameState* gs, PlayerStatus status)
     return count;
 }
 
-bool isRunout(const GameState *gs)
-{
-    int activeIDs[MAX_PLAYERS];
-
-    return (gs->handPlaying && findActive(gs, activeIDs, false) <= 1);
-}

@@ -35,9 +35,11 @@ void handle_client_communication(ServerState *state, Client *client)
                 broadcast_game_state(state);
                 return;
             }
-
+            
             if(tryMove(&state->game, &state->deck, data.action.playerID, data.action.move, data.action.amount))
             {   
+                apply(&state->game, data.action.playerID, data.action.move, data.action.amount); //apply the move on the server if valid
+                processMove(&state->game, &state->deck, data.action.playerID); //FSM transition: apply already done, decide next phase
                 broadcast_move(state, data.action.playerID, data.action.move, data.action.amount);
                 handle_after_move(state);
               
@@ -232,6 +234,10 @@ void init_server(ServerState *state)
         memset(state->clients[i].name, 0, sizeof(state->clients[i].name));
     }
 
+    //no timed FSM action pending yet
+    state->timer_active = 0;
+    memset(&state->timer_deadline, 0, sizeof(state->timer_deadline));
+
     //init deck and gamestate
     memset(&state->game, 0, sizeof(GameState));
     initDeck(&state->deck);
@@ -318,10 +324,12 @@ void broadcast_game_state(ServerState *state)
             temp_data.gameState = state->game; 
             temp_data.gameState.yourPlayerID = state->clients[i].id;
             
-            // Hide hole cards only during an active hand. Once the hand ends,
-            // broadcast the full state briefly before moving to the next hand.
-            if (state->game.handPlaying) {
-                hide_card_info_for_others(&temp_data.gameState, state->clients[i].id); 
+            // Hide hole cards only while betting is still live (HAND_BETTING).
+            // Once betting is settled the hand enters HAND_RUNOUT/HAND_COMPLETE and
+            // all remaining hands are turned face-up so the all-in runout and the
+            // showdown are visible as the board rolls out.
+            if (state->game.phase == HAND_BETTING) {
+                hide_card_info_for_others(&temp_data.gameState, state->clients[i].id);
             }
             
             temp_data.type = MSG_TYPE_GAME_STATE;
@@ -468,81 +476,131 @@ void error(const char *msg)
     perror(msg);
     exit(1);
 }
-//return -1 if game over or invalid, next player id ow.
-void handle_after_move(ServerState *state)
-{   
-    //don't let moves go through if game is already over
-    if(state->game.gameOver)
-    {
-        broadcast_game_state(state);
-        return;
+#define RUNOUT_TICK_MS   1000  //one community card revealed per second during an all-in runout
+#define INTERHAND_MS     3000  //pause after a hand before the next one starts (was a blocking sleep(3))
+
+//arm the non-blocking FSM timer to fire `ms` milliseconds from now.
+static void arm_timer(ServerState *state, long ms)
+{
+    gettimeofday(&state->timer_deadline, NULL);
+    state->timer_deadline.tv_sec  += ms / 1000;
+    state->timer_deadline.tv_usec += (ms % 1000) * 1000;
+    if (state->timer_deadline.tv_usec >= 1000000) {
+        state->timer_deadline.tv_sec  += 1;
+        state->timer_deadline.tv_usec -= 1000000;
     }
+    state->timer_active = 1;
+}
 
-    //if the game is not active and a move is made
-    if (!state->game.handPlaying)
+//the hand has reached HAND_COMPLETE: announce the result, end the tournament if
+//only one player has chips left, otherwise arm the inter-hand delay.
+static void finish_hand(ServerState *state)
+{
+    GameState *g = &state->game;
+
+    //tournament over: a single player holds all the chips
+    if (remainingPlayers(g) == 1)
     {
-        //check for winner
-        if (remainingPlayers(&state->game) == 1)
+        for (int i = 0; i < MAX_PLAYERS; i++)
         {
-            for (int i = 0; i < MAX_PLAYERS; i++)
+            Player *p = &g->players[i];
+            if (p->chips > 0 &&
+                p->status != PLAYER_EMPTY &&
+                p->status != PLAYER_DISCONNECTED)
             {
-                Player *p = &state->game.players[i];
-
-                if (p->chips > 0 &&
-                    p->status != PLAYER_EMPTY &&
-                    p->status != PLAYER_DISCONNECTED)
-                {
-                    state->game.winnerID = p->id;
-                    break;
-                }
+                g->winnerID = p->id;
+                break;
             }
-            
-            //find the winner above and set gameOver to true
-            state->game.gameOver = 1;
-            if (state->game.winnerID < MAX_PLAYERS) {
-                char msg[MAX_PAYLOAD_SIZE];
-                snprintf(msg, sizeof(msg), "%s wins the game!",
-                         state->game.players[state->game.winnerID].name);
-                broadcast_chat_message(state, MAX_PLAYERS, msg);
-            }
-            broadcast_game_state(state);
-            return;
         }
 
-        //if there is no winner after the move, broadcast the final hand state so
-        //clients can see cards, then pause briefly before starting a new hand.
-        if (state->game.winnerID < MAX_PLAYERS) 
-        {
+        g->gameOver = 1;
+        if (g->winnerID < MAX_PLAYERS) {
             char msg[MAX_PAYLOAD_SIZE];
-            snprintf(msg, sizeof(msg), "%s wins the hand.",
-                     state->game.players[state->game.winnerID].name);
+            snprintf(msg, sizeof(msg), "%s wins the game!", g->players[g->winnerID].name);
             broadcast_chat_message(state, MAX_PLAYERS, msg);
         }
         broadcast_game_state(state);
-        sleep(3);
-        start_new_hand(state);
-        return;
+        return; //no timer: game is over, wait for a new game
     }
 
-
-
-    //if runout condition, set runout as pending
-    //runout condition is when hand is active and the number of active (non all in) players are <= 1
-    /*
-    if(isRunout(&state->game))
+    //hand winner announcement (split pots use the MAX_PLAYERS+1 sentinel -> skipped)
+    if (g->winnerID < MAX_PLAYERS)
     {
-        state->runout_pending = 1;
+        char msg[MAX_PAYLOAD_SIZE];
+        snprintf(msg, sizeof(msg), "%s wins the hand.", g->players[g->winnerID].name);
+        broadcast_chat_message(state, MAX_PLAYERS, msg);
+    }
+    broadcast_game_state(state);
+
+    //non-blocking pause before the next hand
+    arm_timer(state, INTERHAND_MS);
+}
+
+//dispatch after a move (or a current player leaving) based on the hand FSM phase.
+void handle_after_move(ServerState *state)
+{
+    GameState *g = &state->game;
+
+    //don't let anything proceed once the game is over
+    if (g->gameOver)
+    {
         broadcast_game_state(state);
         return;
     }
-    */
 
-    //if the game is active, then just broadcast the state, otherwise
-    //have to reset the hand if game is not active
-    broadcast_game_state(state);
-    broadcast_cd_signal(state, state->game.currentPlayer); //send countdown signal to the next player
+    switch (g->phase)
+    {
+        case HAND_BETTING:
+            //normal turn hand-off: show state, prompt the next player
+            broadcast_game_state(state);
+            broadcast_cd_signal(state, g->currentPlayer);
+            break;
 
+        case HAND_RUNOUT:
+            //all-in: show the board so far, then let the timer pace the reveal
+            broadcast_game_state(state);
+            arm_timer(state, RUNOUT_TICK_MS);
+            break;
 
+        case HAND_COMPLETE:
+            //hand decided: announce winner, end game or arm the inter-hand delay
+            finish_hand(state);
+            break;
+
+        case HAND_IDLE:
+        default:
+            broadcast_game_state(state);
+            break;
+    }
+}
+
+//run the pending timed FSM action. Called by the server loop when the timer fires.
+void service_timer(ServerState *state)
+{
+    GameState *g = &state->game;
+    state->timer_active = 0; //consume it; re-armed below if more pacing is needed
+
+    if (g->phase == HAND_RUNOUT)
+    {
+        bool more = runoutStep(g, &state->deck);
+        if (more)
+        {
+            broadcast_game_state(state); //show the freshly revealed street
+            arm_timer(state, RUNOUT_TICK_MS);
+        }
+        else
+        {
+            finish_hand(state); //runout reached the showdown -> result + inter-hand delay
+        }
+        return;
+    }
+
+    if (g->phase == HAND_COMPLETE)
+    {
+        //inter-hand delay elapsed -> deal the next hand
+        start_new_hand(state);
+        return;
+    }
 }
 
 void start_new_hand(ServerState *state)
@@ -575,8 +633,10 @@ void start_new_hand(ServerState *state)
     addBot(&state->game, false);
     newHand(&state->game, &state->deck);
     broadcast_chat_message(state, MAX_PLAYERS, "Starting next hand.");
-    broadcast_game_state(state);
-    broadcast_cd_signal(state, state->game.currentPlayer);
+
+    //dispatch on the new hand's phase: usually HAND_BETTING (broadcast + prompt),
+    //but blinds can immediately force a runout or decide the hand.
+    handle_after_move(state);
 }
 
 void broadcast_move(ServerState *state, uint8_t playerID, MoveType move, uint32_t amount)
