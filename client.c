@@ -65,6 +65,7 @@ void init_gui(int *argc, char ***argv)
         snprintf(id, sizeof(id), "opp_name_%d",   i); W.opp_name[i]   = GET(id);
         snprintf(id, sizeof(id), "opp_chips_%d",  i); W.opp_chips[i]  = GET(id);
         snprintf(id, sizeof(id), "opp_status_%d", i); W.opp_status[i] = GET(id);
+        snprintf(id, sizeof(id), "opp_blind_%d",  i); W.opp_blind[i]  = GET(id);
 
         snprintf(id, sizeof(id), "opp_timer_bar_%d", i);
         W.opp_timer[i].bar = GET(id);

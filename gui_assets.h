@@ -51,6 +51,7 @@ typedef struct {
     GtkWidget *opp_frame [GUI_OPPONENT_SLOTS];
     GtkWidget *opp_name  [GUI_OPPONENT_SLOTS];
     GtkWidget *opp_chips [GUI_OPPONENT_SLOTS];
+    GtkWidget *opp_blind[GUI_OPPONENT_SLOTS];
     GtkWidget *opp_status[GUI_OPPONENT_SLOTS];
     GtkWidget *opp_cards[GUI_OPPONENT_SLOTS][2];
     SeatTimer  opp_timer [GUI_OPPONENT_SLOTS];
@@ -182,6 +183,8 @@ static const char * __attribute__((unused)) CSS =
 "  border-radius: 6px; font-family: 'Georgia', serif;"
 "  font-size: 12px; font-weight: bold; padding: 6px 14px; }"
 "#btn-send-chat:hover { background-color: #f0d898; }";
+
+
 
 
 #endif /* TEMP_GUI_ASSETS_H */

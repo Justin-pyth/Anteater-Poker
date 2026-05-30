@@ -11,22 +11,27 @@
 #include <string.h>
 
 //Swap both of your cards with an opponent of your choosing
-void swapCard (GameState gs, const Card* ownHand, const Card* oppHand);
+void swapCard(GameState *gs, int myID, int oppID);
 
 //Swap one of your cards with an opponent of your choosing
-void swapCards (GameState gs, const Card* ownHand, const Card* oppHand);
+void swapCards(GameState *gs, int myID, int myCardIdx, int oppID, int oppCardIdx);
 
 //Redraw one of your cards from the deck
-void redrawCards (GameState gs, const Card* ownHand, Deck* deck);
+void redrawCards(GameState *gs, Deck *deck, int myID, int myCardIdx);
 
 //Reveal the next community card
-void revealComCard (GameState gs, const Card* ownHand, Deck* community);
+void revealComCard(GameState *gs, Deck *deck);
 
 //Reveal one of your opponents cards in exchange for one of yours
-void revealOppCard (GameState gs, const Card* oppHand);
+void revealOppCard(GameState *gs, int oppID, int oppCardIdx);
 
 //Swap your opponent's cards 
-void swapOppCards (GameState gs, const Card* oppHand1, const Card* oppHand2);
+void swapOppCards(GameState *gs, int oppID);
+
+//Win game (pay 75% of total prize pool)
+void instaWin(GameState *gs, int myID);
+
+#endif
 
 /*
 UNKNOW_R = 0
@@ -50,5 +55,3 @@ DIAMONDS = 2
 CLUBS = 3
 SPADES = 4
 */
-
-#endif

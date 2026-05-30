@@ -188,8 +188,14 @@ void refresh_ui(void)
         gtk_label_set_text(GTK_LABEL(W.opp_chips[i]),  "$0  |  bet $0");
         gtk_label_set_text(GTK_LABEL(W.opp_status[i]), "Waiting");
         gtk_style_context_remove_class(
-            gtk_widget_get_style_context(W.opp_frame[i]), "active-seat");
+        gtk_widget_get_style_context(W.opp_frame[i]), "active-seat");
     }
+
+    if (game->handPlaying)
+        update_blind_chips(game->dealerIndex, game->playerCount);
+    else
+        for (int i = 0; i < GUI_OPPONENT_SLOTS; i++)
+            if (W.opp_blind[i]) gtk_label_set_text(GTK_LABEL(W.opp_blind[i]), "");
 
     int my_turn  = C.connected && game->handPlaying && game->currentPlayer == C.my_player_id;
     int can_check = me->current_bet >= game->currentBet;

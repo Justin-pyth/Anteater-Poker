@@ -432,3 +432,4 @@ void ext_set_anteater_count(GuiExtensions *ext, int count)
     snprintf(buf, sizeof(buf), "Anteater Deck:\n%d card%s", count, count == 1 ? "" : "s");
     gtk_label_set_text(GTK_LABEL(ext->anteater_count_label), buf);
 }
+

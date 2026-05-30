@@ -211,3 +211,30 @@ void sendChatToServer(const char *text)
     uint32_t len = prepare_payload(buffer, MSG_TYPE_CHAT_MESSAGE, &msg);
     send_to_server(&C, buffer, len);
 }
+
+void update_blind_chips(int dealer_idx, int num_players) {
+    int sb_idx = (dealer_idx + 1) % num_players;
+    int bb_idx = (dealer_idx + 2) % num_players;
+
+    for (int i = 0; i < GUI_OPPONENT_SLOTS; i++) {
+        if (!W.opp_blind[i]) continue;
+
+        GtkStyleContext *ctx = gtk_widget_get_style_context(W.opp_blind[i]);
+        gtk_style_context_remove_class(ctx, "chip-dealer");
+        gtk_style_context_remove_class(ctx, "chip-sb");
+        gtk_style_context_remove_class(ctx, "chip-bb");
+
+        if (i == dealer_idx) {
+            gtk_label_set_text(GTK_LABEL(W.opp_blind[i]), "D");
+            gtk_style_context_add_class(ctx, "chip-dealer");
+        } else if (i == sb_idx) {
+            gtk_label_set_text(GTK_LABEL(W.opp_blind[i]), "SB");
+            gtk_style_context_add_class(ctx, "chip-sb");
+        } else if (i == bb_idx) {
+            gtk_label_set_text(GTK_LABEL(W.opp_blind[i]), "BB");
+            gtk_style_context_add_class(ctx, "chip-bb");
+        } else {
+            gtk_label_set_text(GTK_LABEL(W.opp_blind[i]), "");
+        }
+    }
+}

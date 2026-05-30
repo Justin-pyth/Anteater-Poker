@@ -189,3 +189,33 @@ progressbar.timer-red    progress { background-color: #c0392b; }
   padding: 6px 14px;
 }
 #btn-send-chat:hover { background-color: #f0d898; }
+
+.chip-dealer {
+    background-color: #e8c040;
+    color: #3d2a00;
+    border-radius: 999px;
+    padding: 1px 6px;
+    font-weight: bold;
+    font-size: 10px;
+    margin-top: 2px;
+}
+
+.chip-sb {
+    background-color: #5aaaf5;
+    color: #042c53;
+    border-radius: 999px;
+    padding: 1px 6px;
+    font-weight: bold;
+    font-size: 10px;
+    margin-top: 2px;
+}
+
+.chip-bb {
+    background-color: #e85d45;
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 1px 6px;
+    font-weight: bold;
+    font-size: 10px;
+    margin-top: 2px;
+}

@@ -35,4 +35,7 @@ void sendReadyToServer(void);
 void sendNameToServer(const char *name);
 void sendChatToServer(const char *text);
 
+/* -- Blind Chips  -------------------------------------------------- */
+void update_blind_chips(int dealer_idx, int num_players);
+
 #endif /* TEMP_GUI_HELPERS_H */
