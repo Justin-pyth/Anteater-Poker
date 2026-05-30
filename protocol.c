@@ -100,16 +100,13 @@ void handle_client_communication(ServerState *state, Client *client)
             }
 
             //player sends /ready (set busted players as spectatating)
-            if (state->game.players[client->id].chips > 0)
-                state->game.players[client->id].status = PLAYER_READY;
-            else
-                state->game.players[client->id].status = PLAYER_SPECTATING;
+            state->game.players[client->id].status = PLAYER_READY;
 
             //whenever someone readies, send a public broadcast
             const char *name = state->game.players[client->id].name;
             char msg[MAX_PAYLOAD_SIZE];
             //is ready if not busted, otherwise spectating
-            snprintf(msg, sizeof(msg), "%s %s", name, state->game.players[client->id].status == PLAYER_READY ? "is ready!" : "is spectating.");
+            snprintf(msg, sizeof(msg), "%s is ready!", name);
             broadcast_chat_message(state, MAX_PLAYERS, msg);
 
             //server counts # of ready vs connected
@@ -119,14 +116,10 @@ void handle_client_communication(ServerState *state, Client *client)
             {
                 if (state->clients[i].connected) 
                 {
-                    //dont count spectating players as ready
-                    if (state->game.players[i].status != PLAYER_SPECTATING)
-                    {
-                        connectedClients++;
+                    connectedClients++;
 
-                        if (state->game.players[i].status == PLAYER_READY)
-                            readyClients++;
-                    }
+                    if (state->game.players[i].status == PLAYER_READY)
+                        readyClients++;
                 }
             }
 
