@@ -101,7 +101,7 @@ typedef struct {
 
     uint8_t status;
     uint8_t has_cards;
-
+    uint8_t place;
 }   Player;
 
 //struct for rankings of poker hands
@@ -146,13 +146,18 @@ typedef struct {
     uint8_t currentPlayer;
     uint8_t dealerIndex;
     uint8_t yourPlayerID;
+    uint8_t smallBlindIndex;
+    uint8_t bigBlindIndex;
 
+    uint32_t smallBlind;
+    uint32_t bigBlind;
     uint32_t pot;
     uint32_t currentBet;     // bet needed to match
     uint32_t minRaise;
     uint8_t gameOver;
     uint8_t winnerID;
     //non encoded
+    uint8_t lastActor;
     bool handPlaying; //for starting new hands after reset
     bool acted[MAX_PLAYERS];
   
