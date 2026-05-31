@@ -258,6 +258,22 @@ if (me->has_cards) {
             gtk_widget_get_style_context(W.opp_frame[i]), "active-seat");
     }
 
+    /* One-shot chip-win popup: fire once when a hand ends with a single winner.
+       Alpha has no showdown flag, so trigger on the handPlaying true->false edge.
+       endHand() has already zeroed the pot by now, so use the pot captured on the
+       last live frame (prev_pot). */
+    static int      prev_handPlaying = 0;
+    static uint32_t prev_pot         = 0;
+    if (prev_handPlaying && !game->handPlaying && game->winnerID < MAX_PLAYERS) {
+        const char *wname = (game->winnerID == C.my_player_id)
+            ? "You"
+            : (game->players[game->winnerID].name[0]
+               ? game->players[game->winnerID].name : "Player");
+        start_chip_win_anim(wname, prev_pot);
+    }
+    prev_handPlaying = game->handPlaying;
+    if (game->handPlaying) prev_pot = game->pot;  /* remember pot while the hand is live */
+
     int my_turn  = C.connected && game->handPlaying && game->currentPlayer == C.my_player_id;
     int can_check = me->current_bet >= game->currentBet;
 

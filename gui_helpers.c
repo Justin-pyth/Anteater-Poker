@@ -157,6 +157,76 @@ void set_blind_marker(GtkWidget *da, BlindKind kind)
     gtk_widget_queue_draw(da);
 }
 
+/* -- Chip win floating popup ----------------------------------------------- */
+typedef struct { GtkWidget *popup; float alpha; int x, y; guint id; } ChipWin;
+
+static gboolean chip_win_tick(gpointer data)
+{
+    ChipWin *cw = (ChipWin *)data;
+    cw->alpha -= 0.025f;
+    cw->y     -= 1;
+    if (cw->alpha <= 0.0f || !GTK_IS_WIDGET(cw->popup)) {
+        if (GTK_IS_WIDGET(cw->popup)) gtk_widget_destroy(cw->popup);
+        g_free(cw);
+        return G_SOURCE_REMOVE;
+    }
+    gtk_widget_set_opacity(cw->popup, (double)cw->alpha);
+    gtk_window_move(GTK_WINDOW(cw->popup), cw->x, cw->y);
+    return G_SOURCE_CONTINUE;
+}
+
+void start_chip_win_anim(const char *winner_name, uint32_t amount)
+{
+    if (!W.window) return;
+
+    GtkWidget *popup = gtk_window_new(GTK_WINDOW_POPUP);
+    gtk_window_set_decorated(GTK_WINDOW(popup), FALSE);
+    gtk_window_set_skip_taskbar_hint(GTK_WINDOW(popup), TRUE);
+    gtk_window_set_transient_for(GTK_WINDOW(popup), GTK_WINDOW(W.window));
+
+    char buf[128];
+    snprintf(buf, sizeof(buf), "%s wins  +$%u",
+             (winner_name && winner_name[0]) ? winner_name : "Player", amount);
+
+    char markup[256];
+    snprintf(markup, sizeof(markup),
+        "<span foreground='#ffd700' font='Georgia Bold 20'>%s</span>", buf);
+    GtkWidget *label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(label), markup);
+
+    GtkWidget *box = gtk_event_box_new();
+    gtk_widget_set_name(box, "chip-win-box");
+    gtk_container_add(GTK_CONTAINER(box), label);
+    gtk_container_add(GTK_CONTAINER(popup), box);
+
+    GtkCssProvider *prov = gtk_css_provider_new();
+    gtk_css_provider_load_from_data(prov,
+        "#chip-win-box { background-color: rgba(25,15,45,0.92);"
+        "  border: 2px solid #ffd700; border-radius: 10px;"
+        "  padding: 10px 22px; }",
+        -1, NULL);
+    gtk_style_context_add_provider(
+        gtk_widget_get_style_context(box),
+        GTK_STYLE_PROVIDER(prov),
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1);
+    g_object_unref(prov);
+
+    int wx = 0, wy = 0, ww = 900, wh = 660;
+    gtk_window_get_position(GTK_WINDOW(W.window), &wx, &wy);
+    gtk_window_get_size(GTK_WINDOW(W.window), &ww, &wh);
+    int px = wx + ww / 2 - 140;
+    int py = wy + wh / 2 - 25;
+    gtk_window_move(GTK_WINDOW(popup), px, py);
+    gtk_widget_show_all(popup);
+
+    ChipWin *cw = g_new0(ChipWin, 1);
+    cw->popup = popup;
+    cw->alpha = 1.0f;
+    cw->x     = px;
+    cw->y     = py;
+    cw->id    = g_timeout_add(30, chip_win_tick, cw);
+}
+
 /* -- Timer internals ------------------------------------------------------- */
 typedef struct { SeatTimer *t; } TimerCBData;
 
