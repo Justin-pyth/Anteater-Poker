@@ -250,6 +250,10 @@ void initBlinds(GameState* gs)
 
     //add rest of texas holdem conditions later
     gs->currentPlayer = nextActive(gs, big, false);
+    gs->smallBlindIndex = small;
+    gs->bigBlindIndex = big;
+    gs->smallBlind = SMALL_BLIND;
+    gs->bigBlind = BIG_BLIND;
 }
 
 
