@@ -6,8 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h> 
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include "uds.h"
 #include "game.h"
@@ -32,9 +33,13 @@ typedef struct{
     int listen_fd;
     Client clients[MAX_CLIENTS];
     int running;
-    
+
     GameState game;
     Deck deck;
+
+    //non-blocking FSM timer: paces the all-in runout and the inter-hand delay.
+    int timer_active;               //whether a timed action is pending
+    struct timeval timer_deadline;  //when it should fire
 } ServerState;
 
 typedef struct {
@@ -62,6 +67,7 @@ void send_to_client(Client *client, const uint8_t *data, uint32_t len);
 
 
 void remove_client(ServerState *state, Client *client);
+void handle_player_disconnect(ServerState *state, Client *client);
 
 void cleanup_server(ServerState *state);
 
@@ -81,7 +87,9 @@ void send_action(ClientState *client, const PlayerAction *action);
 int create_socket(Client *client);
 
 void handle_after_move(ServerState *state);
+void service_timer(ServerState *state); //run the pending timed FSM action (runout tick / new hand)
 void start_new_hand(ServerState *state);
+void broadcast_move(ServerState *state, uint8_t playerID, MoveType move, uint32_t amount);
 
 //shared functions
 void error(const char *msg);

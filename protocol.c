@@ -15,13 +15,13 @@ void handle_client_communication(ServerState *state, Client *client)
     ssize_t n = read(client->client_fd, buffer, sizeof(buffer));
     if (n < 0) {
         perror("ERROR reading from socket");
-        client->connected = 0;
+        handle_player_disconnect(state, client);
         return;
     }
     if (n==0){
-            client->connected = 0;
-            return;
-        }
+        handle_player_disconnect(state, client);
+        return;
+    }
     Message data;
     if (receive_payload(buffer, n,  &data) == 0) {
         if (data.type == MSG_TYPE_PLAYER_ACTION)
@@ -35,10 +35,13 @@ void handle_client_communication(ServerState *state, Client *client)
                 broadcast_game_state(state);
                 return;
             }
-
+            
             if(tryMove(&state->game, &state->deck, data.action.playerID, data.action.move, data.action.amount))
             {   
-                        
+                //commented out below (most likely a bug)
+                //apply(&state->game, data.action.playerID, data.action.move, data.action.amount); //apply the move on the server if valid
+                //processMove(&state->game, &state->deck, data.action.playerID); //FSM transition: apply already done, decide next phase
+                broadcast_move(state, data.action.playerID, data.action.move, data.action.amount);
                 handle_after_move(state);
               
             }
@@ -61,7 +64,25 @@ void handle_client_communication(ServerState *state, Client *client)
             
             broadcast_chat_message(state, data.sender_id, data.chat);
         }
-           else if (data.type == MSG_TYPE_READY)
+        else if (data.type == MSG_TYPE_JOIN)
+        {
+            char name[MAX_NAME_LENTH];
+            int i;
+            //iterate until u hit terminator character while creating name char by char
+            for (i = 0; i < MAX_NAME_LENTH - 1 && data.chat[i] != '\0'; i++)
+                name[i] = data.chat[i];
+            name[i] = '\0';//add terminator char
+
+            strcpy(state->clients[client->id].name, name);
+            strcpy(state->game.players[client->id].name, name);
+
+            //welcome message
+            char welcome[MAX_PAYLOAD_SIZE];
+            snprintf(welcome, sizeof(welcome), "Welcome to Anteater Poker %s!", name);
+            broadcast_chat_message(state, MAX_PLAYERS, welcome);
+            broadcast_game_state(state);
+        }
+        else if (data.type == MSG_TYPE_READY)
         {
             //don't allow a ready to occur while gaming is playing
             if (state->game.handPlaying) {
@@ -69,8 +90,27 @@ void handle_client_communication(ServerState *state, Client *client)
                 return;
             }
 
-            //player sends /ready
+            //if any player sends a ready message, check for disconnected players and set them as empty
+            for (int i = 0; i < MAX_PLAYERS; i++)
+            {
+                if (!state->clients[i].connected &&
+                    state->game.players[i].status == PLAYER_DISCONNECTED)
+                {
+                    memset(&state->game.players[i], 0, sizeof(Player));
+                    state->game.players[i].id = i;
+                    state->game.players[i].status = PLAYER_EMPTY;
+                }
+            }
+
+            //player sends /ready (set busted players as spectatating)
             state->game.players[client->id].status = PLAYER_READY;
+
+            //whenever someone readies, send a public broadcast
+            const char *name = state->game.players[client->id].name;
+            char msg[MAX_PAYLOAD_SIZE];
+            //is ready if not busted, otherwise spectating
+            snprintf(msg, sizeof(msg), "%s is ready!", name);
+            broadcast_chat_message(state, MAX_PLAYERS, msg);
 
             //server counts # of ready vs connected
             int connectedClients = 0;
@@ -81,8 +121,8 @@ void handle_client_communication(ServerState *state, Client *client)
                 {
                     connectedClients++;
 
-                if (state->game.players[i].status == PLAYER_READY)
-                    readyClients++;
+                    if (state->game.players[i].status == PLAYER_READY)
+                        readyClients++;
                 }
             }
 
@@ -111,7 +151,7 @@ void handle_client_communication(ServerState *state, Client *client)
                 }
 
                 //fill empty seats with bots
-                addBot(&state->game);
+                addBot(&state->game, true);
                 newHand(&state->game, &state->deck);    //start new hand
                 broadcast_game_state(state);
                 broadcast_cd_signal(state, state->game.currentPlayer); //send countdown signal to the next player
@@ -195,6 +235,10 @@ void init_server(ServerState *state)
         memset(state->clients[i].name, 0, sizeof(state->clients[i].name));
     }
 
+    //no timed FSM action pending yet
+    state->timer_active = 0;
+    memset(&state->timer_deadline, 0, sizeof(state->timer_deadline));
+
     //init deck and gamestate
     memset(&state->game, 0, sizeof(GameState));
     initDeck(&state->deck);
@@ -231,6 +275,8 @@ void add_connection(ServerState *state, Client *client)
 
             printf("New client connected: %d\n", state->clients[i].id ); // Print a message indicating a new client has connected
             broadcast_game_state(state);
+
+            
             return;
         }
     }
@@ -247,17 +293,28 @@ void send_to_client(Client *client, const uint8_t *data, uint32_t len)
         client->connected = 0;
     }
 }
-void hide_card_info_for_others(GameState *game, uint8_t player_id)
+void hide_card_info_for_others(GameState *client_state, uint8_t recipient_id)
 {
+    if (recipient_id >= MAX_PLAYERS ||
+        client_state->players[recipient_id].status == PLAYER_SPECTATING)
+        return;
+
     for (int i = 0; i < MAX_PLAYERS; i++) {
-        if (game->players[i].id != player_id)
-           { game->players[i].hand[0].rank = UNKNOW_R;
-            game->players[i].hand[0].suit = UNKNOW_S;
-            game->players[i].hand[1].rank = UNKNOW_R;
-            game->players[i].hand[1].suit = UNKNOW_S;
+        // Find everyone who is NOT the person receiving this network packet
+        if (client_state->players[i].id != recipient_id) {
+            
+            // Only hide cards for players who are actively playing or folded during the live hand.
+            // If they are empty or spectating, their cards don't matter.
+            uint8_t status = client_state->players[i].status;
+            if (status == PLAYER_PLAYING || status == PLAYER_FOLDED || status == PLAYER_ALL_IN) {
+                for (int c = 0; c < HAND_SIZE; c++) {
+                    client_state->players[i].hand[c].suit = UNKNOW_S;
+                    client_state->players[i].hand[c].rank = UNKNOW_R;
+                    client_state->players[i].hand[c].value = 0;
+                }
             }
-           }
-    
+        }
+    }
 }
 void broadcast_game_state(ServerState *state)
 {
@@ -265,9 +322,17 @@ void broadcast_game_state(ServerState *state)
     Message temp_data;
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (state->clients[i].connected) {
-            temp_data.gameState = state->game; // Create a temporary copy of the game state
+            temp_data.gameState = state->game; 
             temp_data.gameState.yourPlayerID = state->clients[i].id;
-            hide_card_info_for_others(&temp_data.gameState, state->clients[i].id); //
+            
+            // Hide hole cards only while betting is still live (HAND_BETTING).
+            // Once betting is settled the hand enters HAND_RUNOUT/HAND_COMPLETE and
+            // all remaining hands are turned face-up so the all-in runout and the
+            // showdown are visible as the board rolls out.
+            if (state->game.phase == HAND_BETTING) {
+                hide_card_info_for_others(&temp_data.gameState, state->clients[i].id);
+            }
+            
             temp_data.type = MSG_TYPE_GAME_STATE;
             uint32_t payload_len = prepare_payload(buffer, MSG_TYPE_GAME_STATE, &temp_data);
             send_to_client(&state->clients[i], buffer, payload_len);
@@ -326,6 +391,35 @@ void remove_client(ServerState *state, Client *client)
     client->sock_fd = -1;
     client->connected = 0; // Mark the client as not connected
 }
+
+void handle_player_disconnect(ServerState *state, Client *client)
+{
+    uint8_t playerID = client->id;
+    bool wasPlaying = state->game.handPlaying; //track if the hand was active
+    bool wasCurrent = wasPlaying && state->game.currentPlayer == playerID; //track the current player
+
+    remove_client(state, client);
+
+    //if the game wasn't active, then just broadcast the player leaving
+    if (!wasPlaying) 
+    {
+        broadcast_game_state(state);
+        return;
+    }
+
+    //if the game was active
+    int activeIDs[MAX_PLAYERS];
+    int activeCount = findActive(&state->game, activeIDs, true);
+    if (activeCount <= 1 || wasCurrent) // and the player who left was the current player
+    {   //handle their move
+        processMove(&state->game, &state->deck, playerID);
+        handle_after_move(state);
+        return;
+    }
+    //if the hand was playing, then just broadcast
+    broadcast_game_state(state);
+}
+
 void cleanup_server(ServerState *state)
 {
     for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -383,65 +477,156 @@ void error(const char *msg)
     perror(msg);
     exit(1);
 }
-//return -1 if game over or invalid, next player id ow.
+#define RUNOUT_TICK_MS   1000  //one community card revealed per second during an all-in runout
+#define INTERHAND_MS     3000  //pause after a hand before the next one starts (was a blocking sleep(3))
+
+//arm the non-blocking FSM timer to fire `ms` milliseconds from now.
+static void arm_timer(ServerState *state, long ms)
+{
+    gettimeofday(&state->timer_deadline, NULL);
+    state->timer_deadline.tv_sec  += ms / 1000;
+    state->timer_deadline.tv_usec += (ms % 1000) * 1000;
+    if (state->timer_deadline.tv_usec >= 1000000) {
+        state->timer_deadline.tv_sec  += 1;
+        state->timer_deadline.tv_usec -= 1000000;
+    }
+    state->timer_active = 1;
+}
+
+//the hand has reached HAND_COMPLETE: announce the result, end the tournament if
+//only one player has chips left, otherwise arm the inter-hand delay.
+static void finish_hand(ServerState *state)
+{
+    GameState *g = &state->game;
+
+    //tournament over: a single player holds all the chips
+    if (remainingPlayers(g) == 1)
+    {
+        for (int i = 0; i < MAX_PLAYERS; i++)
+        {
+            Player *p = &g->players[i];
+            if (p->chips > 0 &&
+                p->status != PLAYER_EMPTY &&
+                p->status != PLAYER_DISCONNECTED)
+            {
+                g->winnerID = p->id;
+                break;
+            }
+        }
+
+        g->gameOver = 1;
+        if (g->winnerID < MAX_PLAYERS) {
+            char msg[MAX_PAYLOAD_SIZE];
+            snprintf(msg, sizeof(msg), "%s wins the game!", g->players[g->winnerID].name);
+            broadcast_chat_message(state, MAX_PLAYERS, msg);
+        }
+        broadcast_game_state(state);
+        return; //no timer: game is over, wait for a new game
+    }
+
+    //hand winner announcement (split pots use the MAX_PLAYERS+1 sentinel -> skipped)
+    if (g->winnerID < MAX_PLAYERS)
+    {
+        char msg[MAX_PAYLOAD_SIZE];
+        snprintf(msg, sizeof(msg), "%s wins the hand.", g->players[g->winnerID].name);
+        broadcast_chat_message(state, MAX_PLAYERS, msg);
+    }
+    else{
+        broadcast_chat_message(state, MAX_PLAYERS, "Several players won pots.");
+    }
+    broadcast_game_state(state);
+
+    //non-blocking pause before the next hand
+    arm_timer(state, INTERHAND_MS);
+}
+
+//dispatch after a move (or a current player leaving) based on the hand FSM phase.
 void handle_after_move(ServerState *state)
-{   
-    //don't let moves go through if game is already over
-    if(state->game.gameOver)
+{
+    GameState *g = &state->game;
+
+    //don't let anything proceed once the game is over
+    if (g->gameOver)
     {
         broadcast_game_state(state);
         return;
     }
 
-    //if the game is not active and a move is made
-    if (!state->game.handPlaying)
+    switch (g->phase)
     {
-        //check for winner
-        if (remainingPlayers(&state->game) == 1)
-        {
-            for (int i = 0; i < MAX_PLAYERS; i++)
-            {
-                Player *p = &state->game.players[i];
-
-                if (p->chips > 0 &&
-                    p->status != PLAYER_EMPTY &&
-                    p->status != PLAYER_DISCONNECTED &&
-                    p->status != PLAYER_SPECTATING)
-                {
-                    state->game.winnerID = p->id;
-                    break;
-                }
-            }
-            
-            //find the winner above and set gameOver to true
-            state->game.gameOver = 1;
+        case HAND_BETTING:
+            //normal turn hand-off: show state, prompt the next player
             broadcast_game_state(state);
-            return;
-        }
+            broadcast_cd_signal(state, g->currentPlayer);
+            break;
 
-        //if there is no winner after the move, then do a new hand
-        start_new_hand(state);
+        case HAND_RUNOUT:
+            //all-in: show the board so far, then let the timer pace the reveal
+            broadcast_game_state(state);
+            arm_timer(state, RUNOUT_TICK_MS);
+            break;
+
+        case HAND_COMPLETE:
+            //hand decided: announce winner, end game or arm the inter-hand delay
+            finish_hand(state);
+            break;
+
+        case HAND_IDLE:
+        default:
+            broadcast_game_state(state);
+            break;
+    }
+}
+
+//run the pending timed FSM action. Called by the server loop when the timer fires.
+void service_timer(ServerState *state)
+{
+    GameState *g = &state->game;
+    state->timer_active = 0; //consume it; re-armed below if more pacing is needed
+
+    if (g->phase == HAND_RUNOUT)
+    {
+        bool more = runoutStep(g, &state->deck);
+        if (more)
+        {
+            broadcast_game_state(state); //show the freshly revealed street
+            arm_timer(state, RUNOUT_TICK_MS);
+        }
+        else
+        {
+            finish_hand(state); //runout reached the showdown -> result + inter-hand delay
+        }
         return;
     }
 
-    //if the game is active, then just broadcast the state, otherwise
-    //have to reset the hand if game is not active
-    broadcast_game_state(state);
-    broadcast_cd_signal(state, state->game.currentPlayer); //send countdown signal to the next player
-
-
+    if (g->phase == HAND_COMPLETE)
+    {
+        //inter-hand delay elapsed -> deal the next hand
+        start_new_hand(state);
+        return;
+    }
 }
 
 void start_new_hand(ServerState *state)
 {
-    // Full reset only if game was over
-    if (state->game.gameOver)
-        resetGame(&state->game);
+    if (state->game.gameOver) {
+        broadcast_game_state(state);
+        return;
+    }
 
-    // Always re-sync player slots with connection state
+    resetHand(&state->game);
+
+    // Re-sync human seats with connection state, but keep existing bots in
+    // their seats between hands. Bot names only shuffle on a new game.
     for (int i = 0; i < MAX_PLAYERS; i++) {
         if (state->clients[i].connected && state->game.players[i].chips > 0)
             state->game.players[i].status = PLAYER_READY;
+        else if (isBot(state->game.players[i].name)) {
+            if (state->game.players[i].chips > 0)
+                state->game.players[i].status = PLAYER_READY;
+            else
+                state->game.players[i].status = PLAYER_SPECTATING;
+        }
         else if (!state->clients[i].connected) {
             memset(&state->game.players[i], 0, sizeof(Player));
             state->game.players[i].id = i;
@@ -449,8 +634,41 @@ void start_new_hand(ServerState *state)
         }
     }
 
-    addBot(&state->game);
+    addBot(&state->game, false);
     newHand(&state->game, &state->deck);
-    broadcast_game_state(state);
-    broadcast_cd_signal(state, state->game.currentPlayer);
+    broadcast_chat_message(state, MAX_PLAYERS, "Starting next hand.");
+
+    //dispatch on the new hand's phase: usually HAND_BETTING (broadcast + prompt),
+    //but blinds can immediately force a runout or decide the hand.
+    handle_after_move(state);
+}
+
+void broadcast_move(ServerState *state, uint8_t playerID, MoveType move, uint32_t amount)
+{
+    const char *name = state->game.players[playerID].name;
+    char moveMsg[MAX_PAYLOAD_SIZE];
+
+    switch (move)
+    {
+        case FOLD:
+            snprintf(moveMsg, sizeof(moveMsg), "%s folded.", name);
+            break;
+        case CHECK:
+            snprintf(moveMsg, sizeof(moveMsg), "%s checked.", name);
+            break;
+        case CALL:
+            snprintf(moveMsg, sizeof(moveMsg), "%s called.", name);
+            break;
+        case RAISE:
+            snprintf(moveMsg, sizeof(moveMsg), "%s raised by $%u.", name, amount);
+            break;
+        case ALL_IN:
+            snprintf(moveMsg, sizeof(moveMsg), "%s went all in.", name);
+            break;
+        default:
+            snprintf(moveMsg, sizeof(moveMsg), "%s made a move.", name);
+            break;
+    }
+
+    broadcast_chat_message(state, MAX_PLAYERS, moveMsg);
 }

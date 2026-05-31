@@ -35,6 +35,8 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount); //a
 
 // findActive() and nextActive() moved to rules.h
 
+void awardSidepots(GameState* gs, int activeIDs[], int activeCount);
+void awardPot(GameState* gs, uint32_t pot, int eligible[], int eligCount);
 void award(GameState*gs); //award players at showdown
 
 void resetHand(GameState* gs); //reset hand after final betting round
@@ -43,10 +45,9 @@ void newHand(GameState* gs, Deck* deck); //start the new hand
 // initBlinds() moved to rules.h
 
 // allPlayersWent() moved to rules.h
-void advance(GameState* gs, Deck* deck); //advance to next stage after all players go
-void processMove(GameState* gs, Deck* deck, uint8_t playerID); //after applying move, decide state
+void processMove(GameState* gs, Deck* deck, uint8_t playerID); //FSM transition: apply already done, decide next phase
 bool tryMove(GameState* gs, Deck* deck, uint8_t playerID, MoveType move, uint32_t amount); //for server
-bool resolveNoAct(GameState* gs, Deck* deck); //to fix edge case where no players can go
+bool runoutStep(GameState* gs, Deck* deck); //one paced runout reveal; returns true while more reveals remain
 int remainingPlayers(const GameState* gs); //gets # of remaining players w/ chips
 
 int countStatus(const GameState* gs, PlayerStatus status); //return the number of players that are X status

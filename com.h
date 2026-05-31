@@ -16,9 +16,9 @@ typedef enum {
     MSG_TYPE_PLAYER_ACTION = 2,
     MSG_TYPE_CHAT_MESSAGE = 3,
     MSG_TYPE_ERROR_MESSAGE = 4,
-    MSG_TYPE_SPECIAL_MESSAGE = 5,
-    MSG_TYPE_READY = 6,
-    MSG_CD_SIGNAL= 7// for sending count down signal
+    MSG_CD_SIGNAL= 5,// for sending count down signal
+    MSG_TYPE_JOIN = 6,
+    MSG_TYPE_READY = 7
 } MessageType;
 typedef struct {
     MessageType type;
@@ -27,7 +27,6 @@ typedef struct {
         GameState gameState;
         PlayerAction action;
         char chat[MAX_PAYLOAD_SIZE];
-        char special[MAX_PAYLOAD_SIZE];
         char error[MAX_PAYLOAD_SIZE];
     };
 } Message; // for handling multi datatypes incomming payload.
@@ -45,8 +44,6 @@ uint32_t encode_card(uint8_t *buffer, uint32_t *offset, const Card *card);
 int decode_card(const uint8_t *buffer, uint32_t *offset, Card *card);
 uint32_t encode_chat_message(uint8_t *buffer, uint32_t *offset, uint8_t sender_id, const char *message);
 int decode_chat_message(const uint8_t *buffer, uint32_t *offset, uint8_t *sender_id, char *message);
-uint32_t encode_special_message(uint8_t *buffer, uint32_t *offset, const char *message);
-int decode_special_message(const uint8_t *buffer, uint32_t *offset, char *message);
 uint32_t encode_error_message(uint8_t *buffer, uint32_t *offset, const char *message);
 int decode_error_message(const uint8_t *buffer, uint32_t *offset, char *message);
 
@@ -58,5 +55,4 @@ int receive_payload(const uint8_t *buffer, uint32_t buf_len, Message *out_data);
 
 
 #endif
-
 

@@ -16,7 +16,8 @@ void refresh_ui(void);
 void infer_my_player_id(void);
 
 /* -- Chat ------------------------------------------------------------------ */
-void append_chat(const char *sender, const char *msg);
+void append_chat(const char *sender, const char *msg, const char *tag_name);
+
 
 /* -- Anteater deck --------------------------------------------------------- */
 void set_anteater_count(int count);

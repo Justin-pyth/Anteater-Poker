@@ -48,24 +48,53 @@ int main(int argc, char *argv[])
         struct timeval timeout;
         struct timeval *timeout_ptr = NULL;
 
-        if (state.game.handPlaying && isBot(state.game.players[state.game.currentPlayer].name)) 
+        if (state.timer_active)
         {
-            //wait 1.0 seconds
+            //a timed FSM action is pending (runout reveal / inter-hand delay):
+            //wake up when its deadline is reached
+            struct timeval now;
+            gettimeofday(&now, NULL);
+            long sec  = state.timer_deadline.tv_sec  - now.tv_sec;
+            long usec = state.timer_deadline.tv_usec - now.tv_usec;
+            if (usec < 0) { sec -= 1; usec += 1000000; }
+            if (sec < 0) { sec = 0; usec = 0; } //already due
+            timeout.tv_sec = sec;
+            timeout.tv_usec = usec;
+            timeout_ptr = &timeout;
+        }
+        else if (state.game.handPlaying &&
+                 state.game.currentPlayer < MAX_PLAYERS &&
+                 isBot(state.game.players[state.game.currentPlayer].name))
+        {
+            //bot's turn: wait 1.0 seconds so the GUI can show the action
             timeout.tv_sec = 1;
             timeout.tv_usec = 0;
-            timeout_ptr = &timeout; //set when bot's turn
+            timeout_ptr = &timeout;
         }
 
-        //integrate bot's timeout into select, aka when its a bot's turn wait 1 second to display to gui
-        //if its a player's turn, then you don't need delay
         int activity = select(max_fd + 1, &read_fds, NULL, NULL, timeout_ptr); // Wait for activity on the sockets
         if (activity < 0) {
             perror("select error");
             continue; // Continue to the next iteration of the loop if select fails
         }
         if (activity == 0) {
-            if (doOneBotTurn(&state.game, &state.deck))
+            //timer takes priority: it only runs during runout / inter-hand pauses,
+            //when no player or bot is due to act
+            if (state.timer_active)
+            {
+                service_timer(&state);
+                continue;
+            }
+
+            uint8_t botID;
+            MoveType move;
+            uint32_t amount;
+
+            if (doOneBotTurn(&state.game, &state.deck, &botID, &move, &amount))
+            {
+                broadcast_move(&state, botID, move, amount);
                 handle_after_move(&state);
+            }
             continue;
         }
         if (FD_ISSET(state.listen_fd, &read_fds)) {

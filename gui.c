@@ -8,15 +8,39 @@ AppWidgets W;
 ClientState C;
 
 /* -- Chat display ---------------------------------------------------------- */
-void append_chat(const char *sender, const char *msg)
+void append_chat(const char *sender, const char *msg, const char *tag_name)
 {
     if (!W.chat_log) return;
     GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(W.chat_log));
+
+    //give different color text (server vs player)
+    if (!gtk_text_tag_table_lookup(gtk_text_buffer_get_tag_table(buf), "server"))
+    {
+        gtk_text_buffer_create_tag(buf, "server", "foreground", "#4B5563", "style", PANGO_STYLE_ITALIC, NULL);
+    }
+    if (!gtk_text_tag_table_lookup(gtk_text_buffer_get_tag_table(buf), "server_alert"))
+    {
+        gtk_text_buffer_create_tag(buf, "server_alert", "foreground", "#B45309", NULL);
+    } 
+    if (!gtk_text_tag_table_lookup(gtk_text_buffer_get_tag_table(buf), "player"))
+    {
+        gtk_text_buffer_create_tag(buf, "player", "foreground", "#000000", NULL);
+    }
+    //also add a bold tag for the sender names
+    if (!gtk_text_tag_table_lookup(gtk_text_buffer_get_tag_table(buf), "bold"))
+    {
+        gtk_text_buffer_create_tag(buf, "bold", "weight", PANGO_WEIGHT_BOLD, NULL);
+    }
+
     GtkTextIter end;
     gtk_text_buffer_get_end_iter(buf, &end);
-    char line[512];
-    snprintf(line, sizeof(line), "%s: %s\n", sender ? sender : "?", msg ? msg : "");
-    gtk_text_buffer_insert(buf, &end, line, -1);
+
+    //make the sender name bold, rest of the text unbolded
+    gtk_text_buffer_insert_with_tags_by_name(buf, &end, sender ? sender : "?", -1, "bold", tag_name, NULL);
+    gtk_text_buffer_insert_with_tags_by_name(buf, &end, ": ", -1, tag_name, NULL);
+    gtk_text_buffer_insert_with_tags_by_name(buf, &end, msg ? msg : "", -1, tag_name, NULL);
+    gtk_text_buffer_insert_with_tags_by_name(buf, &end, "\n", -1, tag_name, NULL);
+
     gtk_text_buffer_get_end_iter(buf, &end);
     GtkTextMark *mark = gtk_text_buffer_get_mark(buf, "insert");
     gtk_text_buffer_move_mark(buf, mark, &end);
@@ -41,9 +65,9 @@ static void dispatch_message(Message *msg)
         refresh_ui();
     } else if (msg->type == MSG_TYPE_CHAT_MESSAGE) {
         if (msg->sender_id >= MAX_PLAYERS)
-            append_chat("SERVER", msg->chat);
+            append_chat("SERVER", msg->chat, "server");
         else
-            append_chat(C.game.players[msg->sender_id].name, msg->chat);
+            append_chat(C.game.players[msg->sender_id].name, msg->chat, "player");
     } else if (msg->type == MSG_TYPE_ERROR_MESSAGE) {
         gtk_label_set_text(GTK_LABEL(W.log_label), msg->error);
     } else if (msg->type == MSG_CD_SIGNAL) {
@@ -129,10 +153,10 @@ void refresh_ui(void)
 
     Player *me = &game->players[C.my_player_id];
 
-    snprintf(buf, sizeof(buf), "Call: $%u", game->currentBet - me->current_bet);
+    snprintf(buf, sizeof(buf), "$%u", game->currentBet - me->current_bet);
     gtk_label_set_text(GTK_LABEL(W.label_call_amnt), buf);
 
-    snprintf(buf, sizeof(buf), "Stack: $%u", me->chips);
+    snprintf(buf, sizeof(buf), "$%u", me->chips);
     gtk_label_set_text(GTK_LABEL(W.label_your_stack), buf);
 
     if (me->has_cards) {
@@ -151,7 +175,7 @@ void refresh_ui(void)
 
         gtk_label_set_text(GTK_LABEL(W.opp_name[opp_slot]),
             p->name[0] ? p->name : "Player");
-        snprintf(buf, sizeof(buf), "$%u  |  bet $%u", p->chips, p->current_bet);
+        snprintf(buf, sizeof(buf), "$%u  |  bet $%u", p->chips, p->total_bet);
         gtk_label_set_text(GTK_LABEL(W.opp_chips[opp_slot]), buf);
 
         const char *st = "Waiting";
@@ -159,11 +183,25 @@ void refresh_ui(void)
         else if (p->status == PLAYER_ALL_IN)        st = "All in";
         else if (p->status == PLAYER_DISCONNECTED)  st = "Disconnected";
         else if (p->status == PLAYER_SPECTATING)    st = "Spectating";
-        else if (pi == game->currentPlayer && game->handPlaying) st = "Acting";
+        else if (p->status == PLAYER_PLAYING && pi == game->currentPlayer && game->handPlaying) st = "Acting";
         gtk_label_set_text(GTK_LABEL(W.opp_status[opp_slot]), st);
 
+        if (p->has_cards) {
+            if (card_is_known(p->hand[0]))
+                set_card_face(W.opp_cards[opp_slot][0], p->hand[0], 1);
+            else
+                set_card_back(W.opp_cards[opp_slot][0]);
+            if (card_is_known(p->hand[1]))
+                set_card_face(W.opp_cards[opp_slot][1], p->hand[1], 1);
+            else
+                set_card_back(W.opp_cards[opp_slot][1]);
+        } else {
+            set_card_back(W.opp_cards[opp_slot][0]);
+            set_card_back(W.opp_cards[opp_slot][1]);
+        }
+
         GtkStyleContext *ctx = gtk_widget_get_style_context(W.opp_frame[opp_slot]);
-        if (pi == game->currentPlayer && game->handPlaying)
+        if (p->status == PLAYER_PLAYING && pi == game->currentPlayer && game->handPlaying)
             gtk_style_context_add_class(ctx, "active-seat");
         else
             gtk_style_context_remove_class(ctx, "active-seat");
@@ -193,6 +231,7 @@ void refresh_ui(void)
     gtk_widget_set_sensitive(W.btn_call,  my_turn && !can_check);
     gtk_widget_set_sensitive(W.btn_raise, my_turn);
     gtk_widget_set_sensitive(W.raise_spin, my_turn);
+    gtk_widget_set_sensitive(W.btn_allin, my_turn);
 }
 
 /* -- Action button callbacks ----------------------------------------------- */
@@ -215,7 +254,6 @@ void on_send_chat(GtkButton *b, gpointer d)
     if (!text || text[0] == '\0') return;
     if (strcmp(text, "/ready") == 0) {
         sendReadyToServer();
-        append_chat("ADMIN", "You are ready.");
     } else {
         sendChatToServer(text);
     }
@@ -269,6 +307,7 @@ void on_connect_clicked(GtkButton *b, gpointer d)
     C.socket_fd    = sockfd;
     C.connected    = 1;
     C.my_player_id = 0;
+    sendNameToServer(name);
 
     if (W.net_source) { g_source_remove(W.net_source); W.net_source = 0; }
     GIOChannel *ch = g_io_channel_unix_new(sockfd);
@@ -278,5 +317,5 @@ void on_connect_clicked(GtkButton *b, gpointer d)
 
     gtk_label_set_text(GTK_LABEL(W.login_status), "");
     show_game_screen();
+    append_chat("SERVER", "Type /ready to ready up.", "server_alert");
 }
-

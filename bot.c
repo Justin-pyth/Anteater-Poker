@@ -1,31 +1,50 @@
 #include "bot.h"
 
-void addBot(GameState* gs)
+void addBot(GameState* gs, bool shuffle)
 {
 
     char botNames[MAX_PLAYERS][MAX_NAME_LENTH] = {"Alvin", "Randy", "Betty",
                                         "Colleen", "Minnie", "Dumbo"};
-    int botNameIndex = 0;
 
     //shuffle bot array
-    for(int i = MAX_PLAYERS-1; i>0; i--)
+    if(shuffle)
     {
-        int j = rand() % (i+1);
+        for(int i = MAX_PLAYERS-1; i>0; i--)
+        {
+            int j = rand() % (i+1);
 
-        //do random swaps to shuffle name bot name array
-        char temp[MAX_NAME_LENTH];
-        strcpy(temp, botNames[i]);
-        strcpy(botNames[i], botNames[j]);
-        strcpy(botNames[j], temp);
+            //do random swaps to shuffle name bot name array
+            char temp[MAX_NAME_LENTH];
+            strcpy(temp, botNames[i]);
+            strcpy(botNames[i], botNames[j]);
+            strcpy(botNames[j], temp);
+        }
     }
 
     //check for empty seats, if empty occupy with a random bot
-    for(int seat = 0; seat < MAX_PLAYERS && botNameIndex < MAX_PLAYERS; seat++)
+    for(int seat = 0; seat < MAX_PLAYERS; seat++)
     {
         if(gs->players[seat].status == PLAYER_EMPTY)
         {
-            initPlayer(&gs->players[seat], seat, botNames[botNameIndex], INIT_CHIPS);
-            botNameIndex++;
+            for(int botNameIndex = 0; botNameIndex < MAX_PLAYERS; botNameIndex++)
+            {
+                bool nameInUse = false;
+                for(int existingSeat = 0; existingSeat < MAX_PLAYERS; existingSeat++)
+                {
+                    if(existingSeat == seat) continue;
+                    if(strcmp(gs->players[existingSeat].name, botNames[botNameIndex]) == 0)
+                    {
+                        nameInUse = true;
+                        break;
+                    }
+                }
+
+                if(!nameInUse)
+                {
+                    initPlayer(&gs->players[seat], seat, botNames[botNameIndex], INIT_CHIPS);
+                    break;
+                }
+            }
         }
     }
 }
@@ -261,20 +280,16 @@ int reconstructDeck(const GameState* gs, const Card* hand, Deck* deck)
     return i;
 }
 
-bool doOneBotTurn(GameState* gs, Deck* deck)
+bool doOneBotTurn(GameState* gs, Deck* deck, uint8_t *botID, MoveType *move, uint32_t *amount)
 {
     if(!gs->handPlaying || !isBot(gs->players[gs->currentPlayer].name))
         return false;
 
-    uint8_t botID;
-    MoveType move;
-    uint32_t amount;
-
     //get the bot's move
-    botMove(gs, deck, &botID, &move, &amount);
+    botMove(gs, deck, botID, move, amount);
 
     //see if its a valid move and apply it
-    return tryMove(gs, deck, botID, move, amount);
+    return tryMove(gs, deck, *botID, *move, *amount);
 }
 
 void doBotTurn(GameState* gs, Deck* deck)
@@ -283,7 +298,7 @@ void doBotTurn(GameState* gs, Deck* deck)
     while(gs->handPlaying && isBot(gs->players[gs->currentPlayer].name))
     {
         //try the move, if its invalid stop
-        if(!doOneBotTurn(gs, deck))
-            break;
+        //if(!doOneBotTurn(gs, deck))
+            //break;
     }
 }

@@ -35,6 +35,7 @@ void init_gui(int *argc, char ***argv)
     W.btn_check        = GET("btn_check");
     W.btn_call         = GET("btn_call");
     W.btn_raise        = GET("btn_raise");
+    W.btn_allin        = GET("btn_ALLIN");
     W.btn_shop         = GET("btn_shop");
     W.raise_spin       = GET("raise_spin");
     W.anteater_panel        = GET("anteater_panel");
@@ -72,11 +73,16 @@ void init_gui(int *argc, char ***argv)
         W.opp_timer[i].timer_id     = 0;
         W.opp_timer[i].seconds_left = 0;
         W.opp_timer[i].turn_seconds = TURN_SECONDS;
+        W.opp_timer[i].is_my_timer  = FALSE;
         gtk_widget_hide(W.opp_timer[i].bar);
 
         char cid[64];
-        snprintf(cid, sizeof(cid), "opp_card_%da", i); init_card_widget(GET(cid));
-        snprintf(cid, sizeof(cid), "opp_card_%db", i); init_card_widget(GET(cid));
+        snprintf(cid, sizeof(cid), "opp_card_%da", i);
+        W.opp_cards[i][0] = GET(cid);
+        init_card_widget(W.opp_cards[i][0]);
+        snprintf(cid, sizeof(cid), "opp_card_%db", i);
+        W.opp_cards[i][1] = GET(cid);
+        init_card_widget(W.opp_cards[i][1]);
     }
 
     W.my_timer.bar          = GET("my_timer_bar");
@@ -84,6 +90,7 @@ void init_gui(int *argc, char ***argv)
     W.my_timer.timer_id     = 0;
     W.my_timer.seconds_left = 0;
     W.my_timer.turn_seconds = TURN_SECONDS;
+    W.my_timer.is_my_timer  = TRUE;
     gtk_widget_hide(W.my_timer.bar);
 
 #undef GET

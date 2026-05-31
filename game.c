@@ -112,6 +112,7 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
 
             p->chips -= call;
             p->current_bet += call;
+            p->total_bet += call;
             gs->pot += call;
 
             if(p->chips == 0)
@@ -125,6 +126,7 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
             uint32_t chipsPotted = total - p->current_bet;
             p->chips -= chipsPotted;
             p->current_bet = total;
+            p->total_bet += chipsPotted;
             gs->pot += chipsPotted;
 
             gs->minRaise = amount;
@@ -149,6 +151,7 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
 
             p->chips = 0;
             p->current_bet += allIn;
+            p->total_bet += allIn;
             gs->pot += allIn;
             p->status = PLAYER_ALL_IN;
 
@@ -171,6 +174,8 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
 
             break;
         }
+        case USE_SPECIAL_CARD:
+            break;
 
     }
 
@@ -180,28 +185,111 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
 
 // nextActive() and findActive() moved to rules.c
 
-void award(GameState* gs)
+void awardSidepots(GameState* gs, int activeIDs[], int activeCount)
 {
-    int activeIDs[MAX_PLAYERS];
-    int count = findActive(gs, activeIDs, true);
-    if(count == 0) return;
+    
+    //side pot logic
+    uint32_t threshold[MAX_PLAYERS]; //create an array of contribution thresholds
+    int thresholdCount = 0;
+
+    //find (unique) contribution thresholds first
+    for(int i = 0; i < MAX_PLAYERS; i++)
+    {
+        uint32_t bet = gs->players[i].total_bet;
+        if(bet == 0) continue; //skip if total bet is 0
+
+        //track if the contribution threshold was already within the array
+        bool dupe = false;
+        for(int j = 0; j < thresholdCount; j++)
+        {
+            if(threshold[j] == bet)
+            {
+                dupe = true;
+                break;
+            }
+        }
+
+        //only add new thresholds
+        if(!dupe)
+            threshold[thresholdCount++] = bet;
+    }
+
+    //bubble sort
+    for(int i = 0; i < thresholdCount-1; i++)
+    {
+        for(int j = 0; j < thresholdCount-i-1; j++)
+        {
+            if(threshold[j] > threshold[j+1])
+            {
+                //swap
+                uint32_t tempBet = threshold[j];
+                threshold[j] = threshold[j+1];
+                threshold[j+1] = tempBet;
+            }
+        }
+    }
 
 
+    uint32_t previousThreshold = 0;
+    for(int i = 0; i < thresholdCount; i ++)
+    {
+        //store non folded players here
+        int eligible[MAX_PLAYERS];
+        int eligCount = 0;
+
+        //A put 50, B put 100, C put 200
+        //slices would be 50, 50, 100
+        //Any player putting more than a certain thresholdBet is (difference between previous and current) gets that slice
+        uint32_t thresholdBet = threshold[i];
+        uint32_t slice = thresholdBet - previousThreshold;
+        uint32_t sidePot = 0;
+
+        //for every player that has enough for the threshold, add their slice to the sidepot
+        for(int p = 0; p < MAX_PLAYERS; p++)
+        {
+            if(gs->players[p].total_bet >= thresholdBet)
+                sidePot += slice;
+        }
+
+        //check their eligibility(not folded), and add them to the list
+        //eligible players are not folded and bet past the threshold
+        for(int a = 0 ; a < activeCount; a++)
+        {
+            int p = activeIDs[a];
+
+            if(gs->players[p].total_bet >= thresholdBet)
+                eligible[eligCount++] = p;
+        }
+
+        //award the pot to eligible players
+        awardPot(gs, sidePot, eligible, eligCount);
+        previousThreshold = thresholdBet; //set curr threshold as previous for next iter
+    }
+}
+
+void awardPot(GameState* gs, uint32_t pot, int eligible[], int eligCount)
+{
+    if (pot == 0 || eligCount == 0) return; //if the side pot is empty or no one is eligble, skip
+    //for determining the winner
     int bestScore = -1, score, winnerCount = 0;
     int winnerIDs[MAX_PLAYERS];
-    for(int i = 0 ; i < count; i++)
+
+    //iterate through all eligible players
+    for(int i = 0 ; i < eligCount; i++)
     {
-        int pID = activeIDs[i];
+        int pID = eligible[i];
         const Player* p = &gs->players[pID];
 
+        //evaluate their hand
         score = evaluateHand(gs, p->hand);
 
+        //if their score is greater than bestScore, reset winner array and make new bestScore
         if(score > bestScore)
         {
             bestScore = score;
             winnerCount = 0;
             winnerIDs[winnerCount++] = pID;
-        }
+        } //if their score is the same as bestScore, add them to winner array
         else if(score == bestScore)
         {
             winnerIDs[winnerCount++] = pID;
@@ -209,12 +297,31 @@ void award(GameState* gs)
             
     }
 
+    //for multiple winners, split the pot by the winner count
+    //2 winners means each player gets half
+    uint32_t split = pot / winnerCount;
+    uint32_t remainder = pot % winnerCount;
 
-    int split = gs->pot / winnerCount;
-    int remainder = gs->pot % winnerCount;
     for(int i = 0 ; i < winnerCount ; i++)
         gs->players[winnerIDs[i]].chips += split;
+
     gs->players[winnerIDs[0]].chips += remainder; //may change, just give to first winner for now
+
+    //not very useful for multiple winners, might need to add winner array to gameState for broadcasting****
+    gs->winnerID = (winnerCount == 1) ? winnerIDs[0] : (MAX_PLAYERS + 1);
+
+}
+
+void award(GameState* gs)
+{
+    int activeIDs[MAX_PLAYERS];
+    int count = findActive(gs, activeIDs, true);
+    if(count == 0) return;
+
+    //will handle sidepots if there is an all-in scenerio, otherwise, it'll just reward normally
+    awardSidepots(gs, activeIDs, count);
+
+    gs->pot = 0; //reset pot
 }
 
 void resetHand(GameState* gs)
@@ -231,7 +338,8 @@ void resetHand(GameState* gs)
         else p->status = PLAYER_READY;
         
         //reset bets and cards
-        p->current_bet = 0; p->has_cards = 0;
+        p->current_bet = 0; p->total_bet = 0; p->has_cards = 0; 
+        p->place = 0;
         memset(&p->hand, 0, sizeof(p->hand));
 
         gs->acted[i] = false;
@@ -243,14 +351,19 @@ void resetHand(GameState* gs)
     memset(gs->community, 0, sizeof(gs->community));
     gs->communityCount = 0;
 
-    gs->dealerIndex = nextActive(gs, gs->dealerIndex, true); //new dealer
+    int newDealer = nextActive(gs, gs->dealerIndex, true); //new dealer
+    if(newDealer != -1)
+        gs->dealerIndex = newDealer;
 
     gs->pot = 0;
     gs->currentBet = 0;
     gs->minRaise = 0;
+    gs->smallBlindIndex = 0;
+    gs->bigBlindIndex = 0;
 
     gs->handPlaying = false;
-    
+    gs->phase = HAND_IDLE;
+
 }
 
 void resetGame(GameState* gs)
@@ -275,6 +388,117 @@ void resetGame(GameState* gs)
 
 // initBlinds() moved to rules.c
 
+/* ============================================================
+    HAND FSM  (phase transitions)
+
+    A hand moves through: BETTING -> (RUNOUT) -> COMPLETE.
+    processMove() is the single transition taken after each move;
+    runoutStep() is ticked by the server to pace the all-in reveal.
+   ============================================================ */
+
+// players still contesting the pot (not folded): PLAYING + ALL_IN
+static int contesting(const GameState* gs)
+{
+    int ids[MAX_PLAYERS];
+    return findActive(gs, ids, true);
+}
+
+// players who can still make a betting decision: PLAYING only (all-in can't act)
+static int ableToBet(const GameState* gs)
+{
+    int ids[MAX_PLAYERS];
+    return findActive(gs, ids, false);
+}
+
+// deal the next community street and open a fresh betting round.
+// never deals past the river; does NOT pick the next actor (caller decides).
+static void dealStreet(GameState* gs, Deck* deck)
+{
+    gs->currentBet = 0;
+    gs->minRaise = gs->bigBlind ? gs->bigBlind : BIG_BLIND;
+
+    for(int i = 0; i < MAX_PLAYERS; i++)
+    {
+        gs->acted[i] = false;
+        gs->players[i].current_bet = 0;
+    }
+
+    switch(gs->stage)
+    {
+        case PREFLOP:
+            gs->community[0] = deal(deck);
+            gs->community[1] = deal(deck);
+            gs->community[2] = deal(deck);
+            gs->communityCount = 3;
+            gs->stage = FLOP;
+            break;
+        case FLOP:
+            gs->community[3] = deal(deck);
+            gs->communityCount = 4;
+            gs->stage = TURN;
+            break;
+        case TURN:
+            gs->community[4] = deal(deck);
+            gs->communityCount = 5;
+            gs->stage = RIVER;
+            break;
+        case RIVER:
+            break; //no street past the river; showdown is handled separately
+    }
+}
+
+// single hand-teardown path: pot cleared, hand parked in COMPLETE for the server.
+static void endHand(GameState* gs)
+{
+    gs->pot = 0;
+    gs->handPlaying = false;
+    gs->currentPlayer = MAX_PLAYERS;
+    gs->phase = HAND_COMPLETE;
+}
+
+// everyone but one player folded -> that player wins the pot uncontested.
+static void endHandFold(GameState* gs)
+{
+    int ids[MAX_PLAYERS];
+    findActive(gs, ids, true); //exactly one contestant remains
+    uint8_t winner = ids[0];
+
+    gs->players[winner].chips += gs->pot;
+    gs->winnerID = winner;
+    endHand(gs);
+}
+
+// final street reached -> evaluate hands and pay the winner(s).
+static void endHandShowdown(GameState* gs)
+{
+    award(gs); //sets winnerID, pays chips, zeroes pot
+    endHand(gs);
+}
+
+// enter the paced all-in runout; the server ticks runoutStep() from here.
+static void beginRunout(GameState* gs)
+{
+    gs->phase = HAND_RUNOUT;
+    gs->currentPlayer = MAX_PLAYERS; //no one acts during a runout
+}
+
+// betting round is settled: go to showdown, deal the next street, or run it out.
+static void settleBettingRound(GameState* gs, Deck* deck)
+{
+    if(gs->stage == RIVER)        //no streets left -> showdown
+    {
+        endHandShowdown(gs);
+        return;
+    }
+    if(ableToBet(gs) > 1)         //2+ players can still bet -> next street, keep betting
+    {
+        dealStreet(gs, deck);
+        gs->currentPlayer = nextActive(gs, gs->dealerIndex, false);
+        return;
+    }
+    beginRunout(gs);              //<=1 can act but streets remain -> paced runout
+}
+
 void newHand(GameState* gs, Deck* deck)
 {
     shuffle(deck);
@@ -282,106 +506,69 @@ void newHand(GameState* gs, Deck* deck)
 
     //set to Preflop stage
     gs->stage = PREFLOP; gs->handPlaying = true;
+    gs->phase = HAND_BETTING;
 
     //reset gameover
     gs->gameOver = 0;
     gs->winnerID = MAX_PLAYERS+1;//aka invalid id (no winner yet)
 
-    //set current player after blinds
+    //set last actor
+    gs->lastActor = MAX_PLAYERS;
+
+    //post blinds and set the first player to act
     initBlinds(gs);
-    resolveNoAct(gs, deck);
+
+    //blinds alone can already decide the hand (only one contestant, or everyone
+    //forced all-in by the blinds) -> route through the same settle path as a move
+    if(contesting(gs) == 1)
+        endHandFold(gs);
+    else if(allPlayersWent(gs))
+        settleBettingRound(gs, deck);
 }
 
 // allPlayersWent() moved to rules.c
 
-void advance(GameState* gs, Deck* deck)
-{
-    gs->currentBet = 0;
-    gs->minRaise = BIG_BLIND;
-    
-    for(int i = 0 ; i < MAX_PLAYERS; i++)
-    {
-        Player *p = &gs->players[i];
-
-        gs->acted[i] = false;
-        p->current_bet = 0;
-    }
-
-    switch (gs->stage)
-    {
-        case PREFLOP:
-        {
-            gs->community[gs->communityCount++] = deal(deck);
-            gs->community[gs->communityCount++] = deal(deck);
-            gs->community[gs->communityCount++] = deal(deck);
-            gs->stage = FLOP;
-            break;
-        }
-        case FLOP:
-        {
-            gs->community[gs->communityCount++] = deal(deck);
-            gs->stage = TURN;
-            break;
-        }
-        case TURN:
-        {
-            gs->community[gs->communityCount++] = deal(deck);
-            gs->stage = RIVER;
-            break;
-        }
-        case RIVER:
-        {
-            award(gs);
-            resetHand(gs);
-            return;
-        }
-    }
-
-    gs->currentPlayer = nextActive(gs, gs->dealerIndex, false);
-}
-
-bool resolveNoAct(GameState* gs, Deck* deck)
-{
-    int activeIDs[MAX_PLAYERS];
-
-    if(findActive(gs, activeIDs, false) > 0)
-        return false;
-
-    while(gs->stage != RIVER)
-        advance(gs, deck);
-
-    award(gs);
-    resetHand(gs);
-    return true;
-}
-
-
+// FSM transition taken after a move has been applied (or a current player left).
 void processMove(GameState* gs, Deck* deck, uint8_t playerID)
 {
-    int activeIDs[MAX_PLAYERS];
-    int count = findActive(gs, activeIDs, true);
+    gs->lastActor = playerID;
 
-    //check if everyone except 1 folded (or left)
-    if(count == 1)
+    //everyone else folded -> uncontested pot
+    if(contesting(gs) == 1)
     {
-        gs->players[activeIDs[0]].chips += gs->pot;
-        resetHand(gs);
+        endHandFold(gs);
         return;
     }
 
-    if(resolveNoAct(gs, deck))
-        return;
-
-    //if everyone went, then advance to next stage
-    if(allPlayersWent(gs))
+    //betting round not settled yet -> hand off to the next player who can act.
+    //(this is what gives an opponent the chance to call/fold an all-in instead
+    // of being run out on automatically.)
+    if(!allPlayersWent(gs))
     {
-        advance(gs, deck);
+        gs->currentPlayer = nextActive(gs, playerID, false);
         return;
     }
 
-    //next player's turn if normal move and nothing else occurs
-    gs->currentPlayer = nextActive(gs, playerID, false);
+    //betting round settled -> showdown / next street / runout
+    settleBettingRound(gs, deck);
+}
 
+// Ticked by the server while phase == HAND_RUNOUT to pace the all-in reveal:
+// reveals one more street per call, then runs the showdown. Returns true while
+// more reveals remain, false once the hand is decided.
+bool runoutStep(GameState* gs, Deck* deck)
+{
+    if(gs->phase != HAND_RUNOUT)
+        return false;
+
+    if(gs->stage == RIVER)   //all community cards out -> showdown, runout done
+    {
+        endHandShowdown(gs);
+        return false;
+    }
+
+    dealStreet(gs, deck);    //reveal one more street
+    return true;
 }
 
 bool tryMove(GameState* gs, Deck* deck, uint8_t playerID, MoveType move, uint32_t amount)
@@ -403,8 +590,8 @@ int remainingPlayers(const GameState* gs)
     {
         const Player* p = &gs->players[i];
 
-        //skip inactive players
-        if(p->status == PLAYER_DISCONNECTED || p->status == PLAYER_EMPTY || p->status == PLAYER_SPECTATING) continue;
+        //skip inactive seats
+        if(p->status == PLAYER_DISCONNECTED || p->status == PLAYER_EMPTY) continue;
 
         if(p->chips > 0)
             count ++;
@@ -426,3 +613,4 @@ int countStatus(const GameState* gs, PlayerStatus status)
     
     return count;
 }
+

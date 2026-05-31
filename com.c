@@ -89,6 +89,8 @@ uint32_t encode_player_data(uint8_t *buffer, uint32_t *offset, const Player *pla
     write_u8(buffer, offset, player->has_cards);//write has_cards
     write_u32(buffer, offset, player->chips);//write chips
     write_u32(buffer, offset, player->current_bet);//write current_bet
+    write_u32(buffer, offset, player->total_bet);
+    write_u8(buffer, offset, player->place);//write place
     return *offset;
 }
 int decode_player_data(const uint8_t *buffer, uint32_t *offset, Player *player)
@@ -101,8 +103,11 @@ int decode_player_data(const uint8_t *buffer, uint32_t *offset, Player *player)
     
     read_u8(buffer, offset, &player->status);
     read_u8(buffer, offset, &player->has_cards);
-   read_u32(buffer, offset, &player->chips);
+    read_u32(buffer, offset, &player->chips);
     read_u32(buffer, offset, &player->current_bet);
+    read_u32(buffer, offset, &player->total_bet);
+    read_u8(buffer, offset, &player->place);
+ 
     
     /*if (player->id < 0 || player->status < 0 || player->has_cards < 0 || player->chips < 0 || player->current_bet < 0) {
         return -1; // Invalid data
@@ -149,6 +154,12 @@ uint32_t encode_server_data(uint8_t *buffer, uint32_t *offset, const GameState *
     write_u8(buffer, offset, gameState->handPlaying);
     write_u8(buffer, offset, gameState->gameOver);
     write_u8(buffer, offset, gameState->winnerID);
+    write_u8(buffer, offset, gameState->lastActor);
+    write_u8(buffer, offset, gameState->smallBlindIndex);
+    write_u8(buffer, offset, gameState->bigBlindIndex);
+    write_u32(buffer, offset, gameState->smallBlind);
+    write_u32(buffer, offset, gameState->bigBlind);
+
 
     
     return *offset;
@@ -178,7 +189,11 @@ int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameS
     read_u8(buffer, offset, (uint8_t *)&gameState->handPlaying);
     read_u8(buffer, offset, &gameState->gameOver);
     read_u8(buffer, offset, &gameState->winnerID);
-    
+    read_u8(buffer, offset, &gameState->lastActor);
+    read_u8(buffer, offset, &gameState->smallBlindIndex);
+    read_u8(buffer, offset, &gameState->bigBlindIndex);
+    read_u32(buffer, offset, &gameState->smallBlind);
+    read_u32(buffer, offset, &gameState->bigBlind);
     /*if (gameState->playerCount < 0 || gameState->communityCount < 0 || gameState->stage < 0 || gameState->currentPlayer < 0 || gameState->dealerIndex < 0 || gameState->pot < 0 || gameState->currentBet < 0 || gameState->minRaise < 0 || gameState->handPlaying < 0) {
         return -1; // Invalid data
     }*/
@@ -223,24 +238,7 @@ int decode_error_message(const uint8_t *buffer, uint32_t *offset, char *message)
     message[length] = '\0'; // Null-terminate the string
     return 0;
 }
-uint32_t encode_special_message(uint8_t *buffer, uint32_t *offset, const char *message)
-{
-    uint32_t length = strlen(message);
-    write_u32(buffer, offset, length);
-    for (uint32_t i = 0; i < length; i++) {
-        write_u8(buffer, offset, message[i]);
-    }
-    return *offset;
-}
-int decode_special_message(const uint8_t *buffer, uint32_t *offset, char *message)
-{    uint32_t length;
-    read_u32(buffer, offset, &length);
-    for (uint32_t i = 0; i < length; i++) {
-        read_u8(buffer, offset, (uint8_t *)&message[i]);
-    }
-    message[length] = '\0'; // Null-terminate the string
-    return 0;
-}
+
 uint32_t prepare_payload(uint8_t *buffer, MessageType type, const Message*data)
 {
     uint32_t offset=0;
@@ -258,17 +256,16 @@ uint32_t prepare_payload(uint8_t *buffer, MessageType type, const Message*data)
         case MSG_TYPE_PLAYER_ACTION:
             encode_client_data(buffer, &offset, &data->action);
             break;
+        case MSG_TYPE_READY:
+            break;
         case MSG_TYPE_CHAT_MESSAGE:
+             encode_chat_message(buffer, &offset, data->sender_id, data->chat);
+            break;
+        case MSG_TYPE_JOIN:
             encode_chat_message(buffer, &offset, data->sender_id, data->chat);
             break;
         case MSG_TYPE_ERROR_MESSAGE:
             encode_error_message(buffer, &offset, data->error);
-            break;
-        case MSG_TYPE_SPECIAL_MESSAGE:
-            encode_special_message(buffer, &offset, data->special);
-            break;
-        case MSG_TYPE_READY:
-            // No payload to encode for ready message
             break;
         case MSG_CD_SIGNAL:
            {
@@ -303,15 +300,14 @@ int receive_payload(const uint8_t *buffer, uint32_t buf_len,  Message *out_data)
         return decode_server_data(buffer, &offset, &out_data->gameState);
     case MSG_TYPE_PLAYER_ACTION:
         return decode_client_data(buffer, &offset, &out_data->action);
+    case MSG_TYPE_READY:
+        return 0; 
     case MSG_TYPE_CHAT_MESSAGE:
+        return decode_chat_message(buffer, &offset, &out_data->sender_id, out_data->chat);
+    case MSG_TYPE_JOIN:
         return decode_chat_message(buffer, &offset, &out_data->sender_id, out_data->chat);//future implementation
     case MSG_TYPE_ERROR_MESSAGE:
         return decode_error_message(buffer, &offset, out_data->error);//future implementation
-    case MSG_TYPE_SPECIAL_MESSAGE:
-        return decode_special_message(buffer, &offset, out_data->special);//future implementation
-    case MSG_TYPE_READY:
-        // No payload to decode for ready message
-        return 0;
     case MSG_CD_SIGNAL:
         {
             return read_u8(buffer, &offset, &out_data->sender_id); // sender_id = target.

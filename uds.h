@@ -34,6 +34,14 @@ typedef enum {
     RIVER
 } Stage;
 
+//server-side hand FSM state (NOT sent on the wire; clients still use stage/handPlaying/winnerID)
+typedef enum {
+    HAND_IDLE,      // no hand in progress (between hands / before start)
+    HAND_BETTING,   // waiting on currentPlayer to act
+    HAND_RUNOUT,    // all-in: remaining community cards revealed one tick at a time
+    HAND_COMPLETE   // hand decided; winner known, waiting out the inter-hand delay
+} HandPhase;
+
 //enum of suit.
 typedef enum {
     UNKNOW_S,// for hiding card information when sending data to other players.
@@ -98,10 +106,11 @@ typedef struct {
     Card hand[HAND_SIZE];
     uint32_t chips;
     uint32_t current_bet;
+    uint32_t total_bet;
 
     uint8_t status;
     uint8_t has_cards;
-
+    uint8_t place;
 }   Player;
 
 //struct for rankings of poker hands
@@ -146,15 +155,21 @@ typedef struct {
     uint8_t currentPlayer;
     uint8_t dealerIndex;
     uint8_t yourPlayerID;
+    uint8_t smallBlindIndex;
+    uint8_t bigBlindIndex;
 
+    uint32_t smallBlind;
+    uint32_t bigBlind;
     uint32_t pot;
     uint32_t currentBet;     // bet needed to match
     uint32_t minRaise;
     uint8_t gameOver;
     uint8_t winnerID;
     //non encoded
+    uint8_t lastActor;
     bool handPlaying; //for starting new hands after reset
     bool acted[MAX_PLAYERS];
+    HandPhase phase;  //hand FSM state; drives the server loop (runout pacing, inter-hand delay)
   
 } GameState;
 typedef struct {

@@ -112,6 +112,9 @@ static gboolean timer_tick_cb(gpointer user_data)
         gtk_widget_hide(t->bar);
         gtk_label_set_text(GTK_LABEL(t->label), "");
         t->timer_id = 0;
+        if (t->is_my_timer) {
+            send_gui_move(FOLD, 0);
+        }
         g_free(cb);
         return G_SOURCE_REMOVE;
     }
@@ -180,6 +183,19 @@ void sendReadyToServer(void)
     msg.type = MSG_TYPE_READY;
     uint8_t buffer[BUFFER_SIZE];
     uint32_t len = prepare_payload(buffer, MSG_TYPE_READY, &msg);
+    send_to_server(&C, buffer, len);
+}
+
+void sendNameToServer(const char *name)
+{
+    if (!C.connected || !name) return;
+    Message msg;
+    msg.type      = MSG_TYPE_JOIN;
+    msg.sender_id = C.my_player_id;
+    strncpy(msg.chat, name, MAX_NAME_LENTH - 1);
+    msg.chat[MAX_NAME_LENTH - 1] = '\0';
+    uint8_t buffer[BUFFER_SIZE];
+    uint32_t len = prepare_payload(buffer, MSG_TYPE_JOIN, &msg);
     send_to_server(&C, buffer, len);
 }
 

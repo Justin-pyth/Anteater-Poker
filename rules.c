@@ -173,20 +173,14 @@ int findActive(const GameState* gs, int activeIDs[], bool inclAllIn)
 
 int nextActive(const GameState* gs, int curr, bool inclReady)
 {
-    //move to next player in a circle
-    int next = (curr + 1) % MAX_PLAYERS;
-    while(next != curr)
+    for(int step = 1; step <= MAX_PLAYERS; step++)
     {
+        int next = (((curr + step) % MAX_PLAYERS) + MAX_PLAYERS) % MAX_PLAYERS;
+
         //if the player is active, return index
         if(gs->players[next].status == PLAYER_PLAYING || (inclReady && gs->players[next].status == PLAYER_READY))
             return next;
-
-        //otherwise check the next player
-        next = (next + 1) % MAX_PLAYERS;
     }
-
-    if(gs->players[curr].status == PLAYER_PLAYING || (inclReady && gs->players[curr].status == PLAYER_READY))
-        return curr;
 
     return -1; //return if no one found
 }
@@ -220,6 +214,7 @@ void initBlinds(GameState* gs)
         //player goes all in if they can't afford small blind
         gs->pot += gs->players[small].chips;
         gs->players[small].current_bet = gs->players[small].chips;
+        gs->players[small].total_bet += gs->players[small].chips;
         gs->players[small].chips = 0;
         gs->players[small].status = PLAYER_ALL_IN;
     }
@@ -228,6 +223,7 @@ void initBlinds(GameState* gs)
         //player can afford small blind
         gs->players[small].chips -= SMALL_BLIND;
         gs->players[small].current_bet = SMALL_BLIND;
+        gs->players[small].total_bet += SMALL_BLIND;
         gs->pot += SMALL_BLIND;
     }
 
@@ -236,6 +232,7 @@ void initBlinds(GameState* gs)
         //player goes all in if they can't afford big blind
         gs->pot += gs->players[big].chips;
         gs->players[big].current_bet = gs->players[big].chips;
+        gs->players[big].total_bet += gs->players[big].chips;
         gs->players[big].chips = 0;
         gs->players[big].status = PLAYER_ALL_IN;
     }
@@ -244,6 +241,7 @@ void initBlinds(GameState* gs)
         //player can afford big blind
         gs->players[big].chips -= BIG_BLIND;
         gs->players[big].current_bet = BIG_BLIND;
+        gs->players[big].total_bet += BIG_BLIND;
         gs->pot += BIG_BLIND;
     }
 
