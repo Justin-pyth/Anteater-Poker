@@ -237,6 +237,7 @@ void init_server(ServerState *state)
 
     //no timed FSM action pending yet
     state->timer_active = 0;
+    state->time_between_hands = 0;
     memset(&state->timer_deadline, 0, sizeof(state->timer_deadline));
 
     //init deck and gamestate
@@ -477,8 +478,9 @@ void error(const char *msg)
     perror(msg);
     exit(1);
 }
-#define RUNOUT_TICK_MS   1000  //one community card revealed per second during an all-in runout
-#define INTERHAND_MS     3000  //pause after a hand before the next one starts (was a blocking sleep(3))
+#define RUNOUT_TICK_MS             1000  //one community card revealed per second during an all-in runout
+#define TIME_BETWEEN_HANDS_SECONDS   5
+#define INTERHAND_MS               1000  //one countdown tick before the next hand
 
 //arm the non-blocking FSM timer to fire `ms` milliseconds from now.
 static void arm_timer(ServerState *state, long ms)
@@ -491,6 +493,13 @@ static void arm_timer(ServerState *state, long ms)
         state->timer_deadline.tv_usec -= 1000000;
     }
     state->timer_active = 1;
+}
+
+void broadcast_time_between_hands(ServerState *state, int seconds)
+{
+    char msg[MAX_PAYLOAD_SIZE];
+    snprintf(msg, sizeof(msg), "Next hand in %d...", seconds);
+    broadcast_chat_message(state, MAX_PLAYERS, msg);
 }
 
 //the hand has reached HAND_COMPLETE: announce the result, end the tournament if
@@ -536,8 +545,11 @@ static void finish_hand(ServerState *state)
     }
     broadcast_game_state(state);
 
-    //non-blocking pause before the next hand
-    arm_timer(state, INTERHAND_MS);
+    //non-blocking countdown before the next hand
+    state->time_between_hands = TIME_BETWEEN_HANDS_SECONDS;
+    broadcast_time_between_hands(state, state->time_between_hands); //show initial time(starts at 5s)
+    state->time_between_hands--; //decrement
+    arm_timer(state, INTERHAND_MS); //start the 1s timer
 }
 
 //dispatch after a move (or a current player leaving) based on the hand FSM phase.
@@ -601,8 +613,20 @@ void service_timer(ServerState *state)
 
     if (g->phase == HAND_COMPLETE)
     {
-        //inter-hand delay elapsed -> deal the next hand
-        start_new_hand(state);
+        //once a hand is complete, check if there is still a cooldown for next round
+        if (state->time_between_hands > 0)
+        {
+            //broadcast it
+            broadcast_time_between_hands(state, state->time_between_hands);
+            //decrement (5->4->3->2->1)
+            state->time_between_hands--;
+            //start 1s timer
+            arm_timer(state, INTERHAND_MS);
+            return;
+        }
+
+        //timer ticked from 5->0s at an interval of 1s per new timer
+        start_new_hand(state); //start next hand
         return;
     }
 }

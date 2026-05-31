@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
+#include <sys/types.h> 
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <netinet/in.h>
@@ -33,13 +33,14 @@ typedef struct{
     int listen_fd;
     Client clients[MAX_CLIENTS];
     int running;
-
+    
     GameState game;
     Deck deck;
 
     //non-blocking FSM timer: paces the all-in runout and the inter-hand delay.
     int timer_active;               //whether a timed action is pending
     struct timeval timer_deadline;  //when it should fire
+    int time_between_hands;         //seconds left before the next hand starts
 } ServerState;
 
 typedef struct {
@@ -90,6 +91,7 @@ void handle_after_move(ServerState *state);
 void service_timer(ServerState *state); //run the pending timed FSM action (runout tick / new hand)
 void start_new_hand(ServerState *state);
 void broadcast_move(ServerState *state, uint8_t playerID, MoveType move, uint32_t amount);
+void broadcast_time_between_hands(ServerState *state, int seconds);
 
 //shared functions
 void error(const char *msg);
