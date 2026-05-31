@@ -159,30 +159,57 @@ void refresh_ui(void)
     snprintf(buf, sizeof(buf), "$%u", me->chips);
     gtk_label_set_text(GTK_LABEL(W.label_your_stack), buf);
 
-    if (me->has_cards) {
-        set_card_face(W.my_cards[0], me->hand[0], card_is_known(me->hand[0]));
-        set_card_face(W.my_cards[1], me->hand[1], card_is_known(me->hand[1]));
+if (me->has_cards) {
+    set_card_face(W.my_cards[0], me->hand[0], card_is_known(me->hand[0]));
+    set_card_face(W.my_cards[1], me->hand[1], card_is_known(me->hand[1]));
+
+    if (me->status == PLAYER_FOLDED) {
+        gtk_widget_set_opacity(W.my_cards[0], 0);
+        gtk_widget_set_opacity(W.my_cards[1], 0);
     } else {
-        set_card_back(W.my_cards[0]);
-        set_card_back(W.my_cards[1]);
+        gtk_widget_set_opacity(W.my_cards[0], 1);
+        gtk_widget_set_opacity(W.my_cards[1], 1);
     }
+} else {
+    gtk_widget_set_opacity(W.my_cards[0], 0);
+    gtk_widget_set_opacity(W.my_cards[1], 0);
+}
+
 
     int opp_slot = 0;
     for (int pi = 0; pi < MAX_PLAYERS && opp_slot < GUI_OPPONENT_SLOTS; pi++) {
         if (pi == C.my_player_id) continue;
         Player *p = &game->players[pi];
         if (p->status == PLAYER_EMPTY) continue;
+        
 
+        gtk_widget_set_opacity(W.opp_cards[opp_slot][0], 1);
+        gtk_widget_set_opacity(W.opp_cards[opp_slot][1], 1);
         gtk_label_set_text(GTK_LABEL(W.opp_name[opp_slot]),
             p->name[0] ? p->name : "Player");
         snprintf(buf, sizeof(buf), "$%u  |  bet $%u", p->chips, p->total_bet);
         gtk_label_set_text(GTK_LABEL(W.opp_chips[opp_slot]), buf);
 
         const char *st = "Waiting";
-        if      (p->status == PLAYER_FOLDED)       st = "Folded";
+        if      (p->status == PLAYER_FOLDED)       
+        {
+            gtk_widget_set_opacity(W.opp_cards[opp_slot][0], 0);
+            gtk_widget_set_opacity(W.opp_cards[opp_slot][1], 0);
+            st = "Folded";
+        }
         else if (p->status == PLAYER_ALL_IN)        st = "All in";
-        else if (p->status == PLAYER_DISCONNECTED)  st = "Disconnected";
-        else if (p->status == PLAYER_SPECTATING)    st = "Spectating";
+        else if (p->status == PLAYER_DISCONNECTED)  
+        {
+            gtk_widget_set_opacity(W.opp_cards[opp_slot][0], 0);
+            gtk_widget_set_opacity(W.opp_cards[opp_slot][1], 0);
+            st = "Disconnected";
+        }
+        else if (p->status == PLAYER_SPECTATING)    
+        {
+            gtk_widget_set_opacity(W.opp_cards[opp_slot][0], 0);
+            gtk_widget_set_opacity(W.opp_cards[opp_slot][1], 0);
+            st = "Spectating";
+        }
         else if (p->status == PLAYER_PLAYING && pi == game->currentPlayer && game->handPlaying) st = "Acting";
         gtk_label_set_text(GTK_LABEL(W.opp_status[opp_slot]), st);
 
