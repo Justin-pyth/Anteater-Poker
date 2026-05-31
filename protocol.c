@@ -38,8 +38,9 @@ void handle_client_communication(ServerState *state, Client *client)
             
             if(tryMove(&state->game, &state->deck, data.action.playerID, data.action.move, data.action.amount))
             {   
-                apply(&state->game, data.action.playerID, data.action.move, data.action.amount); //apply the move on the server if valid
-                processMove(&state->game, &state->deck, data.action.playerID); //FSM transition: apply already done, decide next phase
+                //commented out below (most likely a bug)
+                //apply(&state->game, data.action.playerID, data.action.move, data.action.amount); //apply the move on the server if valid
+                //processMove(&state->game, &state->deck, data.action.playerID); //FSM transition: apply already done, decide next phase
                 broadcast_move(state, data.action.playerID, data.action.move, data.action.amount);
                 handle_after_move(state);
               
@@ -529,6 +530,9 @@ static void finish_hand(ServerState *state)
         char msg[MAX_PAYLOAD_SIZE];
         snprintf(msg, sizeof(msg), "%s wins the hand.", g->players[g->winnerID].name);
         broadcast_chat_message(state, MAX_PLAYERS, msg);
+    }
+    else{
+        broadcast_chat_message(state, MAX_PLAYERS, "Several players won pots.");
     }
     broadcast_game_state(state);
 

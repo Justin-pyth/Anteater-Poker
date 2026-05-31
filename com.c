@@ -89,6 +89,7 @@ uint32_t encode_player_data(uint8_t *buffer, uint32_t *offset, const Player *pla
     write_u8(buffer, offset, player->has_cards);//write has_cards
     write_u32(buffer, offset, player->chips);//write chips
     write_u32(buffer, offset, player->current_bet);//write current_bet
+    write_u32(buffer, offset, player->total_bet);
     write_u8(buffer, offset, player->place);//write place
     return *offset;
 }
@@ -102,8 +103,9 @@ int decode_player_data(const uint8_t *buffer, uint32_t *offset, Player *player)
     
     read_u8(buffer, offset, &player->status);
     read_u8(buffer, offset, &player->has_cards);
-   read_u32(buffer, offset, &player->chips);
+    read_u32(buffer, offset, &player->chips);
     read_u32(buffer, offset, &player->current_bet);
+    read_u32(buffer, offset, &player->total_bet);
     read_u8(buffer, offset, &player->place);
  
     

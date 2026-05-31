@@ -26,16 +26,19 @@ void append_chat(const char *sender, const char *msg, const char *tag_name)
     {
         gtk_text_buffer_create_tag(buf, "player", "foreground", "#000000", NULL);
     }
+    //also add a bold tag for the sender names
+    if (!gtk_text_tag_table_lookup(gtk_text_buffer_get_tag_table(buf), "bold"))
+    {
+        gtk_text_buffer_create_tag(buf, "bold", "weight", PANGO_WEIGHT_BOLD, NULL);
+    }
 
     GtkTextIter end;
     gtk_text_buffer_get_end_iter(buf, &end);
-    char line[512];
-    snprintf(line, sizeof(line), "%s: %s\n", sender ? sender : "?", msg ? msg : "");
 
     //make the sender name bold, rest of the text unbolded
-    gtk_text_buffer_insert_with_tags_by_name(buf, &end, sender, -1, "bold", tag_name, NULL);
+    gtk_text_buffer_insert_with_tags_by_name(buf, &end, sender ? sender : "?", -1, "bold", tag_name, NULL);
     gtk_text_buffer_insert_with_tags_by_name(buf, &end, ": ", -1, tag_name, NULL);
-    gtk_text_buffer_insert_with_tags_by_name(buf, &end, msg, -1, tag_name, NULL);
+    gtk_text_buffer_insert_with_tags_by_name(buf, &end, msg ? msg : "", -1, tag_name, NULL);
     gtk_text_buffer_insert_with_tags_by_name(buf, &end, "\n", -1, tag_name, NULL);
 
     gtk_text_buffer_get_end_iter(buf, &end);
@@ -172,7 +175,7 @@ void refresh_ui(void)
 
         gtk_label_set_text(GTK_LABEL(W.opp_name[opp_slot]),
             p->name[0] ? p->name : "Player");
-        snprintf(buf, sizeof(buf), "$%u  |  bet $%u", p->chips, p->current_bet);
+        snprintf(buf, sizeof(buf), "$%u  |  bet $%u", p->chips, p->total_bet);
         gtk_label_set_text(GTK_LABEL(W.opp_chips[opp_slot]), buf);
 
         const char *st = "Waiting";

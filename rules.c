@@ -214,6 +214,7 @@ void initBlinds(GameState* gs)
         //player goes all in if they can't afford small blind
         gs->pot += gs->players[small].chips;
         gs->players[small].current_bet = gs->players[small].chips;
+        gs->players[small].total_bet += gs->players[small].chips;
         gs->players[small].chips = 0;
         gs->players[small].status = PLAYER_ALL_IN;
     }
@@ -222,6 +223,7 @@ void initBlinds(GameState* gs)
         //player can afford small blind
         gs->players[small].chips -= SMALL_BLIND;
         gs->players[small].current_bet = SMALL_BLIND;
+        gs->players[small].total_bet += SMALL_BLIND;
         gs->pot += SMALL_BLIND;
     }
 
@@ -230,6 +232,7 @@ void initBlinds(GameState* gs)
         //player goes all in if they can't afford big blind
         gs->pot += gs->players[big].chips;
         gs->players[big].current_bet = gs->players[big].chips;
+        gs->players[big].total_bet += gs->players[big].chips;
         gs->players[big].chips = 0;
         gs->players[big].status = PLAYER_ALL_IN;
     }
@@ -238,6 +241,7 @@ void initBlinds(GameState* gs)
         //player can afford big blind
         gs->players[big].chips -= BIG_BLIND;
         gs->players[big].current_bet = BIG_BLIND;
+        gs->players[big].total_bet += BIG_BLIND;
         gs->pot += BIG_BLIND;
     }
 

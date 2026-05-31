@@ -35,6 +35,8 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount); //a
 
 // findActive() and nextActive() moved to rules.h
 
+void awardSidepots(GameState* gs, int activeIDs[], int activeCount);
+void awardPot(GameState* gs, uint32_t pot, int eligible[], int eligCount);
 void award(GameState*gs); //award players at showdown
 
 void resetHand(GameState* gs); //reset hand after final betting round

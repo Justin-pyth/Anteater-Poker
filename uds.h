@@ -106,6 +106,7 @@ typedef struct {
     Card hand[HAND_SIZE];
     uint32_t chips;
     uint32_t current_bet;
+    uint32_t total_bet;
 
     uint8_t status;
     uint8_t has_cards;

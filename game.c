@@ -112,6 +112,7 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
 
             p->chips -= call;
             p->current_bet += call;
+            p->total_bet += call;
             gs->pot += call;
 
             if(p->chips == 0)
@@ -125,6 +126,7 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
             uint32_t chipsPotted = total - p->current_bet;
             p->chips -= chipsPotted;
             p->current_bet = total;
+            p->total_bet += chipsPotted;
             gs->pot += chipsPotted;
 
             gs->minRaise = amount;
@@ -149,6 +151,7 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
 
             p->chips = 0;
             p->current_bet += allIn;
+            p->total_bet += allIn;
             gs->pot += allIn;
             p->status = PLAYER_ALL_IN;
 
@@ -182,28 +185,111 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
 
 // nextActive() and findActive() moved to rules.c
 
-void award(GameState* gs)
+void awardSidepots(GameState* gs, int activeIDs[], int activeCount)
 {
-    int activeIDs[MAX_PLAYERS];
-    int count = findActive(gs, activeIDs, true);
-    if(count == 0) return;
+    
+    //side pot logic
+    uint32_t threshold[MAX_PLAYERS]; //create an array of contribution thresholds
+    int thresholdCount = 0;
+
+    //find (unique) contribution thresholds first
+    for(int i = 0; i < MAX_PLAYERS; i++)
+    {
+        uint32_t bet = gs->players[i].total_bet;
+        if(bet == 0) continue; //skip if total bet is 0
+
+        //track if the contribution threshold was already within the array
+        bool dupe = false;
+        for(int j = 0; j < thresholdCount; j++)
+        {
+            if(threshold[j] == bet)
+            {
+                dupe = true;
+                break;
+            }
+        }
+
+        //only add new thresholds
+        if(!dupe)
+            threshold[thresholdCount++] = bet;
+    }
+
+    //bubble sort
+    for(int i = 0; i < thresholdCount-1; i++)
+    {
+        for(int j = 0; j < thresholdCount-i-1; j++)
+        {
+            if(threshold[j] > threshold[j+1])
+            {
+                //swap
+                uint32_t tempBet = threshold[j];
+                threshold[j] = threshold[j+1];
+                threshold[j+1] = tempBet;
+            }
+        }
+    }
 
 
+    uint32_t previousThreshold = 0;
+    for(int i = 0; i < thresholdCount; i ++)
+    {
+        //store non folded players here
+        int eligible[MAX_PLAYERS];
+        int eligCount = 0;
+
+        //A put 50, B put 100, C put 200
+        //slices would be 50, 50, 100
+        //Any player putting more than a certain thresholdBet is (difference between previous and current) gets that slice
+        uint32_t thresholdBet = threshold[i];
+        uint32_t slice = thresholdBet - previousThreshold;
+        uint32_t sidePot = 0;
+
+        //for every player that has enough for the threshold, add their slice to the sidepot
+        for(int p = 0; p < MAX_PLAYERS; p++)
+        {
+            if(gs->players[p].total_bet >= thresholdBet)
+                sidePot += slice;
+        }
+
+        //check their eligibility(not folded), and add them to the list
+        //eligible players are not folded and bet past the threshold
+        for(int a = 0 ; a < activeCount; a++)
+        {
+            int p = activeIDs[a];
+
+            if(gs->players[p].total_bet >= thresholdBet)
+                eligible[eligCount++] = p;
+        }
+
+        //award the pot to eligible players
+        awardPot(gs, sidePot, eligible, eligCount);
+        previousThreshold = thresholdBet; //set curr threshold as previous for next iter
+    }
+}
+
+void awardPot(GameState* gs, uint32_t pot, int eligible[], int eligCount)
+{
+    if (pot == 0 || eligCount == 0) return; //if the side pot is empty or no one is eligble, skip
+    //for determining the winner
     int bestScore = -1, score, winnerCount = 0;
     int winnerIDs[MAX_PLAYERS];
-    for(int i = 0 ; i < count; i++)
+
+    //iterate through all eligible players
+    for(int i = 0 ; i < eligCount; i++)
     {
-        int pID = activeIDs[i];
+        int pID = eligible[i];
         const Player* p = &gs->players[pID];
 
+        //evaluate their hand
         score = evaluateHand(gs, p->hand);
 
+        //if their score is greater than bestScore, reset winner array and make new bestScore
         if(score > bestScore)
         {
             bestScore = score;
             winnerCount = 0;
             winnerIDs[winnerCount++] = pID;
-        }
+        } //if their score is the same as bestScore, add them to winner array
         else if(score == bestScore)
         {
             winnerIDs[winnerCount++] = pID;
@@ -211,14 +297,30 @@ void award(GameState* gs)
             
     }
 
+    //for multiple winners, split the pot by the winner count
+    //2 winners means each player gets half
+    uint32_t split = pot / winnerCount;
+    uint32_t remainder = pot % winnerCount;
 
-    int split = gs->pot / winnerCount;
-    int remainder = gs->pot % winnerCount;
     for(int i = 0 ; i < winnerCount ; i++)
         gs->players[winnerIDs[i]].chips += split;
+
     gs->players[winnerIDs[0]].chips += remainder; //may change, just give to first winner for now
 
+    //not very useful for multiple winners, might need to add winner array to gameState for broadcasting****
     gs->winnerID = (winnerCount == 1) ? winnerIDs[0] : (MAX_PLAYERS + 1);
+
+}
+
+void award(GameState* gs)
+{
+    int activeIDs[MAX_PLAYERS];
+    int count = findActive(gs, activeIDs, true);
+    if(count == 0) return;
+
+    //will handle sidepots if there is an all-in scenerio, otherwise, it'll just reward normally
+    awardSidepots(gs, activeIDs, count);
+
     gs->pot = 0; //reset pot
 }
 
@@ -236,7 +338,8 @@ void resetHand(GameState* gs)
         else p->status = PLAYER_READY;
         
         //reset bets and cards
-        p->current_bet = 0; p->has_cards = 0; p->place = 0;
+        p->current_bet = 0; p->total_bet = 0; p->has_cards = 0; 
+        p->place = 0;
         memset(&p->hand, 0, sizeof(p->hand));
 
         gs->acted[i] = false;
