@@ -44,6 +44,7 @@ typedef struct {
     GtkWidget *deck_count_label;
     GtkWidget *community_cards[5];
     GtkWidget *my_cards[2];
+    GtkWidget *self_blind;
     GtkWidget *label_call_amnt;
     GtkWidget *label_your_stack;
 
@@ -53,6 +54,7 @@ typedef struct {
     GtkWidget *opp_chips [GUI_OPPONENT_SLOTS];
     GtkWidget *opp_status[GUI_OPPONENT_SLOTS];
     GtkWidget *opp_cards[GUI_OPPONENT_SLOTS][2];
+    GtkWidget *opp_blind [GUI_OPPONENT_SLOTS];
     SeatTimer  opp_timer [GUI_OPPONENT_SLOTS];
 
     /* local player timer */

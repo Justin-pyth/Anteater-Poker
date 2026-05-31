@@ -100,6 +100,63 @@ void set_card_back(GtkWidget *da)
     gtk_widget_queue_draw(da);
 }
 
+/* -- Blind markers --------------------------------------------------------- */
+static GdkPixbuf *blind_sb_pix = NULL;   // small-blind chip
+static GdkPixbuf *blind_bb_pix = NULL;   // big-blind chip
+static int        blind_pix_loaded = 0;
+
+static void load_blind_pixbufs(void)
+{
+    if (blind_pix_loaded) return;
+    blind_pix_loaded = 1;   // load once; relative path resolves when run from the repo dir
+    blind_sb_pix = gdk_pixbuf_new_from_file("img/small blind.png", NULL);
+    blind_bb_pix = gdk_pixbuf_new_from_file("img/big blind.png",   NULL);
+}
+
+static gboolean draw_blind_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
+{
+    BlindKind kind = *(BlindKind *)data;
+    GdkPixbuf *pix = (kind == BLIND_SB) ? blind_sb_pix
+                   : (kind == BLIND_BB) ? blind_bb_pix
+                   : NULL;
+    if (!pix) return FALSE;   // BLIND_NONE, or the image failed to load -> draw nothing
+
+    int W  = gtk_widget_get_allocated_width(widget);
+    int H  = gtk_widget_get_allocated_height(widget);
+    int pw = gdk_pixbuf_get_width(pix);
+    int ph = gdk_pixbuf_get_height(pix);
+    if (pw <= 0 || ph <= 0) return FALSE;
+
+    // scale to fit while keeping aspect ratio, then center
+    double sx = (double)W / pw, sy = (double)H / ph;
+    double s  = sx < sy ? sx : sy;
+    double dw = pw * s, dh = ph * s;
+
+    cairo_save(cr);
+    cairo_translate(cr, (W - dw) / 2.0, (H - dh) / 2.0);
+    cairo_scale(cr, s, s);
+    gdk_cairo_set_source_pixbuf(cr, pix, 0, 0);
+    cairo_paint(cr);
+    cairo_restore(cr);
+    return FALSE;
+}
+
+void init_blind_widget(GtkWidget *da)
+{
+    load_blind_pixbufs();
+    BlindKind *k = g_new0(BlindKind, 1);   // 0 == BLIND_NONE
+    g_object_set_data_full(G_OBJECT(da), "blind-kind", k, g_free);
+    g_signal_connect(da, "draw", G_CALLBACK(draw_blind_cb), k);
+}
+
+void set_blind_marker(GtkWidget *da, BlindKind kind)
+{
+    BlindKind *k = g_object_get_data(G_OBJECT(da), "blind-kind");
+    if (!k) return;
+    *k = kind;
+    gtk_widget_queue_draw(da);
+}
+
 /* -- Timer internals ------------------------------------------------------- */
 typedef struct { SeatTimer *t; } TimerCBData;
 

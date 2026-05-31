@@ -175,6 +175,13 @@ if (me->has_cards) {
     gtk_widget_set_opacity(W.my_cards[1], 0);
 }
 
+    /* small/big blind marker for your own seat (only during a live hand) */
+    BlindKind myBlind = BLIND_NONE;
+    if (game->handPlaying) {
+        if      (C.my_player_id == game->smallBlindIndex) myBlind = BLIND_SB;
+        else if (C.my_player_id == game->bigBlindIndex)   myBlind = BLIND_BB;
+    }
+    set_blind_marker(W.self_blind, myBlind);
 
     int opp_slot = 0;
     for (int pi = 0; pi < MAX_PLAYERS && opp_slot < GUI_OPPONENT_SLOTS; pi++) {
@@ -185,6 +192,15 @@ if (me->has_cards) {
 
         gtk_widget_set_opacity(W.opp_cards[opp_slot][0], 1);
         gtk_widget_set_opacity(W.opp_cards[opp_slot][1], 1);
+
+        /* small/big blind marker for this seat (only during a live hand) */
+        BlindKind oppBlind = BLIND_NONE;
+        if (game->handPlaying) {
+            if      (pi == game->smallBlindIndex) oppBlind = BLIND_SB;
+            else if (pi == game->bigBlindIndex)   oppBlind = BLIND_BB;
+        }
+        set_blind_marker(W.opp_blind[opp_slot], oppBlind);
+
         gtk_label_set_text(GTK_LABEL(W.opp_name[opp_slot]),
             p->name[0] ? p->name : "Player");
         snprintf(buf, sizeof(buf), "$%u  |  bet $%u", p->chips, p->total_bet);
