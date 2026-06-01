@@ -92,6 +92,7 @@ void service_timer(ServerState *state); //run the pending timed FSM action (runo
 void start_new_hand(ServerState *state);
 void broadcast_move(ServerState *state, uint8_t playerID, MoveType move, uint32_t amount);
 void broadcast_time_between_hands(ServerState *state, int seconds);
+void broadcast_side_pot_summary(ServerState *state);
 
 //shared functions
 void error(const char *msg);
