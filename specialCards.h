@@ -3,7 +3,7 @@
 #define  SPECIALCARDS_H
 
 #include "uds.h"
-#include "Rules.h"
+#include "rules.h"
 #include "game.h"
 #include <time.h>
 #include <stdio.h>
