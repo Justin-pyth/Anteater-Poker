@@ -100,6 +100,133 @@ void set_card_back(GtkWidget *da)
     gtk_widget_queue_draw(da);
 }
 
+/* -- Blind markers --------------------------------------------------------- */
+static GdkPixbuf *blind_sb_pix = NULL;   // small-blind chip
+static GdkPixbuf *blind_bb_pix = NULL;   // big-blind chip
+static int        blind_pix_loaded = 0;
+
+static void load_blind_pixbufs(void)
+{
+    if (blind_pix_loaded) return;
+    blind_pix_loaded = 1;   // load once; relative path resolves when run from the repo dir
+    blind_sb_pix = gdk_pixbuf_new_from_file("img/small blind.png", NULL);
+    blind_bb_pix = gdk_pixbuf_new_from_file("img/big blind.png",   NULL);
+}
+
+static gboolean draw_blind_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
+{
+    BlindKind kind = *(BlindKind *)data;
+    GdkPixbuf *pix = (kind == BLIND_SB) ? blind_sb_pix
+                   : (kind == BLIND_BB) ? blind_bb_pix
+                   : NULL;
+    if (!pix) return FALSE;   // BLIND_NONE, or the image failed to load -> draw nothing
+
+    int W  = gtk_widget_get_allocated_width(widget);
+    int H  = gtk_widget_get_allocated_height(widget);
+    int pw = gdk_pixbuf_get_width(pix);
+    int ph = gdk_pixbuf_get_height(pix);
+    if (pw <= 0 || ph <= 0) return FALSE;
+
+    // scale to fit while keeping aspect ratio, then center
+    double sx = (double)W / pw, sy = (double)H / ph;
+    double s  = sx < sy ? sx : sy;
+    double dw = pw * s, dh = ph * s;
+
+    cairo_save(cr);
+    cairo_translate(cr, (W - dw) / 2.0, (H - dh) / 2.0);
+    cairo_scale(cr, s, s);
+    gdk_cairo_set_source_pixbuf(cr, pix, 0, 0);
+    cairo_paint(cr);
+    cairo_restore(cr);
+    return FALSE;
+}
+
+void init_blind_widget(GtkWidget *da)
+{
+    load_blind_pixbufs();
+    BlindKind *k = g_new0(BlindKind, 1);   // 0 == BLIND_NONE
+    g_object_set_data_full(G_OBJECT(da), "blind-kind", k, g_free);
+    g_signal_connect(da, "draw", G_CALLBACK(draw_blind_cb), k);
+}
+
+void set_blind_marker(GtkWidget *da, BlindKind kind)
+{
+    BlindKind *k = g_object_get_data(G_OBJECT(da), "blind-kind");
+    if (!k) return;
+    *k = kind;
+    gtk_widget_queue_draw(da);
+}
+
+/* -- Chip win floating popup ----------------------------------------------- */
+typedef struct { GtkWidget *popup; float alpha; int x, y; guint id; } ChipWin;
+
+static gboolean chip_win_tick(gpointer data)
+{
+    ChipWin *cw = (ChipWin *)data;
+    cw->alpha -= 0.025f;
+    cw->y     -= 1;
+    if (cw->alpha <= 0.0f || !GTK_IS_WIDGET(cw->popup)) {
+        if (GTK_IS_WIDGET(cw->popup)) gtk_widget_destroy(cw->popup);
+        g_free(cw);
+        return G_SOURCE_REMOVE;
+    }
+    gtk_widget_set_opacity(cw->popup, (double)cw->alpha);
+    gtk_window_move(GTK_WINDOW(cw->popup), cw->x, cw->y);
+    return G_SOURCE_CONTINUE;
+}
+
+void start_chip_win_anim(const char *winner_name, uint32_t amount)
+{
+    if (!W.window) return;
+
+    GtkWidget *popup = gtk_window_new(GTK_WINDOW_POPUP);
+    gtk_window_set_decorated(GTK_WINDOW(popup), FALSE);
+    gtk_window_set_skip_taskbar_hint(GTK_WINDOW(popup), TRUE);
+    gtk_window_set_transient_for(GTK_WINDOW(popup), GTK_WINDOW(W.window));
+
+    char buf[128];
+    snprintf(buf, sizeof(buf), "%s wins  +$%u",
+             (winner_name && winner_name[0]) ? winner_name : "Player", amount);
+
+    char markup[256];
+    snprintf(markup, sizeof(markup),
+        "<span foreground='#ffd700' font='Georgia Bold 20'>%s</span>", buf);
+    GtkWidget *label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(label), markup);
+
+    GtkWidget *box = gtk_event_box_new();
+    gtk_widget_set_name(box, "chip-win-box");
+    gtk_container_add(GTK_CONTAINER(box), label);
+    gtk_container_add(GTK_CONTAINER(popup), box);
+
+    GtkCssProvider *prov = gtk_css_provider_new();
+    gtk_css_provider_load_from_data(prov,
+        "#chip-win-box { background-color: rgba(25,15,45,0.92);"
+        "  border: 2px solid #ffd700; border-radius: 10px;"
+        "  padding: 10px 22px; }",
+        -1, NULL);
+    gtk_style_context_add_provider(
+        gtk_widget_get_style_context(box),
+        GTK_STYLE_PROVIDER(prov),
+        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1);
+    g_object_unref(prov);
+
+    int wx = 0, wy = 0, ww = 900, wh = 660;
+    gtk_window_get_position(GTK_WINDOW(W.window), &wx, &wy);
+    gtk_window_get_size(GTK_WINDOW(W.window), &ww, &wh);
+    int px = wx + ww / 2 - 140;
+    int py = wy + wh / 2 - 25;
+    gtk_window_move(GTK_WINDOW(popup), px, py);
+    gtk_widget_show_all(popup);
+
+    ChipWin *cw = g_new0(ChipWin, 1);
+    cw->popup = popup;
+    cw->alpha = 1.0f;
+    cw->x     = px;
+    cw->y     = py;
+    cw->id    = g_timeout_add(30, chip_win_tick, cw);
+}
+
 /* -- Timer internals ------------------------------------------------------- */
 typedef struct { SeatTimer *t; } TimerCBData;
 

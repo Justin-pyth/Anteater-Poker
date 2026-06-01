@@ -175,6 +175,13 @@ if (me->has_cards) {
     gtk_widget_set_opacity(W.my_cards[1], 0);
 }
 
+    /* small/big blind marker for your own seat (only during a live hand) */
+    BlindKind myBlind = BLIND_NONE;
+    if (game->handPlaying) {
+        if      (C.my_player_id == game->smallBlindIndex) myBlind = BLIND_SB;
+        else if (C.my_player_id == game->bigBlindIndex)   myBlind = BLIND_BB;
+    }
+    set_blind_marker(W.self_blind, myBlind);
 
     int opp_slot = 0;
     for (int pi = 0; pi < MAX_PLAYERS && opp_slot < GUI_OPPONENT_SLOTS; pi++) {
@@ -185,6 +192,15 @@ if (me->has_cards) {
 
         gtk_widget_set_opacity(W.opp_cards[opp_slot][0], 1);
         gtk_widget_set_opacity(W.opp_cards[opp_slot][1], 1);
+
+        /* small/big blind marker for this seat (only during a live hand) */
+        BlindKind oppBlind = BLIND_NONE;
+        if (game->handPlaying) {
+            if      (pi == game->smallBlindIndex) oppBlind = BLIND_SB;
+            else if (pi == game->bigBlindIndex)   oppBlind = BLIND_BB;
+        }
+        set_blind_marker(W.opp_blind[opp_slot], oppBlind);
+
         gtk_label_set_text(GTK_LABEL(W.opp_name[opp_slot]),
             p->name[0] ? p->name : "Player");
         snprintf(buf, sizeof(buf), "$%u  |  bet $%u", p->chips, p->total_bet);
@@ -241,6 +257,22 @@ if (me->has_cards) {
         gtk_style_context_remove_class(
             gtk_widget_get_style_context(W.opp_frame[i]), "active-seat");
     }
+
+    /* One-shot chip-win popup: fire once when a hand ends with a single winner.
+       Alpha has no showdown flag, so trigger on the handPlaying true->false edge.
+       endHand() has already zeroed the pot by now, so use the pot captured on the
+       last live frame (prev_pot). */
+    static int      prev_handPlaying = 0;
+    static uint32_t prev_pot         = 0;
+    if (prev_handPlaying && !game->handPlaying && game->winnerID < MAX_PLAYERS) {
+        const char *wname = (game->winnerID == C.my_player_id)
+            ? "You"
+            : (game->players[game->winnerID].name[0]
+               ? game->players[game->winnerID].name : "Player");
+        start_chip_win_anim(wname, prev_pot);
+    }
+    prev_handPlaying = game->handPlaying;
+    if (game->handPlaying) prev_pot = game->pot;  /* remember pot while the hand is live */
 
     int my_turn  = C.connected && game->handPlaying && game->currentPlayer == C.my_player_id;
     int can_check = me->current_bet >= game->currentBet;

@@ -502,6 +502,118 @@ void broadcast_time_between_hands(ServerState *state, int seconds)
     broadcast_chat_message(state, MAX_PLAYERS, msg);
 }
 
+void broadcast_side_pot_summary(ServerState *state)
+{
+    //this function pretty much mirrors awardSidePot from game
+    //but it just creates a message to send to the chat
+    //**** LOOK AT GAME.C for AWARD SIDE POT FUNCTION  */
+    GameState *g = &state->game;
+    uint32_t threshold[MAX_PLAYERS];
+    int thresholdCount = 0;
+    int activeIDs[MAX_PLAYERS];
+    int activeCount = findActive(g, activeIDs, true);
+    bool hasAllIn = false;
+
+    //side pots cannot be active with 2 players
+    if (activeCount < 2) return;
+
+    //side pots only exist when there is atleast one allin player
+    for (int i = 0; i < activeCount; i++)
+    {
+        if (g->players[activeIDs[i]].status == PLAYER_ALL_IN)
+        {
+            hasAllIn = true;
+            break;
+        }
+    }
+    if (!hasAllIn) return;
+
+    //create a list of unique contribution thresholds
+    for (int i = 0; i < MAX_PLAYERS; i++)
+    {
+        uint32_t bet = g->players[i].total_bet;
+        if (bet == 0) continue;
+
+        bool dupe = false;
+        for (int j = 0; j < thresholdCount; j++)
+        {
+            if (threshold[j] == bet)
+            {
+                dupe = true;
+                break;
+            }
+        }
+        if (!dupe)
+            threshold[thresholdCount++] = bet;
+    }
+
+    //ignore the first threshold (aka normal situation that would not require sidepots)
+    if (thresholdCount <= 1)
+        return;
+
+    //bubble sort ascending
+    for (int i = 0; i < thresholdCount - 1; i++)
+    {
+        for (int j = 0; j < thresholdCount - i - 1; j++)
+        {
+            if (threshold[j] > threshold[j + 1])
+            {
+                uint32_t temp = threshold[j];
+                threshold[j] = threshold[j + 1];
+                threshold[j + 1] = temp;
+            }
+        }
+    }
+
+    //find the eligible players
+    uint32_t previousThreshold = threshold[0];
+    for (int i = 1; i < thresholdCount; i++)
+    {
+        uint32_t thresholdBet = threshold[i];
+        uint32_t slice = thresholdBet - previousThreshold;
+        uint32_t sidePot = 0;
+        char msg[MAX_PAYLOAD_SIZE];
+        int write;
+        int eligCount = 0;
+
+        for (int p = 0; p < MAX_PLAYERS; p++)
+        {
+            if (g->players[p].total_bet >= thresholdBet)
+                sidePot += slice;
+        }
+
+        if (sidePot == 0)
+        {
+            previousThreshold = thresholdBet;
+            continue;
+        }
+
+        write = snprintf(msg, sizeof(msg), "Side Pot [$%u]; Eligible Players: ", sidePot);
+        if (write < 0 || (size_t)write >= sizeof(msg))
+            return;
+
+        for (int p = 0; p < activeCount; p++)
+        {
+            Player *player = &g->players[activeIDs[p]];
+            //player must be past threshold bet and playing(not folded)
+            if (player->total_bet < thresholdBet) continue;
+
+            write += snprintf(msg + write, sizeof(msg) - (size_t)write,  "%s%s", eligCount ? ", " : "", player->name[0] ? player->name : "Player");
+            if ((size_t)write >= sizeof(msg))
+            {
+                msg[sizeof(msg) - 1] = '\0'; //terminator
+                break;
+            }
+            eligCount++;
+        }
+
+        if (eligCount >= 2 && eligCount < activeCount)
+            broadcast_chat_message(state, MAX_PLAYERS, msg);
+
+        previousThreshold = thresholdBet;
+    }
+}
+
 //the hand has reached HAND_COMPLETE: announce the result, end the tournament if
 //only one player has chips left, otherwise arm the inter-hand delay.
 static void finish_hand(ServerState *state)
@@ -546,6 +658,7 @@ static void finish_hand(ServerState *state)
     broadcast_game_state(state);
 
     //non-blocking countdown before the next hand
+    broadcast_side_pot_summary(state);
     state->time_between_hands = TIME_BETWEEN_HANDS_SECONDS;
     broadcast_time_between_hands(state, state->time_between_hands); //show initial time(starts at 5s)
     state->time_between_hands--; //decrement

@@ -59,6 +59,8 @@ void init_gui(int *argc, char ***argv)
         W.my_cards[i] = GET(id);
         init_card_widget(W.my_cards[i]);
     }
+    W.self_blind = GET("self_blind");
+    init_blind_widget(W.self_blind);
     for (int i = 0; i < GUI_OPPONENT_SLOTS; i++) {
         char id[64];
         snprintf(id, sizeof(id), "opp_frame_%d",  i); W.opp_frame[i]  = GET(id);
@@ -83,6 +85,10 @@ void init_gui(int *argc, char ***argv)
         snprintf(cid, sizeof(cid), "opp_card_%db", i);
         W.opp_cards[i][1] = GET(cid);
         init_card_widget(W.opp_cards[i][1]);
+
+        snprintf(cid, sizeof(cid), "opp_blind_%d", i);
+        W.opp_blind[i] = GET(cid);
+        init_blind_widget(W.opp_blind[i]);
     }
 
     W.my_timer.bar          = GET("my_timer_bar");
