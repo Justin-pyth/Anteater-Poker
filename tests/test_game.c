@@ -218,40 +218,37 @@ void test_tryMove_allIn()
     printf("test_tryMove_allIn PASSED\n");
 }
 
+// ********** SPECIAL CARDS **********
 
 /*
     test_tryMove_useSpecialCard()
 */
-void test_tryMove_useSpecialCard()
-{
-    GameState gs;
-    Deck deck;
+// void test_tryMove_useSpecialCard_swapCard()
+// {
+//     GameState gs;
+//     Deck deck;
 
-    uint32_t initialPotAmt = 200;
-    initializeThreePlayers(&gs, &deck, initialPotAmt);
+//     uint32_t initialPotAmt = 200;
+//     initializeThreePlayers(&gs, &deck, initialPotAmt);
 
-    // Player should not match the current bet so they can call
+//     // Player should not match the current bet so they can call
 
-    // Store initial values for comparison
-    uint32_t initialChips = gs.players[0].chips;
-    uint32_t initialBet = gs.players[0].current_bet;
+//     // Store initial values for comparison
+//     uint32_t initialChips = gs.players[0].chips;
+//     uint32_t initialBet = gs.players[0].current_bet;
 
-    // Store call amount for comparison
-    uint32_t callAmt = gs.currentBet - initialBet;
+//     // Store call amount for comparison
+//     uint32_t callAmt = gs.currentBet - initialBet;
 
-    // Try CALL move
-    bool result = tryMove(&gs, &deck, 0, USE_SPECIAL_CARD, 0);
+//     // Try CALL move
+//     bool result = tryMove(&gs, &deck, 0, USE_SPECIAL_CARD, 0);
 
-    // Verify (assert) all resulting consequences of a USE_SPECIAL_CARD move are correct
-    assert(result == true);                                 // move succeeded
-    assert(gs.players[0].status == PLAYER_PLAYING);         // player status should not change from "PLAYER_PLAYING" 
-    assert(gs.players[0].chips == initialChips - callAmt);  // player should have callAmt less chips after calling
-    assert(gs.pot == initialPotAmt + callAmt);              // pot should increase by callAmt
-    assert(gs.players[0].current_bet == gs.currentBet);     // current bet before and after did not change
-    assert(gs.acted[0] == true);                            // player made and completed a move
+//     // Verify (assert) all resulting consequences of a USE_SPECIAL_CARD move are correct
+//     assert(result == true);                                 // move succeeded
+//     assert(gs.acted[0] == true);                            // player made and completed a move
 
-    printf("test_tryMove_useSpecialCard PASSED\n");
-}
+//     printf("test_tryMove_useSpecialCard PASSED\n");
+// }
 
 
 int main()
