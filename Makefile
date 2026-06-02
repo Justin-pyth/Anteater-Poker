@@ -35,6 +35,9 @@ tests/test_game: tests/test_game.o game.o rules.o
 tests/flow_demo: tests/flow_demo.o game.o rules.o bot.o
 	$(CC) $(CFLAGS) $^ -o $@
 
+test_game: tests/test_game
+	./tests/test_game
+
 server.o: server.c protocol.h game.h rules.h uds.h bot.h
 protocol.o: protocol.c protocol.h game.h rules.h uds.h com.h
 client.o: client.c gui.h gui_assets.h
