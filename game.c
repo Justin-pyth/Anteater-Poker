@@ -39,6 +39,7 @@ void initPlayer(Player *p, uint8_t id, const char* name, uint32_t chips)
 
 void shuffle(Deck* deck)
 {
+    //to make it random, generate a seed
     srand(time(NULL));
 
     deck->top = 0;
