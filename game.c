@@ -39,6 +39,8 @@ void initPlayer(Player *p, uint8_t id, const char* name, uint32_t chips)
 
 void shuffle(Deck* deck)
 {
+    srand(time(NULL));
+
     deck->top = 0;
     for(int i = DECK_SIZE - 1; i>0; i--)
     {
