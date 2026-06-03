@@ -275,7 +275,7 @@ if (me->has_cards) {
     if (game->handPlaying) prev_pot = game->pot;  /* remember pot while the hand is live */
 
     //leaderboard check
-    int check_gameover = 0;
+    static int check_gameover = 0;
     if(!check_gameover && game->gameOver)
         show_leaderboard();
     check_gameover = game->gameOver;

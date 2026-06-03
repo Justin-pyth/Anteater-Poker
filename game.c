@@ -421,6 +421,7 @@ void resetGame(GameState* gs)
 
         p->chips = INIT_CHIPS;
         p->status = PLAYER_CONNECTED;
+        p->place = 0;
     }
 }
 
@@ -662,8 +663,9 @@ void updatePlaces(GameState* gs)
         //skip empty or disconnected
         if(p->status == PLAYER_EMPTY || p->status == PLAYER_DISCONNECTED) continue;
 
-        //if they are busted and they haven't been placed
-        if(p->chips == 0 && p->place == 0)
+        //if they went bust and (they are not spectating or the place hasnt been assigned)
+        //have to check if they are not spectating for second place winner
+        if(p->chips == 0 && (p->status != PLAYER_SPECTATING || p->place == 0))
         {
             p->place = remainingPlayers(gs) + 1;
             printf("[bust] %s busted, place=%d\n", p->name, p->place);
