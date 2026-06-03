@@ -51,6 +51,8 @@ bool runoutStep(GameState* gs, Deck* deck); //one paced runout reveal; returns t
 int remainingPlayers(const GameState* gs); //gets # of remaining players w/ chips
 
 int countStatus(const GameState* gs, PlayerStatus status); //return the number of players that are X status
+
+void updatePlaces(GameState* gs);
 /*^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     The flow of a move will be:
         -client uses sendMove() to the server

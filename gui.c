@@ -274,6 +274,12 @@ if (me->has_cards) {
     prev_handPlaying = game->handPlaying;
     if (game->handPlaying) prev_pot = game->pot;  /* remember pot while the hand is live */
 
+    //leaderboard check
+    int check_gameover = 0;
+    if(!check_gameover && game->gameOver)
+        show_leaderboard();
+    check_gameover = game->gameOver;
+
     int my_turn  = C.connected && game->handPlaying && game->currentPlayer == C.my_player_id;
     int can_check = me->current_bet >= game->currentBet;
 
@@ -377,4 +383,37 @@ void on_connect_clicked(GtkButton *b, gpointer d)
     gtk_label_set_text(GTK_LABEL(W.login_status), "");
     show_game_screen();
     append_chat("SERVER", "Type /ready to ready up.", "server_alert");
+}
+
+
+void show_leaderboard(void)
+{
+    GameState *g = &C.game;
+
+    //sort players by ascending
+    int order[MAX_PLAYERS];
+    for(int i = 0; i < MAX_PLAYERS; i++) order[i] = i;
+    for(int i = 0; i < MAX_PLAYERS-1; i++)
+        for(int j = i+1; j < MAX_PLAYERS; j++)
+            if(g->players[order[i]].place > g->players[order[j]].place)
+            {
+                int t = order[i];
+                order[i] = order[j];
+                order[j] = t;
+            }
+
+    for(int i = 0; i < MAX_PLAYERS; i++)
+    {
+        Player *p = &g->players[order[i]];
+        char buf[32];
+
+        gtk_label_set_text(GTK_LABEL(W.lb_name[i]),  p->name[0] ? p->name : "Empty");
+        snprintf(buf, sizeof(buf), "%d", p->place);
+        gtk_label_set_text(GTK_LABEL(W.lb_place[i]), p->place > 0 ? buf : "-");
+        set_card_face(W.lb_card[i][0], p->hand[0], card_is_known(p->hand[0]));
+        set_card_face(W.lb_card[i][1], p->hand[1], card_is_known(p->hand[1]));
+    }
+    
+    gtk_window_set_transient_for(GTK_WINDOW(W.leaderboard), GTK_WINDOW(W.window));
+    gtk_widget_show_all(W.leaderboard);
 }
