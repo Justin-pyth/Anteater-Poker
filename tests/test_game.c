@@ -4,7 +4,7 @@
 #include "../specialCards.h"
 
 /* 
-    UNIT TESTING FOR game.c
+    UNIT TESTING
 */
 
 #define GREEN "\033[32m"
