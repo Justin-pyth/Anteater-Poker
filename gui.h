@@ -39,5 +39,7 @@ void on_connect_clicked(GtkButton *b, gpointer d);
 /* -- Chat callbacks -------------------------------------------------------- */
 void on_send_chat(GtkButton *b, gpointer d);
 void on_chat_activate(GtkEntry *e, gpointer d);
+void on_ready_clicked(GtkButton *b, gpointer d);
+void on_quit_clicked(GtkButton *b, gpointer d);
 
 #endif /* TEMP_GUI_H */

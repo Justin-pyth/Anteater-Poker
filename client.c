@@ -44,11 +44,17 @@ void init_gui(int *argc, char ***argv)
     W.chat_log       = GET("chat_log");
     W.chat_entry     = GET("chat_entry");
     W.btn_send_chat  = GET("btn_send_chat");
+    W.ready_btn      = GET("ready_btn");
+    W.quit_btn       = GET("quit_btn");
     W.label_call_amnt = GET("label_call_amnt");
     W.label_your_stack = GET("label_your_stack");
     W.leaderboard = GET("leaderboard");
     if (W.leaderboard)
         g_signal_connect(W.leaderboard, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), NULL);
+    if (W.ready_btn)
+        g_signal_connect(W.ready_btn, "clicked", G_CALLBACK(on_ready_clicked), NULL);
+    if (W.quit_btn)
+        g_signal_connect(W.quit_btn, "clicked", G_CALLBACK(on_quit_clicked), NULL);
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
         char id[32];
