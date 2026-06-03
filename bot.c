@@ -146,9 +146,13 @@ void botMove(const GameState* gs, const Deck* deck, uint8_t* botID, MoveType* mo
     {
         //pick a random amount to raise
         uint32_t maxRaise = gs->players[*botID].chips - (gs->currentBet - gs->players[*botID].current_bet);
+        uint32_t capRaise = gs->currentBet * 3; //cap the raise amount to by 3x the current bet
 
-        if(maxRaise >= gs->minRaise)
-            *amount = gs->minRaise + (rand() % (maxRaise - gs->minRaise + 1));
+        if(capRaise > maxRaise) capRaise = maxRaise; //dont cap above max raise
+        if(capRaise < gs->minRaise) capRaise = gs->minRaise; //dont cap below min raise
+
+        if(maxRaise >= gs->minRaise) //set the raise amount to a random number between capraise and min raise
+            *amount = gs->minRaise + (rand() % (capRaise - gs->minRaise + 1));
         else
         {
             //if bot can't raise but owes chips CALL
@@ -164,7 +168,9 @@ void botMove(const GameState* gs, const Deck* deck, uint8_t* botID, MoveType* mo
 
 MoveType decide(const GameState* gs, const Deck* deck)
 {
-    double prob = monteCarloSim(gs, deck, gs->players[gs->currentPlayer].hand, 1000);
+    double prob = monteCarloSim(gs, deck, gs->players[gs->currentPlayer].hand, 1000); //win prob (0.0 - 1.0)
+    double norm_prob = prob * MAX_PLAYERS; //use this number instead to normalize win probability to 6 players
+
     uint32_t call = gs->currentBet - gs->players[gs->currentPlayer].current_bet;
     uint32_t chips = gs->players[gs->currentPlayer].chips;
 
@@ -172,37 +178,33 @@ MoveType decide(const GameState* gs, const Deck* deck)
     strcpy(name, gs->players[gs->currentPlayer].name);
     double _allIn, _raise, _call, _check, _bluff;
 
-    if(strcmp(name, "Alvin") == 0)
+    if(strcmp(name, "Alvin") == 0) //frequently does allIn, more aggressive bot
     {
-        _allIn = 0.30; _raise = 0.45; _call = 0.30; _check = 0.40, _bluff = 0.15;
+        _allIn = 1.20; _raise = 1.40; _call = 1.00; _check = 1.10, _bluff = 0.15;
     }
-    else if(strcmp(name, "Randy") == 0)
+    else if(strcmp(name, "Randy") == 0) //mostly a random player
     {
-        _allIn = 0.50; _raise = 0.50; _call = 0.50; _check = 0.50, _bluff = 0.30;
+        _allIn = 1.40; _raise = 1.30; _call = 1.00; _check = 1.20, _bluff = 0.20;
     }
-    else if(strcmp(name, "Betty") == 0)
+    else if(strcmp(name, "Betty") == 0) //raises a lot
     {
-        _allIn = 0.50; _raise = 0.75; _call = 0.50; _check = 0.65, _bluff = 0.05;
+        _allIn = 1.50; _raise = 1.20; _call = 1.10; _check = 1.00, _bluff = 0.18;
     }
-    else if(strcmp(name, "Colleen") == 0)
+    else if(strcmp(name, "Colleen") == 0) //calls a lot
     {
-        _allIn = 0.70; _raise = 0.85; _call = 0.70; _check = 0.80, _bluff = 0.00;
+        _allIn = 1.30; _raise = 1.80; _call = 0.90; _check = 1.60, _bluff = 0.08;
     }
-    else if(strcmp(name, "Minnie") == 0)
+    else if(strcmp(name, "Minnie") == 0) //will play more aggressive with weak hands
     {
-        _allIn = 0.25; _raise = 0.35; _call = 0.25; _check = 0.30, _bluff = 0.40;
+        _allIn = 1.40; _raise = 1.10; _call = 1.00; _check = 0.90, _bluff = 0.22;
     }
-    else if(strcmp(name, "Dumbo") == 0)
+    else if(strcmp(name, "Dumbo") == 0) //calls with bad cards, barely raises with good cards, etc
     {
-        _allIn = 0.10; _raise = 0.20; _call = 0.10; _check = 0.15, _bluff = 0.50;
+        _allIn = 1.50; _raise = 1.70; _call = 0.85; _check = 1.50, _bluff = 0.12;
     }
     else{ //default
-        _allIn = 0.50; _raise = 0.75; _call = 0.50; _check = 0.65, _bluff = 0.05;
+        _allIn = 1.40; _raise = 1.50; _call = 1.00; _check = 1.20, _bluff = 0.10;
     }
-
-    //if the bot is able to raise, bluff (based on bot name)
-    if(call == 0 || chips >= call)
-        if( (rand() / (double)RAND_MAX) < _bluff) return RAISE;
     
     //if bot owes chips
     if(call > 0)
@@ -211,17 +213,21 @@ MoveType decide(const GameState* gs, const Deck* deck)
         if(chips < call)
         {
             //you are allowed to go all_in on a call with insufficient chips
-            if (prob > _allIn) return ALL_IN;
-            else            return FOLD; //fold if bad hand
+            double breakEven = 0;
+            if (gs->pot + call > 0)//guard to prevent division by 0, just to be safe
+                breakEven = (double)call/(gs->pot + call) * MAX_PLAYERS; //check min equity to break even
+            if (norm_prob > breakEven * _allIn) return ALL_IN; //if the win probablity is greater than the scaled chance, go allin
+            else            return FOLD; //fold if not worth risk
         }
 
-        if(prob > _raise)     return RAISE;
-        else if(prob > _call) return CALL;
+        if(norm_prob > _raise)     return RAISE;
+        else if(norm_prob > _call) return CALL;
         else                return FOLD;
     }
     else
     {
-        if(prob > _check)     return RAISE;
+        if( (rand() / (double)RAND_MAX) < _bluff) return RAISE; //bluff
+        if(norm_prob > _check)     return RAISE;
         else                return CHECK;
     }
 }
