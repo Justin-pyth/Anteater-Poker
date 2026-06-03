@@ -14,6 +14,8 @@ void addBot(GameState* gs, bool shuffle)
             int j = rand() % (i+1);
 
             //do random swaps to shuffle name bot name array
+            if(i == j) continue;
+
             char temp[MAX_NAME_LENTH];
             strcpy(temp, botNames[i]);
             strcpy(botNames[i], botNames[j]);
