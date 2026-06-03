@@ -2312,7 +2312,7 @@ DECK</property>
                                 <property name="can-focus">False</property>
                                 <property name="margin-start">7</property>
                                 <property name="margin-end">7</property>
-                                <property name="label" translatable="yes">Pot</property>
+                                <property name="label" translatable="yes">STACK</property>
                                 <property name="justify">center</property>
                                 <property name="width-chars">20</property>
                                 <attributes>
