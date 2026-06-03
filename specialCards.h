@@ -3,7 +3,7 @@
 #define  SPECIALCARDS_H
 
 #include "uds.h"
-#include "Rules.h"
+#include "rules.h"
 #include "game.h"
 #include <time.h>
 #include <stdio.h>
@@ -11,7 +11,7 @@
 #include <string.h>
 
 //Swap both of your cards with an opponent of your choosing
-void swapCard (GameState gs, const Card* ownHand, const Card* oppHand);
+void swapCard (GameState gs, const Card* ownHand1, const Card* ownHand2, const Card* oppHand1,const Card* oppHand2);
 
 //Swap one of your cards with an opponent of your choosing
 void swapCards (GameState gs, const Card* ownHand, const Card* oppHand);
@@ -23,7 +23,7 @@ void redrawCards (GameState gs, const Card* ownHand, Deck* deck);
 void revealComCard (GameState gs, const Card* ownHand, Deck* community);
 
 //Reveal one of your opponents cards in exchange for one of yours
-void revealOppCard (GameState gs, const Card* oppHand);
+void revealOppCard (GameState gs, const Card* ownHand, const Card* oppHand);
 
 //Swap your opponent's cards 
 void swapOppCards (GameState gs, const Card* oppHand1, const Card* oppHand2);
