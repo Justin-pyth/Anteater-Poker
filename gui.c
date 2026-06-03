@@ -388,6 +388,8 @@ void on_connect_clicked(GtkButton *b, gpointer d)
 
 void show_leaderboard(void)
 {
+    if(!W.leaderboard) return; //check if it exists
+
     GameState *g = &C.game;
 
     //sort players by ascending
@@ -407,13 +409,20 @@ void show_leaderboard(void)
         Player *p = &g->players[order[i]];
         char buf[32];
 
-        gtk_label_set_text(GTK_LABEL(W.lb_name[i]),  p->name[0] ? p->name : "Empty");
-        snprintf(buf, sizeof(buf), "%d", p->place);
-        gtk_label_set_text(GTK_LABEL(W.lb_place[i]), p->place > 0 ? buf : "-");
-        set_card_face(W.lb_card[i][0], p->hand[0], card_is_known(p->hand[0]));
-        set_card_face(W.lb_card[i][1], p->hand[1], card_is_known(p->hand[1]));
+        //add their name
+        if(W.lb_name[i])
+            gtk_label_set_text(GTK_LABEL(W.lb_name[i]), p->name[0] ? p->name : "Empty");
+        if(W.lb_place[i]) //their place
+        {
+            snprintf(buf, sizeof(buf), "%d", p->place);
+            gtk_label_set_text(GTK_LABEL(W.lb_place[i]), p->place > 0 ? buf : "-");
+        } //and their last card (if it existed)
+        if(W.lb_card[i][0])
+            set_card_face(W.lb_card[i][0], p->hand[0], card_is_known(p->hand[0]));
+        if(W.lb_card[i][1])
+            set_card_face(W.lb_card[i][1], p->hand[1], card_is_known(p->hand[1]));
     }
-    
+
     gtk_window_set_transient_for(GTK_WINDOW(W.leaderboard), GTK_WINDOW(W.window));
     gtk_widget_show_all(W.leaderboard);
 }
