@@ -3,6 +3,10 @@
 
 #include "gui_assets.h"
 #include "gui_helpers.h"
+#include "shop.h"
+
+/* -- Globals --------------------------------------------------------------- */
+extern ShopWindow *shop;
 
 /* -- Lifecycle ------------------------------------------------------------- */
 void init_gui(int *argc, char ***argv);
@@ -30,6 +34,7 @@ void on_check(GtkButton *b, gpointer d);
 void on_call(GtkButton *b, gpointer d);
 void on_raise(GtkButton *b, gpointer d);
 void on_allin(GtkButton *b, gpointer d);
+void on_shop_clicked(GtkButton *b, gpointer d);
 
 /* -- Connect / login callbacks --------------------------------------------- */
 void on_play_clicked(GtkButton *b, gpointer d);

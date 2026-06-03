@@ -19,7 +19,7 @@ test: tests/test_game tests/flow_demo
 server: server.o protocol.o game.o rules.o bot.o com.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-client: client.o gui.o gui_helpers.o protocol.o game.o rules.o bot.o com.o
+client: client.o gui.o gui_helpers.o shop.o protocol.o game.o rules.o bot.o com.o
 	$(CC) $(CFLAGS) $^ $(GTK_LIBS) -rdynamic -o $@
 
 
@@ -43,6 +43,8 @@ gui.o: gui.c gui.h gui_helpers.h gui_assets.h protocol.h com.h uds.h
 	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c gui.c -o gui.o
 gui_helpers.o: gui_helpers.c gui_helpers.h gui_assets.h protocol.h com.h uds.h
 	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c gui_helpers.c -o gui_helpers.o
+shop.o: shop.c shop.h
+	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c shop.c -o shop.o
 game.o: game.c game.h rules.h uds.h
 rules.o: rules.c rules.h uds.h
 bot.o: bot.c bot.h game.h rules.h uds.h

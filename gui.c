@@ -1,11 +1,13 @@
 #include "gui.h"
 #include "gui_helpers.h"
+#include "shop.h"
 #include <stdio.h>
 #include <string.h>
 
 /* -- Globals --------------------------------------------------------------- */
 AppWidgets W;
 ClientState C;
+ShopWindow *shop;
 
 /* -- Chat display ---------------------------------------------------------- */
 void append_chat(const char *sender, const char *msg)
@@ -248,9 +250,21 @@ void on_chat_activate(GtkEntry *e, gpointer d)
     gtk_button_clicked(GTK_BUTTON(W.btn_send_chat));
 }
 
+/* -- Shop callback --------------------------------------------------------- */
+void on_shop_clicked(GtkButton *b, gpointer d)
+{
+    (void)b; (void)d;
+    show_shop_window(shop, (int)C.game.players[C.my_player_id].chips);
+}
+
 /* -- Screen transitions ---------------------------------------------------- */
 void show_game_screen(void)
 {
+    /* Build shop window once on first call */
+    if (!shop) {
+        shop = build_shop_window(W.window, (int)C.game.players[C.my_player_id].chips);
+        g_signal_connect(W.btn_shop, "clicked", G_CALLBACK(on_shop_clicked), NULL);
+    }
     gtk_widget_show_all(W.game_screen);
     gtk_stack_set_visible_child_name(GTK_STACK(W.stack), "game");
     gtk_window_resize(GTK_WINDOW(W.window), 900, 660);
