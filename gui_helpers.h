@@ -43,4 +43,7 @@ void sendReadyToServer(void);
 void sendNameToServer(const char *name);
 void sendChatToServer(const char *text);
 
+/* -- Leaderboard display -------------------------------------------------------*/
+void show_leaderboard(void);
+
 #endif /* TEMP_GUI_HELPERS_H */

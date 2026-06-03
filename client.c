@@ -46,6 +46,17 @@ void init_gui(int *argc, char ***argv)
     W.btn_send_chat  = GET("btn_send_chat");
     W.label_call_amnt = GET("label_call_amnt");
     W.label_your_stack = GET("label_your_stack");
+    W.leaderboard = GET("leaderboard");
+    for(int i = 0; i < MAX_PLAYERS; i++)
+    {
+        char id[32];
+        snprintf(id, sizeof(id), "leaderBoard_Name%d",  i+1); W.lb_name[i]    = GET(id);
+        snprintf(id, sizeof(id), "leaderBoard_Place%d", i+1); W.lb_place[i]   = GET(id);
+        snprintf(id, sizeof(id), "card_0_%d",           i+1); W.lb_card[i][0] = GET(id);
+        snprintf(id, sizeof(id), "card_1_%d",           i+1); W.lb_card[i][1] = GET(id);
+        init_card_widget(W.lb_card[i][0]);
+        init_card_widget(W.lb_card[i][1]);
+    }
 
     for (int i = 0; i < 5; i++) {
         char id[32];

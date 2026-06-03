@@ -81,6 +81,12 @@ typedef struct {
     GtkWidget *chat_entry;
     GtkWidget *btn_send_chat;
 
+    /* leaderboard */
+    GtkWidget *leaderboard;
+    GtkWidget *lb_name [MAX_PLAYERS];
+    GtkWidget *lb_place[MAX_PLAYERS];
+    GtkWidget *lb_card [MAX_PLAYERS][2];
+
     guint net_source; /* g_io_add_watch source id */
 } AppWidgets;
 

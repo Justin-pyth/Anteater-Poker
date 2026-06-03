@@ -361,12 +361,15 @@ void resetHand(GameState* gs)
         //check if player exists
         if(p->status == PLAYER_EMPTY || p->status == PLAYER_DISCONNECTED) continue;
         //check if player can continue playing
-        //aka check if they have chips left and if they havent been placed on the leaderboard
-        if(p->chips == 0 && p->place == 0)
+        //aka check if they have chips left
+        if(p->chips == 0)
         {
-            p->place = remainingPlayers(gs) + 1;
+            if(p->place == 0) // only assign place if not already placed
+            {
+                p->place = remainingPlayers(gs) + 1;
+                printf("[bust] %s busted, place=%d\n", p->name, p->place);
+            }
             p->status = PLAYER_SPECTATING;
-            printf("[bust] %s busted, place=%d\n", p->name, p->place);
         }
         else
         {
@@ -649,3 +652,21 @@ int countStatus(const GameState* gs, PlayerStatus status)
     return count;
 }
 
+void updatePlaces(GameState* gs)
+{
+    //iterate through all players
+    for(int i = 0; i < MAX_PLAYERS; i++)
+    {
+        Player* p = &gs->players[i];
+
+        //skip empty or disconnected
+        if(p->status == PLAYER_EMPTY || p->status == PLAYER_DISCONNECTED) continue;
+
+        //if they are busted and they haven't been placed
+        if(p->chips == 0 && p->place == 0)
+        {
+            p->place = remainingPlayers(gs) + 1;
+            printf("[bust] %s busted, place=%d\n", p->name, p->place);
+        }
+    }
+}

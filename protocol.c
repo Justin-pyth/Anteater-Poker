@@ -623,6 +623,7 @@ static void finish_hand(ServerState *state)
     //tournament over: a single player holds all the chips
     if (remainingPlayers(g) == 1)
     {
+        updatePlaces(g);
         for (int i = 0; i < MAX_PLAYERS; i++)
         {
             Player *p = &g->players[i];
