@@ -47,6 +47,8 @@ void init_gui(int *argc, char ***argv)
     W.label_call_amnt = GET("label_call_amnt");
     W.label_your_stack = GET("label_your_stack");
     W.leaderboard = GET("leaderboard");
+    if (W.leaderboard)
+        g_signal_connect(W.leaderboard, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), NULL);
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
         char id[32];
