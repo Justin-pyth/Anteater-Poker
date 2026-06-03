@@ -190,7 +190,12 @@ void apply(GameState* gs, uint8_t playerID, MoveType move, uint32_t amount)
 
 void awardSidepots(GameState* gs, int activeIDs[], int activeCount)
 {
-    
+    //for tracking multiple winners, store chips prior
+    uint32_t prevChips[MAX_PLAYERS];
+    for(int i = 0; i< MAX_PLAYERS; i++)
+        prevChips[i] = gs->players[i].chips;
+
+
     //side pot logic
     uint32_t threshold[MAX_PLAYERS]; //create an array of contribution thresholds
     int thresholdCount = 0;
@@ -268,6 +273,26 @@ void awardSidepots(GameState* gs, int activeIDs[], int activeCount)
         awardPot(gs, sidePot, eligible, eligCount);
         previousThreshold = thresholdBet; //set curr threshold as previous for next iter
     }
+
+    //track if multiple people won some money
+    gs->winnerCount = 0; //reset winner count
+    gs->winnerID = MAX_PLAYERS+1; //init invalid player 
+    uint32_t highestChips = 0;
+    for(int i = 0; i < MAX_PLAYERS; i++)
+    {
+        uint32_t addedChips = gs->players[i].chips - prevChips[i];
+        if(addedChips > highestChips)
+        {
+            highestChips = addedChips;
+            gs->winnerID = i;
+
+        }
+        if(addedChips > 0)
+            gs->winnerCount++;
+    }
+    
+    printf("[awardSidepots] winnerID=%d winnerCount=%d\n", gs->winnerID, gs->winnerCount);
+
 }
 
 void awardPot(GameState* gs, uint32_t pot, int eligible[], int eligCount)
@@ -310,8 +335,7 @@ void awardPot(GameState* gs, uint32_t pot, int eligible[], int eligCount)
 
     gs->players[winnerIDs[0]].chips += remainder; //may change, just give to first winner for now
 
-    //not very useful for multiple winners, might need to add winner array to gameState for broadcasting****
-    gs->winnerID = (winnerCount == 1) ? winnerIDs[0] : (MAX_PLAYERS + 1);
+    
 
 }
 

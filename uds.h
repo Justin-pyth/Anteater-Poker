@@ -170,6 +170,7 @@ typedef struct {
     bool handPlaying; //for starting new hands after reset
     bool acted[MAX_PLAYERS];
     HandPhase phase;  //hand FSM state; drives the server loop (runout pacing, inter-hand delay)
+    int winnerCount;
   
 } GameState;
 typedef struct {

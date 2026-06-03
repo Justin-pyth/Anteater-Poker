@@ -645,16 +645,21 @@ static void finish_hand(ServerState *state)
         return; //no timer: game is over, wait for a new game
     }
 
-    //hand winner announcement (split pots use the MAX_PLAYERS+1 sentinel -> skipped)
-    if (g->winnerID < MAX_PLAYERS)
+    //hand winner announcement for chat
+    //if a single winner, then output their name
+    if (g->winnerCount == 1)
     {
         char msg[MAX_PAYLOAD_SIZE];
         snprintf(msg, sizeof(msg), "%s wins the hand.", g->players[g->winnerID].name);
         broadcast_chat_message(state, MAX_PLAYERS, msg);
+    } //fallback for multiple winners **Note that the animated announcement will have highest earner as winner
+    else if (g->winnerCount > 1)
+    {
+        char msg[MAX_PAYLOAD_SIZE];
+        snprintf(msg, sizeof(msg), "%s earned the most points but several players won a pot.", g->players[g->winnerID].name);
+        broadcast_chat_message(state, MAX_PLAYERS, msg);
     }
-    else{
-        broadcast_chat_message(state, MAX_PLAYERS, "Several players won pots.");
-    }
+    
     broadcast_game_state(state);
 
     //non-blocking countdown before the next hand
