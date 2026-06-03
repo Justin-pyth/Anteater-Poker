@@ -1,12 +1,18 @@
 #include <assert.h>
 #include <stdio.h>
 #include "../game.h"
+#include "../specialCards.h"
 
 /* 
     UNIT TESTING FOR game.c
 */
 
-// HELPER FUNCTIONS
+#define GREEN "\033[32m"
+#define RESET "\033[0m"
+
+// ========================================
+// *********** HELPER FUNCTIONS ***********
+// ========================================
 
 /*
     initializeThreePlayers()
@@ -51,6 +57,10 @@ void initializeThreePlayers(GameState *gs, Deck *deck, uint32_t initialPot)
 }
 
 
+// ========================================
+// ************* TEST CASES ***************
+// ========================================
+
 /*
     test_tryMove_fold()
 
@@ -82,7 +92,7 @@ void test_tryMove_fold()
     assert(gs.pot == initialPotAmt);                // pot before and after did not change
     assert(gs.acted[0] == true);                    // player made and completed a move
 
-    printf("test_tryMove_fold PASSED\n");
+    printf(RESET "test_tryMove_allIn " GREEN "PASSED\n");
 }
 
 
@@ -114,7 +124,7 @@ void test_tryMove_check()
     assert(gs.players[0].current_bet == gs.currentBet); // current bet before and after did not change
     assert(gs.acted[0] == true);                        // player made and completed a move
 
-    printf("test_tryMove_check PASSED\n");
+    printf(RESET "test_tryMove_allIn " GREEN "PASSED\n");
 }
 
 
@@ -149,7 +159,7 @@ void test_tryMove_call()
     assert(gs.players[0].current_bet == gs.currentBet);     // current bet before and after did not change
     assert(gs.acted[0] == true);                            // player made and completed a move
 
-    printf("test_tryMove_call PASSED\n");
+    printf(RESET "test_tryMove_call " GREEN "PASSED\n");
 }
 
 
@@ -185,7 +195,7 @@ void test_tryMove_raise()
     assert(gs.players[0].current_bet == initialBet + contributionAmt);  // current bet should increase by contributionAmt
     assert(gs.acted[0] == true);                                        // player made and completed a move
 
-    printf("test_tryMove_raise PASSED\n");
+    printf(RESET "test_tryMove_raise " GREEN "PASSED\n");
 }
 
 
@@ -215,8 +225,9 @@ void test_tryMove_allIn()
     assert(gs.players[0].current_bet == initialBet + initialChips); // current bet before and after did not change
     assert(gs.acted[0] == true);                                    // player made and completed a move
 
-    printf("test_tryMove_allIn PASSED\n");
+    printf(RESET "test_tryMove_allIn " GREEN "PASSED\n");
 }
+
 
 // ********** SPECIAL CARDS **********
 
@@ -225,39 +236,79 @@ void test_tryMove_allIn()
 */
 // void test_tryMove_useSpecialCard_swapCard()
 // {
-//     GameState gs;
-//     Deck deck;
-
-//     uint32_t initialPotAmt = 200;
-//     initializeThreePlayers(&gs, &deck, initialPotAmt);
-
-//     // Player should not match the current bet so they can call
-
-//     // Store initial values for comparison
-//     uint32_t initialChips = gs.players[0].chips;
-//     uint32_t initialBet = gs.players[0].current_bet;
-
-//     // Store call amount for comparison
-//     uint32_t callAmt = gs.currentBet - initialBet;
-
-//     // Try CALL move
-//     bool result = tryMove(&gs, &deck, 0, USE_SPECIAL_CARD, 0);
-
-//     // Verify (assert) all resulting consequences of a USE_SPECIAL_CARD move are correct
-//     assert(result == true);                                 // move succeeded
-//     assert(gs.acted[0] == true);                            // player made and completed a move
-
-//     printf("test_tryMove_useSpecialCard PASSED\n");
+//    // ** NOT IMPLEMENTED YET IN tryMove() IN game.c
 // }
+
+/*
+    test_swapCard()
+
+    Testing: void swapCard (GameState gs, const Card* ownHand1, const Card* ownHand2, const Card* oppHand1,const Card* oppHand2)
+    directly from specialCards
+*/
+void test_swapCard()
+{
+    GameState gs;
+
+    memset(&gs, 0, sizeof(GameState));
+
+    // Initialize two players
+    initPlayer(&gs.players[0], 0, "Apple", 1000);
+    initPlayer(&gs.players[1], 1, "Banana", 1000);
+
+    // Assign first player two cards
+    gs.players[0].hand[0].rank = ACE;
+    gs.players[0].hand[0].suit = SPADES;
+
+    gs.players[0].hand[1].rank = KING;
+    gs.players[0].hand[1].suit = HEARTS;
+
+    // Assign second player two cards
+    gs.players[1].hand[0].rank = TWO;
+    gs.players[1].hand[0].suit = CLUBS;
+
+    gs.players[1].hand[1].rank = THREE;
+    gs.players[1].hand[1].suit = DIAMONDS;
+
+    // Save original hands of each player
+    Card playerOneCardOne = gs.players[0].hand[0];
+    Card playerOneCardTwo = gs.players[0].hand[1];
+
+    Card playerTwoCardOne = gs.players[1].hand[0];
+    Card playerTwoCardTwo = gs.players[1].hand[1];
+
+    // try SWAP CARD
+    swapCard(gs, &playerOneCardOne, &playerTwoCardOne);
+
+    // Verify that the first cards are swapped
+    assert(gs.players[0].hand[0].rank == playerTwoCardOne.rank);
+    assert(gs.players[0].hand[0].suit == playerTwoCardOne.suit);
+
+    assert(gs.players[1].hand[0].rank == playerOneCardOne.rank);
+    assert(gs.players[1].hand[0].suit == playerOneCardOne.suit);
+
+    // Verify that the second cards are unchanged
+    assert(gs.players[0].hand[1].rank == playerOneCardTwo.rank);
+    assert(gs.players[0].hand[1].suit == playerOneCardTwo.suit);
+
+    assert(gs.players[1].hand[1].rank == playerTwoCardTwo.rank);
+    assert(gs.players[1].hand[1].suit == playerTwoCardTwo.suit);
+
+    printf(RESET "test_swapCard " GREEN "PASSED\n");
+}
 
 
 int main()
 {
+    // Test cases for tryMove()
     test_tryMove_fold();
     test_tryMove_check();
     test_tryMove_call();
     test_tryMove_raise();
     test_tryMove_allIn();
+    // test_tryMove_useSpecialCard(); // ** NOT YET IMPLEMENTED
+
+    // Test cases for special cards
+    test_swapCard();
 
     return 0;
 }

@@ -29,7 +29,7 @@ test_server: test_server.o protocol.o game.o rules.o bot.o com.o
 test_client: test_client.o protocol.o game.o rules.o bot.o com.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-tests/test_game: tests/test_game.o game.o rules.o
+tests/test_game: tests/test_game.o game.o rules.o specialCards.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 tests/flow_demo: tests/flow_demo.o game.o rules.o bot.o
