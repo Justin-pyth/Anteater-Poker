@@ -277,7 +277,7 @@ void test_swapCard()
     Card playerTwoCardTwo = gs.players[1].hand[1];
 
     // try SWAP CARD
-    swapCard(gs, &playerOneCardOne, &playerTwoCardOne);
+    swapCard(gs, &playerOneCardOne, &playerOneCardTwo, &playerTwoCardOne, &playerTwoCardTwo);
 
     // Verify that the first cards are swapped
     assert(gs.players[0].hand[0].rank == playerTwoCardOne.rank);
