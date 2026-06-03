@@ -10,6 +10,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Anteater shop prices. INSTAWIN is 75% of the pot.
+#define PRICE_SWAP1    300
+#define PRICE_SWAP2    400
+#define PRICE_REVEAL   200
+#define PRICE_REDRAW   250
+#define PRICE_SWAPOPS  150
+
 //Swap both of your cards with an opponent of your choosing
 void swapCard(GameState *gs, int myID, int oppID);
 
@@ -30,6 +37,13 @@ void swapOppCards(GameState *gs, int oppID);
 
 //Win game (pay 75% of total prize pool)
 void instaWin(GameState *gs, int myID);
+
+// Anteater shop: charge the buyer for `card` and run the matching action above.
+// `target` is the opponent's id (SWAP1/SWAP2/SWAPOPS); `myCardIdx`/`oppCardIdx`
+// pick which cards to swap/redraw (SWAP1, REDRAW). Returns false (charging
+// nothing) if the purchase is illegal or unaffordable.
+bool buyPowerup(GameState *gs, Deck *deck, uint8_t playerID, Anteater_shop card,
+                uint8_t target, uint8_t myCardIdx, uint8_t oppCardIdx);
 
 #endif
 

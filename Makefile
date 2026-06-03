@@ -16,17 +16,17 @@ test: tests/test_game tests/flow_demo
 	./tests/test_game
 	./tests/flow_demo
 
-server: server.o protocol.o game.o rules.o bot.o com.o
+server: server.o protocol.o game.o rules.o bot.o com.o specialCards.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-client: client.o gui.o gui_helpers.o protocol.o game.o rules.o bot.o com.o
+client: client.o gui.o gui_helpers.o protocol.o game.o rules.o bot.o com.o specialCards.o
 	$(CC) $(CFLAGS) $^ $(GTK_LIBS) -rdynamic -o $@
 
 
-test_server: test_server.o protocol.o game.o rules.o bot.o com.o
+test_server: test_server.o protocol.o game.o rules.o bot.o com.o specialCards.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-test_client: test_client.o protocol.o game.o rules.o bot.o com.o
+test_client: test_client.o protocol.o game.o rules.o bot.o com.o specialCards.o
 	$(CC) $(CFLAGS) $^ -o $@
 
 tests/test_game: tests/test_game.o game.o rules.o specialCards.o
@@ -50,6 +50,7 @@ game.o: game.c game.h rules.h uds.h
 rules.o: rules.c rules.h uds.h
 bot.o: bot.c bot.h game.h rules.h uds.h
 com.o: com.c com.h uds.h
+specialCards.o: specialCards.c specialCards.h uds.h game.h rules.h
 test_server.o: test_server.c protocol.h com.h uds.h
 test_client.o: test_client.c protocol.h com.h uds.h
 tests/test_game.o: tests/test_game.c game.h rules.h uds.h

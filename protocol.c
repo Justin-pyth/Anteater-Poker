@@ -1,4 +1,5 @@
 #include "protocol.h"
+#include "specialCards.h"
 #include <netdb.h>
 #include <string.h>
 #include <unistd.h>
@@ -36,16 +37,30 @@ void handle_client_communication(ServerState *state, Client *client)
                 return;
             }
             
-            if(tryMove(&state->game, &state->deck, data.action.playerID, data.action.move, data.action.amount))
-            {   
-                //commented out below (most likely a bug)
-                //apply(&state->game, data.action.playerID, data.action.move, data.action.amount); //apply the move on the server if valid
-                //processMove(&state->game, &state->deck, data.action.playerID); //FSM transition: apply already done, decide next phase
+            bool ok;
+            if(data.action.move == USE_SPECIAL_CARD)
+            {
+                //the GUI packs the two card indices into the otherwise-unused amount field
+                uint8_t myCardIdx  = data.action.amount & 0xFF;
+                uint8_t oppCardIdx = (data.action.amount >> 8) & 0xFF;
+                ok = buyPowerup(&state->game, &state->deck, data.action.playerID,
+                                data.action.useSpecialCard, data.action.target,
+                                myCardIdx, oppCardIdx);
+                if(ok)
+                    broadcast_game_state(state); //powerup doesn't end the turn; just resync everyone
+            }
+            else if(tryMove(&state->game, &state->deck, data.action.playerID, data.action.move, data.action.amount))
+            {
+                ok = true;
                 broadcast_move(state, data.action.playerID, data.action.move, data.action.amount);
                 handle_after_move(state);
-              
             }
             else
+            {
+                ok = false;
+            }
+
+            if(!ok)
             {
                 //send error back to the client
                 uint8_t error_buffer[BUFFER_SIZE];
@@ -53,7 +68,7 @@ void handle_client_communication(ServerState *state, Client *client)
                 strncpy(error_message.error, "Invalid move", MAX_PAYLOAD_SIZE);
                 error_message.type = MSG_TYPE_ERROR_MESSAGE;
                 uint32_t error_len = prepare_payload(error_buffer, MSG_TYPE_ERROR_MESSAGE, &error_message);
-               
+
                 send_to_client(client, error_buffer, error_len);
             }
             

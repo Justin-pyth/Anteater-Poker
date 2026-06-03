@@ -52,3 +52,44 @@ void instaWin(GameState *gs, int myID) {
     gs->gameOver = 1;
     gs->winnerID = myID;
 }
+
+bool buyPowerup(GameState *gs, Deck *deck, uint8_t playerID, Anteater_shop card,
+                uint8_t target, uint8_t myCardIdx, uint8_t oppCardIdx)
+{
+    //buyer must be a live player in the hand 
+    if (playerID >= MAX_PLAYERS) return false;
+    Player *p = &gs->players[playerID];
+    if (p->status != PLAYER_PLAYING) return false;
+    if (myCardIdx >= HAND_SIZE || oppCardIdx >= HAND_SIZE) return false;
+
+    //target must be a real opponent holding cards (target-based cards)
+    bool needsTarget = (card == SWAP1 || card == SWAP2 || card == SWAPOPS);
+    if (needsTarget) {
+        if (target >= MAX_PLAYERS || target == playerID) return false;
+        if (!gs->players[target].has_cards) return false;
+    }
+
+    //cost, INSTAWIN is 75% of the pot, everything else is a flat price
+    uint32_t cost;
+    switch (card) {
+        case SWAP1:    cost = PRICE_SWAP1;     break;
+        case SWAP2:    cost = PRICE_SWAP2;     break;
+        case REVEAL:   cost = PRICE_REVEAL;    break;
+        case REDRAW:   cost = PRICE_REDRAW;    break;
+        case SWAPOPS:  cost = PRICE_SWAPOPS;   break;
+        case INSTAWIN: cost = gs->pot * 3 / 4; break;
+        default:       return false;
+    }
+    if (p->chips < cost) return false;
+
+    p->chips -= cost;
+    switch (card) {
+        case SWAP1:    swapCards(gs, playerID, myCardIdx, target, oppCardIdx); break;
+        case SWAP2:    swapCard(gs, playerID, target);                         break;
+        case REVEAL:   revealComCard(gs, deck);                                break;
+        case REDRAW:   redrawCards(gs, deck, playerID, myCardIdx);             break;
+        case INSTAWIN: instaWin(gs, playerID);                                 break;
+        case SWAPOPS:  swapOppCards(gs, target);                               break;
+    }
+    return true;
+}
