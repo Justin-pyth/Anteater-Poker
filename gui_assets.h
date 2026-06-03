@@ -81,6 +81,10 @@ typedef struct {
     GtkWidget *chat_entry;
     GtkWidget *btn_send_chat;
 
+    /* ready / quit dialog buttons */
+    GtkWidget *ready_btn;
+    GtkWidget *quit_btn;
+
     /* leaderboard */
     GtkWidget *leaderboard;
     GtkWidget *lb_name [MAX_PLAYERS];

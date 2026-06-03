@@ -331,6 +331,21 @@ void on_chat_activate(GtkEntry *e, gpointer d)
     gtk_button_clicked(GTK_BUTTON(W.btn_send_chat));
 }
 
+void on_ready_clicked(GtkButton *b, gpointer d)
+{
+    (void)b; (void)d;
+    if (W.leaderboard)
+        gtk_widget_hide(W.leaderboard);
+    sendReadyToServer();
+
+}
+
+void on_quit_clicked(GtkButton *b, gpointer d)
+{
+    (void)b; (void)d;
+    gtk_main_quit();
+}
+
 /* -- Screen transitions ---------------------------------------------------- */
 void show_game_screen(void)
 {
@@ -392,29 +407,47 @@ void show_leaderboard(void)
 
     GameState *g = &C.game;
 
-    //sort players by ascending
+    //sort players by ascending place, keeping unplaced players at the end
     int order[MAX_PLAYERS];
     for(int i = 0; i < MAX_PLAYERS; i++) order[i] = i;
     for(int i = 0; i < MAX_PLAYERS-1; i++)
         for(int j = i+1; j < MAX_PLAYERS; j++)
-            if(g->players[order[i]].place > g->players[order[j]].place)
+        {
+            int place_i = g->players[order[i]].place;
+            int place_j = g->players[order[j]].place;
+
+            if(place_i == 0) place_i = MAX_PLAYERS + 1;
+            if(place_j == 0) place_j = MAX_PLAYERS + 1;
+
+            if(place_i > place_j)
             {
                 int t = order[i];
                 order[i] = order[j];
                 order[j] = t;
             }
-
+        }
+    
+    //for ordering from 1->2->3->4->5->6
+    int display_place = 0; //leaderboard place displayed
+    int previous_place = 0;//raw place (inaccurate because of multiple people getting out at once)
     for(int i = 0; i < MAX_PLAYERS; i++)
     {
         Player *p = &g->players[order[i]];
         char buf[32];
+
+        //if there are skipped places, fix
+        if(p->place > 0 && p->place != previous_place)
+        {
+            display_place++;
+            previous_place = p->place;
+        }
 
         //add their name
         if(W.lb_name[i])
             gtk_label_set_text(GTK_LABEL(W.lb_name[i]), p->name[0] ? p->name : "Empty");
         if(W.lb_place[i]) //their place
         {
-            snprintf(buf, sizeof(buf), "%d", p->place);
+            snprintf(buf, sizeof(buf), "%d", display_place);
             gtk_label_set_text(GTK_LABEL(W.lb_place[i]), p->place > 0 ? buf : "-");
         } //and their last card (if it existed)
         if(W.lb_card[i][0])
