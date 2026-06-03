@@ -631,6 +631,7 @@ static void finish_hand(ServerState *state)
                 p->status != PLAYER_DISCONNECTED)
             {
                 g->winnerID = p->id;
+                p->place = 1; //set the winner's place
                 break;
             }
         }

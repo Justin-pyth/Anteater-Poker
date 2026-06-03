@@ -361,13 +361,21 @@ void resetHand(GameState* gs)
         //check if player exists
         if(p->status == PLAYER_EMPTY || p->status == PLAYER_DISCONNECTED) continue;
         //check if player can continue playing
-        if(p->chips == 0) p->status = PLAYER_SPECTATING;
-        else p->status = PLAYER_READY;
-        
+        //aka check if they have chips left and if they havent been placed on the leaderboard
+        if(p->chips == 0 && p->place == 0)
+        {
+            p->place = remainingPlayers(gs) + 1;
+            p->status = PLAYER_SPECTATING;
+            printf("[bust] %s busted, place=%d\n", p->name, p->place);
+        }
+        else
+        {
+            //only reset hole cards if they didn't bust, otherwise, use them for leaderboard
+            memset(&p->hand, 0, sizeof(p->hand));
+            p->status = PLAYER_READY;
+        }
         //reset bets and cards
         p->current_bet = 0; p->total_bet = 0; p->has_cards = 0; 
-        p->place = 0;
-        memset(&p->hand, 0, sizeof(p->hand));
 
         gs->acted[i] = false;
 
