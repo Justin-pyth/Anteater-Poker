@@ -1,4 +1,5 @@
 #include "game.h"
+#include "specialCards.h"
 
 // score5() and evaluateHand() moved to rules.c
 
@@ -563,6 +564,8 @@ void newHand(GameState* gs, Deck* deck)
         endHandFold(gs);
     else if(allPlayersWent(gs))
         settleBettingRound(gs, deck);
+
+    init_shop_slots(gs);
 }
 
 // allPlayersWent() moved to rules.c

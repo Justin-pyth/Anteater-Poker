@@ -297,6 +297,16 @@ if (me->has_cards) {
     gtk_widget_set_sensitive(W.btn_raise, my_turn);
     gtk_widget_set_sensitive(W.raise_spin, my_turn);
     gtk_widget_set_sensitive(W.btn_allin, my_turn);
+
+    gboolean shop_ok = shop_is_available();
+    if (W.btn_shop)
+        gtk_widget_set_sensitive(W.btn_shop, shop_ok);
+    if (shop_is_open()) {
+        if (!shop_ok)
+            shop_close();
+        else
+            refresh_shop_ui();
+    }
 }
 
 /* -- Action button callbacks ----------------------------------------------- */
@@ -344,6 +354,53 @@ void on_quit_clicked(GtkButton *b, gpointer d)
 {
     (void)b; (void)d;
     gtk_main_quit();
+}
+
+/* -- Shop callbacks -------------------------------------------------------- */
+void on_shop_clicked(GtkButton *b, gpointer d)
+{
+    (void)b; (void)d;
+    shop_open();
+}
+
+void on_shop_back(GtkButton *b, gpointer d)
+{
+    (void)b; (void)d;
+    shop_on_back();
+}
+
+void on_shop_confirm(GtkButton *b, gpointer d)
+{
+    (void)b; (void)d;
+    shop_on_confirm();
+}
+
+void on_shop_card_clicked(GtkButton *b, gpointer d)
+{
+    (void)b;
+    shop_on_card_slot_clicked(GPOINTER_TO_INT(d));
+}
+
+gboolean on_shop_my_card_press(GtkWidget *w, GdkEventButton *ev, gpointer d)
+{
+    (void)w;
+    if (ev->type != GDK_BUTTON_PRESS || ev->button != 1) return FALSE;
+    return shop_on_my_card_clicked(GPOINTER_TO_INT(d));
+}
+
+gboolean on_shop_opp_frame_press(GtkWidget *w, GdkEventButton *ev, gpointer d)
+{
+    (void)w;
+    if (ev->type != GDK_BUTTON_PRESS || ev->button != 1) return FALSE;
+    return shop_on_opponent_clicked(GPOINTER_TO_INT(d));
+}
+
+gboolean on_shop_opp_card_press(GtkWidget *w, GdkEventButton *ev, gpointer d)
+{
+    (void)w;
+    if (ev->type != GDK_BUTTON_PRESS || ev->button != 1) return FALSE;
+    int packed = GPOINTER_TO_INT(d);
+    return shop_on_opp_card_clicked(packed / 2, packed % 2);
 }
 
 /* -- Screen transitions ---------------------------------------------------- */

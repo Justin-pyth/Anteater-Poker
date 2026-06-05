@@ -53,9 +53,27 @@ void instaWin(GameState *gs, int myID) {
     gs->winnerID = myID;
 }
 
+void init_shop_slots(GameState *gs)
+{
+    static const Anteater_shop slots[6] = {
+        SWAP1, SWAP2, REVEAL, REDRAW, INSTAWIN, SWAPOPS
+    };
+    for (int i = 0; i < 6; i++)
+        gs->cardPrice[i] = slots[i];
+}
+
+bool shop_window_open(const GameState *gs)
+{
+    return gs->handPlaying
+        && gs->stage == PREFLOP
+        && gs->communityCount == 0;
+}
+
 bool buyPowerup(GameState *gs, Deck *deck, uint8_t playerID, Anteater_shop card,
                 uint8_t target, uint8_t myCardIdx, uint8_t oppCardIdx)
 {
+    if (!shop_window_open(gs)) return false;
+
     //buyer must be a live player in the hand 
     if (playerID >= MAX_PLAYERS) return false;
     Player *p = &gs->players[playerID];

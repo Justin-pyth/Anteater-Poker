@@ -49,8 +49,31 @@ void init_gui(int *argc, char ***argv)
     W.label_call_amnt = GET("label_call_amnt");
     W.label_your_stack = GET("label_your_stack");
     W.leaderboard = GET("leaderboard");
+    W.shop          = GET("shop");
+    W.shop_text     = GET("shop_text");
+    W.confirm_button = GET("confirm_button");
+    W.back_button   = GET("back_button");
+    for (int i = 0; i < 6; i++) {
+        char id[16];
+        snprintf(id, sizeof(id), "card%d", i + 1);
+        W.shop_cards[i] = GET(id);
+    }
     if (W.leaderboard)
         g_signal_connect(W.leaderboard, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), NULL);
+    shop_init_dialog();
+    if (W.shop_text)
+        gtk_editable_set_editable(GTK_EDITABLE(W.shop_text), FALSE);
+    if (W.btn_shop)
+        g_signal_connect(W.btn_shop, "clicked", G_CALLBACK(on_shop_clicked), NULL);
+    if (W.back_button)
+        g_signal_connect(W.back_button, "clicked", G_CALLBACK(on_shop_back), NULL);
+    if (W.confirm_button)
+        g_signal_connect(W.confirm_button, "clicked", G_CALLBACK(on_shop_confirm), NULL);
+    for (int i = 0; i < 6; i++) {
+        if (W.shop_cards[i])
+            g_signal_connect(W.shop_cards[i], "clicked",
+                             G_CALLBACK(on_shop_card_clicked), GINT_TO_POINTER(i));
+    }
     if (W.ready_btn)
         g_signal_connect(W.ready_btn, "clicked", G_CALLBACK(on_ready_clicked), NULL);
     if (W.quit_btn)
@@ -77,6 +100,8 @@ void init_gui(int *argc, char ***argv)
         snprintf(id, sizeof(id), "my_card_%d", i);
         W.my_cards[i] = GET(id);
         init_card_widget(W.my_cards[i]);
+        g_signal_connect(W.my_cards[i], "button-press-event",
+                         G_CALLBACK(on_shop_my_card_press), GINT_TO_POINTER(i));
     }
     W.self_blind = GET("self_blind");
     init_blind_widget(W.self_blind);
@@ -101,9 +126,15 @@ void init_gui(int *argc, char ***argv)
         snprintf(cid, sizeof(cid), "opp_card_%da", i);
         W.opp_cards[i][0] = GET(cid);
         init_card_widget(W.opp_cards[i][0]);
+        g_signal_connect(W.opp_cards[i][0], "button-press-event",
+                         G_CALLBACK(on_shop_opp_card_press), GINT_TO_POINTER(i * 2));
         snprintf(cid, sizeof(cid), "opp_card_%db", i);
         W.opp_cards[i][1] = GET(cid);
         init_card_widget(W.opp_cards[i][1]);
+        g_signal_connect(W.opp_cards[i][1], "button-press-event",
+                         G_CALLBACK(on_shop_opp_card_press), GINT_TO_POINTER(i * 2 + 1));
+        g_signal_connect(W.opp_frame[i], "button-press-event",
+                         G_CALLBACK(on_shop_opp_frame_press), GINT_TO_POINTER(i));
 
         snprintf(cid, sizeof(cid), "opp_blind_%d", i);
         W.opp_blind[i] = GET(cid);
