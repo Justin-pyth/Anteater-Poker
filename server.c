@@ -10,12 +10,21 @@
 #include <sys/select.h>
 #include "protocol.h"
 
+#ifdef ENABLE_SERVER_GUI
+#include <gtk/gtk.h>
+#include "server_gui.h"
+#endif
+
 
 
 int main(int argc, char *argv[])
 {
+#ifdef ENABLE_SERVER_GUI
+    gtk_init(&argc, &argv);
+#else
     (void)argc;
     (void)argv;
+#endif
 
     int listen_fd; // Socket file descriptor for listening
     ServerState state; // Server state to hold client information
@@ -23,8 +32,15 @@ int main(int argc, char *argv[])
     init_server(&state); // Initialize the server state
     listen_fd = create_socket(NULL); // Create a socket for listening
     state.listen_fd = listen_fd; // Store the listening socket in the server state
+#ifdef ENABLE_SERVER_GUI
+    server_gui_init(&state);
+#endif
     printf("Server is running on port %d\n", PORT);
     while (state.running) {
+#ifdef ENABLE_SERVER_GUI
+        server_gui_pump();
+        server_gui_refresh(&state.game);
+#endif
         // After sucessfully create the socker, server loop begins here
         //it will accept incoming connections and handle client communication
 
@@ -71,6 +87,14 @@ int main(int argc, char *argv[])
             timeout.tv_usec = 0;
             timeout_ptr = &timeout;
         }
+#ifdef ENABLE_SERVER_GUI
+        else
+        {
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 50000;
+            timeout_ptr = &timeout;
+        }
+#endif
 
         int activity = select(max_fd + 1, &read_fds, NULL, NULL, timeout_ptr); // Wait for activity on the sockets
         if (activity < 0) {
