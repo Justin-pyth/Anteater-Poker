@@ -38,6 +38,7 @@ void start_my_timer(int seconds);
 void stop_my_timer(void);
 
 /* -- Network send helpers -------------------------------------------------- */
+
 void send_gui_move(MoveType move, uint32_t amount);
 void sendReadyToServer(void);
 void sendNameToServer(const char *name);
@@ -45,5 +46,19 @@ void sendChatToServer(const char *text);
 
 /* -- Leaderboard display -------------------------------------------------------*/
 void show_leaderboard(void);
+
+/* -- Shop ----------------------------------------------------------------------*/
+gboolean shop_is_available(void);
+gboolean shop_is_open(void);
+void shop_init_dialog(void);
+void shop_open(void);
+void shop_close(void);
+void refresh_shop_ui(void);
+void shop_on_card_slot_clicked(int slot);
+void shop_on_confirm(void);
+void shop_on_back(void);
+gboolean shop_on_opponent_clicked(int gui_slot);
+gboolean shop_on_my_card_clicked(int card_idx);
+gboolean shop_on_opp_card_clicked(int gui_slot, int card_idx);
 
 #endif /* TEMP_GUI_HELPERS_H */

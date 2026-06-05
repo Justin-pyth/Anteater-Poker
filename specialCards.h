@@ -38,6 +38,12 @@ void swapOppCards(GameState *gs, int oppID);
 //Win game (pay 75% of total prize pool)
 void instaWin(GameState *gs, int myID);
 
+// Fixed shop inventory (card1–card6 in the Glade shop dialog).
+void init_shop_slots(GameState *gs);
+
+// True during preflop before any community cards are revealed.
+bool shop_window_open(const GameState *gs);
+
 // Anteater shop: charge the buyer for `card` and run the matching action above.
 // `target` is the opponent's id (SWAP1/SWAP2/SWAPOPS); `myCardIdx`/`oppCardIdx`
 // pick which cards to swap/redraw (SWAP1, REDRAW). Returns false (charging

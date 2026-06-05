@@ -1,4 +1,5 @@
 #include "gui_helpers.h"
+#include "specialCards.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -82,6 +83,7 @@ void init_card_widget(GtkWidget *da)
     CardDrawData *d = g_new0(CardDrawData, 1);
     g_object_set_data_full(G_OBJECT(da), "card-data", d, g_free);
     g_signal_connect(da, "draw", G_CALLBACK(draw_card_cb), d);
+    gtk_widget_add_events(da, GDK_BUTTON_PRESS_MASK);
 }
 
 void set_card_face(GtkWidget *da, Card c, int face_up)
@@ -340,4 +342,319 @@ void sendChatToServer(const char *text)
     uint8_t buffer[BUFFER_SIZE];
     uint32_t len = prepare_payload(buffer, MSG_TYPE_CHAT_MESSAGE, &msg);
     send_to_server(&C, buffer, len);
+}
+
+/* -- Shop -------------------------------------------------------------------- */
+
+typedef enum {
+    SHOP_STEP_PICK_CARD,
+    SHOP_STEP_PICK_TARGET,
+    SHOP_STEP_PICK_MY_CARD,
+    SHOP_STEP_PICK_OPP_CARD,
+    SHOP_STEP_CONFIRM
+} ShopStep;
+
+typedef struct {
+    gboolean      open;
+    ShopStep      step;
+    Anteater_shop selected;
+    uint8_t       target;
+    uint8_t       my_card_idx;
+    uint8_t       opp_card_idx;
+    int           selected_slot;
+} ShopState;
+
+static ShopState shop;
+
+static const Anteater_shop SHOP_SLOTS[6] = {
+    SWAP1, SWAP2, REVEAL, REDRAW, INSTAWIN, SWAPOPS
+};
+
+static int gui_slot_to_player_id(int gui_slot)
+{
+    int slot = 0;
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (i == (int)C.my_player_id) continue;
+        if (C.game.players[i].status == PLAYER_EMPTY) continue;
+        if (slot == gui_slot) return i;
+        slot++;
+    }
+    return -1;
+}
+
+static const char *shop_card_name(Anteater_shop card)
+{
+    switch (card) {
+        case SWAP1:    return "Swap 1 Card";
+        case SWAP2:    return "Swap Both Cards";
+        case REVEAL:   return "Reveal Community";
+        case REDRAW:   return "Redraw Card";
+        case INSTAWIN: return "Instant Win";
+        case SWAPOPS:  return "Swap Opponent Cards";
+        default:       return "Unknown";
+    }
+}
+
+static uint32_t shop_card_price(const GameState *gs, Anteater_shop card)
+{
+    switch (card) {
+        case SWAP1:    return PRICE_SWAP1;
+        case SWAP2:    return PRICE_SWAP2;
+        case REVEAL:   return PRICE_REVEAL;
+        case REDRAW:   return PRICE_REDRAW;
+        case SWAPOPS:  return PRICE_SWAPOPS;
+        case INSTAWIN: return gs->pot * 3 / 4;
+        default:       return 0;
+    }
+}
+
+static gboolean shop_can_afford(Anteater_shop card)
+{
+    if (C.my_player_id >= MAX_PLAYERS) return FALSE;
+    Player *me = &C.game.players[C.my_player_id];
+    if (me->status != PLAYER_PLAYING) return FALSE;
+    return me->chips >= shop_card_price(&C.game, card);
+}
+
+static gboolean shop_needs_target(Anteater_shop card)
+{
+    return card == SWAP1 || card == SWAP2 || card == SWAPOPS;
+}
+
+static void shop_set_name_display(const char *name)
+{
+    if (!W.shop_text) return;
+    gtk_entry_set_text(GTK_ENTRY(W.shop_text), name ? name : "");
+}
+
+static void shop_clear_highlights(void)
+{
+    for (int i = 0; i < 6; i++) {
+        if (!W.shop_cards[i]) continue;
+        gtk_style_context_remove_class(
+            gtk_widget_get_style_context(W.shop_cards[i]), "shop-card-selected");
+    }
+    for (int i = 0; i < GUI_OPPONENT_SLOTS; i++) {
+        if (!W.opp_frame[i]) continue;
+        gtk_style_context_remove_class(
+            gtk_widget_get_style_context(W.opp_frame[i]), "shop-target-hint");
+    }
+}
+
+static void shop_reset_selection(void)
+{
+    shop.step           = SHOP_STEP_PICK_CARD;
+    shop.selected       = SWAP1;
+    shop.target         = 0;
+    shop.my_card_idx    = 0;
+    shop.opp_card_idx   = 0;
+    shop.selected_slot  = -1;
+    shop_clear_highlights();
+    shop_set_name_display("");
+    if (W.confirm_button)
+        gtk_widget_set_sensitive(W.confirm_button, FALSE);
+}
+
+gboolean shop_is_available(void)
+{
+    if (!C.connected || C.my_player_id >= MAX_PLAYERS) return FALSE;
+    if (!shop_window_open(&C.game)) return FALSE;
+    return C.game.players[C.my_player_id].status == PLAYER_PLAYING;
+}
+
+gboolean shop_is_open(void)
+{
+    return shop.open;
+}
+
+static gboolean on_shop_delete_event(GtkWidget *widget, GdkEvent *event, gpointer data)
+{
+    (void)widget; (void)event; (void)data;
+    shop_close();
+    return TRUE;
+}
+
+void shop_close(void)
+{
+    shop.open = FALSE;
+    shop_reset_selection();
+    shop_clear_highlights();
+    if (W.shop)
+        gtk_widget_hide(W.shop);
+}
+
+void shop_init_dialog(void)
+{
+    if (!W.shop) return;
+    g_signal_connect(W.shop, "delete-event", G_CALLBACK(on_shop_delete_event), NULL);
+    gtk_window_set_modal(GTK_WINDOW(W.shop), FALSE);
+    gtk_widget_hide(W.shop);
+}
+
+void shop_open(void)
+{
+    if (!W.shop || !shop_is_available()) return;
+    shop.open = TRUE;
+    shop_reset_selection();
+    refresh_shop_ui();
+    gtk_window_set_transient_for(GTK_WINDOW(W.shop), GTK_WINDOW(W.window));
+    gtk_window_set_modal(GTK_WINDOW(W.shop), FALSE);
+    gtk_widget_show_all(W.shop);
+}
+
+static void shop_advance_after_card_pick(void)
+{
+    if (shop_needs_target(shop.selected)) {
+        shop.step = SHOP_STEP_PICK_TARGET;
+        if (W.confirm_button)
+            gtk_widget_set_sensitive(W.confirm_button, FALSE);
+        return;
+    }
+    if (shop.selected == REDRAW) {
+        shop.step = SHOP_STEP_PICK_MY_CARD;
+        if (W.confirm_button)
+            gtk_widget_set_sensitive(W.confirm_button, FALSE);
+        return;
+    }
+    shop.step = SHOP_STEP_CONFIRM;
+    if (W.confirm_button)
+        gtk_widget_set_sensitive(W.confirm_button, shop_can_afford(shop.selected));
+}
+
+void shop_on_card_slot_clicked(int slot)
+{
+    if (!shop.open || slot < 0 || slot >= 6) return;
+    if (!shop_can_afford(SHOP_SLOTS[slot])) return;
+
+    shop_clear_highlights();
+    shop.selected_slot = slot;
+    shop.selected      = SHOP_SLOTS[slot];
+    if (W.shop_cards[slot])
+        gtk_style_context_add_class(
+            gtk_widget_get_style_context(W.shop_cards[slot]), "shop-card-selected");
+
+    shop_set_name_display(shop_card_name(shop.selected));
+    shop_advance_after_card_pick();
+}
+
+gboolean shop_on_opponent_clicked(int gui_slot)
+{
+    if (!shop.open || shop.step != SHOP_STEP_PICK_TARGET) return FALSE;
+
+    int pid = gui_slot_to_player_id(gui_slot);
+    if (pid < 0) return FALSE;
+    if (!C.game.players[pid].has_cards) return FALSE;
+
+    shop.target = (uint8_t)pid;
+    shop_clear_highlights();
+    if (W.shop_cards[shop.selected_slot])
+        gtk_style_context_add_class(
+            gtk_widget_get_style_context(W.shop_cards[shop.selected_slot]),
+            "shop-card-selected");
+    if (W.opp_frame[gui_slot])
+        gtk_style_context_add_class(
+            gtk_widget_get_style_context(W.opp_frame[gui_slot]), "shop-target-hint");
+
+    if (shop.selected == SWAP1) {
+        shop.step = SHOP_STEP_PICK_MY_CARD;
+        if (W.confirm_button)
+            gtk_widget_set_sensitive(W.confirm_button, FALSE);
+    } else {
+        shop.step = SHOP_STEP_CONFIRM;
+        if (W.confirm_button)
+            gtk_widget_set_sensitive(W.confirm_button, shop_can_afford(shop.selected));
+    }
+    return TRUE;
+}
+
+gboolean shop_on_my_card_clicked(int card_idx)
+{
+    if (!shop.open || shop.step != SHOP_STEP_PICK_MY_CARD) return FALSE;
+    if (card_idx < 0 || card_idx >= HAND_SIZE) return FALSE;
+
+    shop.my_card_idx = (uint8_t)card_idx;
+    if (shop.selected == SWAP1) {
+        shop.step = SHOP_STEP_PICK_OPP_CARD;
+        if (W.confirm_button)
+            gtk_widget_set_sensitive(W.confirm_button, FALSE);
+    } else {
+        shop.step = SHOP_STEP_CONFIRM;
+        if (W.confirm_button)
+            gtk_widget_set_sensitive(W.confirm_button, shop_can_afford(shop.selected));
+    }
+    return TRUE;
+}
+
+gboolean shop_on_opp_card_clicked(int gui_slot, int card_idx)
+{
+    if (!shop.open || shop.step != SHOP_STEP_PICK_OPP_CARD) return FALSE;
+    if (card_idx < 0 || card_idx >= HAND_SIZE) return FALSE;
+
+    int pid = gui_slot_to_player_id(gui_slot);
+    if (pid < 0 || pid != (int)shop.target) return FALSE;
+
+    shop.opp_card_idx = (uint8_t)card_idx;
+    shop.step = SHOP_STEP_CONFIRM;
+    if (W.confirm_button)
+        gtk_widget_set_sensitive(W.confirm_button, shop_can_afford(shop.selected));
+    return TRUE;
+}
+
+void shop_on_confirm(void)
+{
+    if (!shop.open || shop.step != SHOP_STEP_CONFIRM) return;
+    if (!shop_is_available() || !shop_can_afford(shop.selected)) return;
+
+    PlayerAction action;
+    action.playerID       = C.my_player_id;
+    action.move           = USE_SPECIAL_CARD;
+    action.useSpecialCard = shop.selected;
+    action.target         = shop.target;
+    action.amount         = shop.my_card_idx | ((uint32_t)shop.opp_card_idx << 8);
+    send_action(&C, &action);
+
+    shop_reset_selection();
+    refresh_shop_ui();
+}
+
+void shop_on_back(void)
+{
+    shop_close();
+}
+
+void refresh_shop_ui(void)
+{
+    if (!W.shop) return;
+
+    GameState *g = &C.game;
+    for (int i = 0; i < 6; i++) {
+        if (!W.shop_cards[i]) continue;
+        Anteater_shop card = SHOP_SLOTS[i];
+        char label[64];
+        uint32_t price = shop_card_price(g, card);
+        snprintf(label, sizeof(label), "%s\n$%u", shop_card_name(card), price);
+        gtk_button_set_label(GTK_BUTTON(W.shop_cards[i]), label);
+        gtk_widget_set_sensitive(W.shop_cards[i], shop_can_afford(card));
+
+        if (shop.selected_slot == i)
+            gtk_style_context_add_class(
+                gtk_widget_get_style_context(W.shop_cards[i]), "shop-card-selected");
+        else
+            gtk_style_context_remove_class(
+                gtk_widget_get_style_context(W.shop_cards[i]), "shop-card-selected");
+    }
+
+    if (W.confirm_button)
+        gtk_widget_set_sensitive(W.confirm_button,
+            shop.step == SHOP_STEP_CONFIRM && shop_can_afford(shop.selected));
+
+    if (shop.step == SHOP_STEP_PICK_TARGET) {
+        for (int i = 0; i < GUI_OPPONENT_SLOTS; i++) {
+            if (!W.opp_frame[i]) continue;
+            int pid = gui_slot_to_player_id(i);
+            if (pid >= 0 && (uint8_t)pid == shop.target)
+                gtk_style_context_add_class(
+                    gtk_widget_get_style_context(W.opp_frame[i]), "shop-target-hint");
+        }
+    }
 }

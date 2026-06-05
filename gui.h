@@ -42,4 +42,13 @@ void on_chat_activate(GtkEntry *e, gpointer d);
 void on_ready_clicked(GtkButton *b, gpointer d);
 void on_quit_clicked(GtkButton *b, gpointer d);
 
+/* -- Shop callbacks -------------------------------------------------------- */
+void on_shop_clicked(GtkButton *b, gpointer d);
+void on_shop_back(GtkButton *b, gpointer d);
+void on_shop_confirm(GtkButton *b, gpointer d);
+void on_shop_card_clicked(GtkButton *b, gpointer d);
+gboolean on_shop_my_card_press(GtkWidget *w, GdkEventButton *ev, gpointer d);
+gboolean on_shop_opp_frame_press(GtkWidget *w, GdkEventButton *ev, gpointer d);
+gboolean on_shop_opp_card_press(GtkWidget *w, GdkEventButton *ev, gpointer d);
+
 #endif /* TEMP_GUI_H */

@@ -2589,30 +2589,10 @@ DECK</property>
             <property name="can-focus">False</property>
             <property name="layout-style">end</property>
             <child>
-              <object class="GtkButton" id="confirm_button">
-                <property name="label" translatable="yes">Confirm</property>
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
+              <placeholder/>
             </child>
             <child>
-              <object class="GtkButton" id="back_button">
-                <property name="label" translatable="yes">Back</property>
-                <property name="visible">True</property>
-                <property name="can-focus">True</property>
-                <property name="receives-default">True</property>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
+              <placeholder/>
             </child>
           </object>
           <packing>
@@ -2645,7 +2625,7 @@ DECK</property>
             <property name="row-homogeneous">True</property>
             <property name="column-homogeneous">True</property>
             <child>
-              <object class="GtkButton" id="card1">
+              <object class="GtkButton">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
@@ -2659,7 +2639,7 @@ DECK</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="card2">
+              <object class="GtkButton">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
@@ -2673,7 +2653,7 @@ DECK</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="card3">
+              <object class="GtkButton">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
@@ -2687,7 +2667,7 @@ DECK</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="card4">
+              <object class="GtkButton">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
@@ -2701,7 +2681,7 @@ DECK</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="card5">
+              <object class="GtkButton">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
@@ -2715,7 +2695,7 @@ DECK</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="card6">
+              <object class="GtkButton">
                 <property name="visible">True</property>
                 <property name="can-focus">True</property>
                 <property name="receives-default">True</property>
