@@ -100,9 +100,23 @@ static void on_restart_clicked(GtkButton *b, gpointer u)
 {
     (void)b; (void)u;
     if (!SG.state) return;
-    SG.state->game.gameOver = 1;         /* forces resetGame() inside start_new_hand() */
-    start_new_hand(SG.state);
-    server_gui_log("Game restarted — chips reset, fresh hand dealt.");
+    GameState *g = &SG.state->game;
+
+    /* free any disconnected seats first (resetGame would otherwise skip them) */
+    for (int s = 0; s < MAX_PLAYERS; s++) {
+        if (g->players[s].status == PLAYER_DISCONNECTED) {
+            memset(&g->players[s], 0, sizeof(Player));
+            g->players[s].id = s;
+            g->players[s].status = PLAYER_EMPTY;
+        }
+    }
+
+    /* initial state: remaining players back to $1000, board/pot cleared, gameOver=0 */
+    resetGame(g);
+
+    broadcast_chat_message(SG.state, MAX_PLAYERS, "Game restarted — chips reset to $1000.");
+    broadcast_game_state(SG.state);
+    server_gui_log("Game restarted — chips reset, disconnected seats cleared.");
 }
 
 static void on_addbots_clicked(GtkButton *b, gpointer u)
@@ -117,13 +131,19 @@ static void on_addbots_clicked(GtkButton *b, gpointer u)
 static void on_quit_clicked(GtkButton *b, gpointer u)
 {
     (void)b; (void)u;
-    if (SG.state) SG.state->running = 0; /* let server.c's loop exit + cleanup */
+    if (SG.state) {
+        broadcast_chat_message(SG.state, MAX_PLAYERS, "Server has been closed.");
+        SG.state->running = 0;           /* let server.c's loop exit + cleanup */
+    }
 }
 
 static gboolean on_window_delete(GtkWidget *w, GdkEvent *e, gpointer u)
 {
     (void)w; (void)e; (void)u;
-    if (SG.state) SG.state->running = 0; /* closing the window stops the server */
+    if (SG.state) {
+        broadcast_chat_message(SG.state, MAX_PLAYERS, "Server has been closed.");
+        SG.state->running = 0;           /* closing the window stops the server */
+    }
     return FALSE;                        /* allow the window to be destroyed */
 }
 
@@ -144,13 +164,18 @@ static const char *SGUI_CSS =
 "  border: 1px solid #30363d; border-radius: 6px; padding: 4px;"
 "}"
 ".sg-btn {"
-"  border-radius: 8px; font-family: 'Georgia', serif; font-size: 13px;"
+"  border-radius: 8px; font-family: 'Georgia', serif; font-size: 14px;"
 "  font-weight: bold; letter-spacing: 1px; padding: 8px 16px; border: 1px solid;"
+"  background-image: none;"   /* defeat the native theme gradient so our colors show */
+"  color: #ffffff;"
 "}"
-"#sg-newhand { background-color: #1a3a1a; border-color: #27ae60; color: #7ae890; }"
-"#sg-restart { background-color: #14342f; border-color: #16a085; color: #7ae8d8; }"
-"#sg-addbots { background-color: #2a1a3a; border-color: #9b59b6; color: #c39bd3; }"
-"#sg-quit    { background-color: #3a1a1a; border-color: #c0392b; color: #e87a7a; }"
+/* target the button's label node directly so it wins over the global `label{}`
+   rule, which would otherwise override the inherited button text color */
+".sg-btn label { color: #ffffff; font-weight: bold; }"
+"#sg-newhand { background-color: #1a3a1a; border-color: #27ae60; }"
+"#sg-restart { background-color: #14342f; border-color: #16a085; }"
+"#sg-addbots { background-color: #2a1a3a; border-color: #9b59b6; }"
+"#sg-quit    { background-color: #3a1a1a; border-color: #c0392b; }"
 ".sg-btn:hover { opacity: 0.85; }";
 
 /* =========================================================================

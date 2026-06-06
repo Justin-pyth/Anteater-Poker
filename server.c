@@ -36,6 +36,12 @@ int main(int argc, char *argv[])
     server_gui_init(&state);
 #endif
     printf("Server is running on port %d\n", PORT);
+
+    //wall-clock deadline that paces bot moves (~1s apart). Using a deadline instead
+    //of relying on select() blocking for a full second lets the server GUI build cap
+    //the select timeout for responsiveness without speeding up the bots.
+    struct timeval next_bot_action = {0, 0};
+
     while (state.running) {
 #ifdef ENABLE_SERVER_GUI
         server_gui_pump();
@@ -94,6 +100,17 @@ int main(int argc, char *argv[])
             timeout.tv_usec = 50000;
             timeout_ptr = &timeout;
         }
+
+        //Keep the monitor responsive: never block longer than the GUI refresh
+        //interval (~50ms), even during bot-only play or the inter-hand pause.
+        //The real bot/timer pacing is enforced by wall-clock deadlines below, so
+        //waking early here costs nothing but a cheap GTK pump.
+        if (timeout_ptr == NULL || timeout.tv_sec > 0 || timeout.tv_usec > 50000)
+        {
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 50000;
+            timeout_ptr = &timeout;
+        }
 #endif
 
         int activity = select(max_fd + 1, &read_fds, NULL, NULL, timeout_ptr); // Wait for activity on the sockets
@@ -102,22 +119,46 @@ int main(int argc, char *argv[])
             continue; // Continue to the next iteration of the loop if select fails
         }
         if (activity == 0) {
+            struct timeval now;
+            gettimeofday(&now, NULL);
+
             //timer takes priority: it only runs during runout / inter-hand pauses,
-            //when no player or bot is due to act
+            //when no player or bot is due to act. Fire only once its deadline is
+            //actually reached (the GUI build may wake early due to the timeout cap).
             if (state.timer_active)
             {
-                service_timer(&state);
+                if (now.tv_sec > state.timer_deadline.tv_sec ||
+                    (now.tv_sec == state.timer_deadline.tv_sec &&
+                     now.tv_usec >= state.timer_deadline.tv_usec))
+                {
+                    service_timer(&state);
+                }
                 continue;
             }
 
-            uint8_t botID;
-            MoveType move;
-            uint32_t amount;
-
-            if (doOneBotTurn(&state.game, &state.deck, &botID, &move, &amount))
+            //bot's turn: pace moves ~1s apart using the wall clock (independent of how
+            //often select() wakes), so the headless build is unchanged while the GUI
+            //build stays responsive.
+            if (state.game.handPlaying &&
+                state.game.currentPlayer < MAX_PLAYERS &&
+                isBot(state.game.players[state.game.currentPlayer].name) &&
+                (now.tv_sec > next_bot_action.tv_sec ||
+                 (now.tv_sec == next_bot_action.tv_sec &&
+                  now.tv_usec >= next_bot_action.tv_usec)))
             {
-                broadcast_move(&state, botID, move, amount);
-                handle_after_move(&state);
+                uint8_t botID;
+                MoveType move;
+                uint32_t amount;
+
+                if (doOneBotTurn(&state.game, &state.deck, &botID, &move, &amount))
+                {
+                    broadcast_move(&state, botID, move, amount);
+                    handle_after_move(&state);
+                }
+
+                //schedule the next bot action ~1s out
+                gettimeofday(&next_bot_action, NULL);
+                next_bot_action.tv_sec += 1;
             }
             continue;
         }
