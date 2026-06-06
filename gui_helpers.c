@@ -52,6 +52,15 @@ static gboolean draw_card_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
     cairo_set_line_width(cr, 0.8);
     cairo_stroke(cr);
 
+    /* selection border draws on both face-up and face-down cards (opponent cards
+       are usually face-down during targeting) */
+    if (d->highlight) {
+        cairo_set_source_rgb(cr, 1.0, 0.84, 0.0);  /* gold */
+        cairo_set_line_width(cr, 3.0);
+        cairo_rectangle(cr, 1.5, 1.5, w - 3.0, h - 3.0);
+        cairo_stroke(cr);
+    }
+
     if (!d->face_up || !card_is_known(d->card)) return FALSE;
 
     if (suit_is_red(d->card.suit)) cairo_set_source_rgb(cr, 0.80, 0.15, 0.15);
@@ -65,6 +74,15 @@ static gboolean draw_card_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
     cairo_move_to(cr, 4, h-4);
     cairo_show_text(cr, suit_label(d->card.suit));
     return FALSE;
+}
+
+void set_card_highlight(GtkWidget *da, gboolean on)
+{
+    if (!da) return;
+    CardDrawData *d = g_object_get_data(G_OBJECT(da), "card-data");
+    if (!d) return;
+    d->highlight = on ? 1 : 0;
+    gtk_widget_queue_draw(da);
 }
 
 GtkWidget *make_card_widget(int w, int h)
@@ -381,14 +399,6 @@ static const Anteater_shop SHOP_SLOTS[6] = {
     SWAP1, SWAP2, REVEAL, REDRAW, SWAPOPS, INSTAWIN  /* INSTAWIN last: hidden while disabled */
 };
 
-static int gui_slot_to_player_id(int gui_slot)
-{
-    //strip tile index == seat index
-    if (gui_slot < 0 || gui_slot >= MAX_PLAYERS) return -1;
-    if (C.game.players[gui_slot].status == PLAYER_EMPTY) return -1;
-    return gui_slot;
-}
-
 static const char *shop_card_name(Anteater_shop card)
 {
     switch (card) {
@@ -434,17 +444,68 @@ static void shop_set_name_display(const char *name)
     gtk_entry_set_text(GTK_ENTRY(W.shop_text), name ? name : "");
 }
 
+static void shop_set_prompt(const char *msg)
+{
+    if (W.log_label && msg)
+        gtk_label_set_text(GTK_LABEL(W.log_label), msg);
+}
+
+/* a seat the server will accept as a powerup target: an opponent holding cards */
+static gboolean shop_valid_target(int seat)
+{
+    if (seat < 0 || seat >= MAX_PLAYERS) return FALSE;
+    if (seat == (int)C.my_player_id) return FALSE;
+    return C.game.players[seat].has_cards ? TRUE : FALSE;
+}
+
+static int shop_valid_target_count(void)
+{
+    int n = 0;
+    for (int s = 0; s < MAX_PLAYERS; s++) if (shop_valid_target(s)) n++;
+    return n;
+}
+
 static void shop_clear_highlights(void)
 {
     for (int i = 0; i < 6; i++) {
-        if (!W.shop_cards[i]) continue;
-        gtk_style_context_remove_class(
-            gtk_widget_get_style_context(W.shop_cards[i]), "shop-card-selected");
+        if (W.shop_cards[i])
+            gtk_style_context_remove_class(
+                gtk_widget_get_style_context(W.shop_cards[i]), "shop-card-selected");
     }
     for (int i = 0; i < GUI_OPPONENT_SLOTS; i++) {
-        if (!W.opp_frame[i]) continue;
-        gtk_style_context_remove_class(
-            gtk_widget_get_style_context(W.opp_frame[i]), "shop-target-hint");
+        if (W.opp_frame[i])
+            gtk_style_context_remove_class(
+                gtk_widget_get_style_context(W.opp_frame[i]), "shop-target-hint");
+        if (W.opp_cards[i][0]) set_card_highlight(W.opp_cards[i][0], FALSE);
+        if (W.opp_cards[i][1]) set_card_highlight(W.opp_cards[i][1], FALSE);
+    }
+    if (W.my_cards[0]) set_card_highlight(W.my_cards[0], FALSE);
+    if (W.my_cards[1]) set_card_highlight(W.my_cards[1], FALSE);
+}
+
+/* highlight every valid opponent's whole tile (SWAP2 / SWAPOPS targeting) */
+static void shop_highlight_target_players(void)
+{
+    for (int i = 0; i < GUI_OPPONENT_SLOTS; i++)
+        if (W.opp_frame[i] && shop_valid_target(i))
+            gtk_style_context_add_class(
+                gtk_widget_get_style_context(W.opp_frame[i]), "shop-target-hint");
+}
+
+/* highlight your own two hole cards (REDRAW / SWAP1 first step) */
+static void shop_highlight_my_cards(void)
+{
+    if (W.my_cards[0]) set_card_highlight(W.my_cards[0], TRUE);
+    if (W.my_cards[1]) set_card_highlight(W.my_cards[1], TRUE);
+}
+
+/* highlight every valid opponent's cards (SWAP1 second step) */
+static void shop_highlight_opp_cards(void)
+{
+    for (int i = 0; i < GUI_OPPONENT_SLOTS; i++) {
+        if (!shop_valid_target(i)) continue;
+        if (W.opp_cards[i][0]) set_card_highlight(W.opp_cards[i][0], TRUE);
+        if (W.opp_cards[i][1]) set_card_highlight(W.opp_cards[i][1], TRUE);
     }
 }
 
@@ -512,19 +573,9 @@ void shop_open(void)
 
 static void shop_advance_after_card_pick(void)
 {
-    if (shop_needs_target(shop.selected)) {
-        shop.step = SHOP_STEP_PICK_TARGET;
-        if (W.confirm_button)
-            gtk_widget_set_sensitive(W.confirm_button, FALSE);
-        return;
-    }
-    if (shop.selected == REDRAW) {
-        shop.step = SHOP_STEP_PICK_MY_CARD;
-        if (W.confirm_button)
-            gtk_widget_set_sensitive(W.confirm_button, FALSE);
-        return;
-    }
-    shop.step = SHOP_STEP_CONFIRM;
+    //picking a powerup just readies Confirm; any target selection happens on the
+    //table after Confirm (so the dialog can get out of the way).
+    shop.step = SHOP_STEP_PICK_CARD;
     if (W.confirm_button)
         gtk_widget_set_sensitive(W.confirm_button, shop_can_afford(shop.selected));
 }
@@ -546,75 +597,9 @@ void shop_on_card_slot_clicked(int slot)
     shop_advance_after_card_pick();
 }
 
-gboolean shop_on_opponent_clicked(int gui_slot)
+/* build + send the USE_SPECIAL_CARD action from the current shop selection */
+static void shop_send_action(void)
 {
-    if (!shop.open || shop.step != SHOP_STEP_PICK_TARGET) return FALSE;
-
-    int pid = gui_slot_to_player_id(gui_slot);
-    if (pid < 0) return FALSE;
-    if (pid == (int)C.my_player_id) return FALSE;
-    if (!C.game.players[pid].has_cards) return FALSE;
-
-    shop.target = (uint8_t)pid;
-    shop_clear_highlights();
-    if (W.shop_cards[shop.selected_slot])
-        gtk_style_context_add_class(
-            gtk_widget_get_style_context(W.shop_cards[shop.selected_slot]),
-            "shop-card-selected");
-    if (W.opp_frame[gui_slot])
-        gtk_style_context_add_class(
-            gtk_widget_get_style_context(W.opp_frame[gui_slot]), "shop-target-hint");
-
-    if (shop.selected == SWAP1) {
-        shop.step = SHOP_STEP_PICK_MY_CARD;
-        if (W.confirm_button)
-            gtk_widget_set_sensitive(W.confirm_button, FALSE);
-    } else {
-        shop.step = SHOP_STEP_CONFIRM;
-        if (W.confirm_button)
-            gtk_widget_set_sensitive(W.confirm_button, shop_can_afford(shop.selected));
-    }
-    return TRUE;
-}
-
-gboolean shop_on_my_card_clicked(int card_idx)
-{
-    if (!shop.open || shop.step != SHOP_STEP_PICK_MY_CARD) return FALSE;
-    if (card_idx < 0 || card_idx >= HAND_SIZE) return FALSE;
-
-    shop.my_card_idx = (uint8_t)card_idx;
-    if (shop.selected == SWAP1) {
-        shop.step = SHOP_STEP_PICK_OPP_CARD;
-        if (W.confirm_button)
-            gtk_widget_set_sensitive(W.confirm_button, FALSE);
-    } else {
-        shop.step = SHOP_STEP_CONFIRM;
-        if (W.confirm_button)
-            gtk_widget_set_sensitive(W.confirm_button, shop_can_afford(shop.selected));
-    }
-    return TRUE;
-}
-
-gboolean shop_on_opp_card_clicked(int gui_slot, int card_idx)
-{
-    if (!shop.open || shop.step != SHOP_STEP_PICK_OPP_CARD) return FALSE;
-    if (card_idx < 0 || card_idx >= HAND_SIZE) return FALSE;
-
-    int pid = gui_slot_to_player_id(gui_slot);
-    if (pid < 0 || pid == (int)C.my_player_id || pid != (int)shop.target) return FALSE;
-
-    shop.opp_card_idx = (uint8_t)card_idx;
-    shop.step = SHOP_STEP_CONFIRM;
-    if (W.confirm_button)
-        gtk_widget_set_sensitive(W.confirm_button, shop_can_afford(shop.selected));
-    return TRUE;
-}
-
-void shop_on_confirm(void)
-{
-    if (!shop.open || shop.step != SHOP_STEP_CONFIRM) return;
-    if (!shop_is_available() || !shop_can_afford(shop.selected)) return;
-
     PlayerAction action;
     action.playerID       = C.my_player_id;
     action.move           = USE_SPECIAL_CARD;
@@ -622,9 +607,92 @@ void shop_on_confirm(void)
     action.target         = shop.target;
     action.amount         = shop.my_card_idx | ((uint32_t)shop.opp_card_idx << 8);
     send_action(&C, &action);
+}
 
-    shop_reset_selection();
-    refresh_shop_ui();
+/* PICK_TARGET — whole-opponent powerups (SWAP2 / SWAPOPS) */
+gboolean shop_on_opponent_clicked(int gui_slot)
+{
+    if (!shop.open || shop.step != SHOP_STEP_PICK_TARGET) return FALSE;
+    if (!shop_valid_target(gui_slot)) return FALSE;   //tile index == seat
+
+    shop.target = (uint8_t)gui_slot;
+    shop_send_action();
+    shop_close();
+    return TRUE;
+}
+
+/* PICK_MY_CARD — choose which of your cards (REDRAW applies now; SWAP1 advances) */
+gboolean shop_on_my_card_clicked(int card_idx)
+{
+    if (!shop.open || shop.step != SHOP_STEP_PICK_MY_CARD) return FALSE;
+    if (card_idx < 0 || card_idx >= HAND_SIZE) return FALSE;
+
+    shop.my_card_idx = (uint8_t)card_idx;
+
+    if (shop.selected == SWAP1) {
+        shop_clear_highlights();
+        shop.step = SHOP_STEP_PICK_OPP_CARD;
+        shop_highlight_opp_cards();
+        shop_set_prompt("Shop: click an opponent's card to swap for.");
+        return TRUE;
+    }
+
+    //REDRAW
+    shop_send_action();
+    shop_close();
+    return TRUE;
+}
+
+/* PICK_OPP_CARD — SWAP1: the clicked card identifies both target and which card */
+gboolean shop_on_opp_card_clicked(int gui_slot, int card_idx)
+{
+    if (!shop.open || shop.step != SHOP_STEP_PICK_OPP_CARD) return FALSE;
+    if (card_idx < 0 || card_idx >= HAND_SIZE) return FALSE;
+    if (!shop_valid_target(gui_slot)) return FALSE;   //tile index == seat
+
+    shop.target       = (uint8_t)gui_slot;
+    shop.opp_card_idx = (uint8_t)card_idx;
+    shop_send_action();
+    shop_close();
+    return TRUE;
+}
+
+void shop_on_confirm(void)
+{
+    if (!shop.open || shop.selected_slot < 0) return;
+    if (!shop_is_available() || !shop_can_afford(shop.selected)) return;
+
+    //REVEAL needs no target — apply immediately
+    if (!shop_needs_target(shop.selected) && shop.selected != REDRAW) {
+        shop_send_action();
+        shop_close();
+        return;
+    }
+
+    //otherwise enter on-table targeting: hide the dialog so the table is reachable
+    if (W.shop) gtk_widget_hide(W.shop);
+
+    if (shop.selected == REDRAW || shop.selected == SWAP1) {
+        shop.step = SHOP_STEP_PICK_MY_CARD;
+        shop_clear_highlights();
+        shop_highlight_my_cards();
+        shop_set_prompt(shop.selected == REDRAW
+            ? "Shop: click one of your cards to redraw."
+            : "Shop: click one of your cards to swap away.");
+        return;
+    }
+
+    //SWAP2 / SWAPOPS — pick a whole opponent
+    if (shop_valid_target_count() == 0) {
+        if (W.shop) gtk_widget_show_all(W.shop);   //nothing to target; stay in picker
+        refresh_shop_ui();
+        shop_set_prompt("Shop: no opponent available to target.");
+        return;
+    }
+    shop.step = SHOP_STEP_PICK_TARGET;
+    shop_clear_highlights();
+    shop_highlight_target_players();
+    shop_set_prompt("Shop: click an opponent to target.");
 }
 
 void shop_on_back(void)
@@ -660,17 +728,9 @@ void refresh_shop_ui(void)
                 gtk_widget_get_style_context(W.shop_cards[i]), "shop-card-selected");
     }
 
+    //Confirm is ready once a powerup is picked and affordable; target selection
+    //(if any) happens on the table after Confirm.
     if (W.confirm_button)
         gtk_widget_set_sensitive(W.confirm_button,
-            shop.step == SHOP_STEP_CONFIRM && shop_can_afford(shop.selected));
-
-    if (shop.step == SHOP_STEP_PICK_TARGET) {
-        for (int i = 0; i < GUI_OPPONENT_SLOTS; i++) {
-            if (!W.opp_frame[i]) continue;
-            int pid = gui_slot_to_player_id(i);
-            if (pid >= 0 && (uint8_t)pid == shop.target)
-                gtk_style_context_add_class(
-                    gtk_widget_get_style_context(W.opp_frame[i]), "shop-target-hint");
-        }
-    }
+            shop.selected_slot >= 0 && shop_can_afford(shop.selected));
 }

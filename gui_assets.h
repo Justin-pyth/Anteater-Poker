@@ -21,6 +21,7 @@ typedef struct {
 typedef struct {
     Card card;
     int  face_up;
+    int  highlight;   /* draw a gold selection border (shop targeting) */
 } CardDrawData;
 
 /* -- All widget references in one place ------------------------------------ */
