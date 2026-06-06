@@ -32,8 +32,8 @@ void revealComCard(GameState *gs, Deck *deck);
 //Reveal one of your opponents cards in exchange for one of yours
 void revealOppCard(GameState *gs, int oppID, int oppCardIdx);
 
-//Swap your opponent's cards 
-void swapOppCards(GameState *gs, int oppID);
+//Sabotage a target opponent: replace both their hole cards with fresh deck draws
+void swapOppCards(GameState *gs, Deck *deck, int oppID);
 
 //Win game (pay 75% of total prize pool)
 void instaWin(GameState *gs, int myID);

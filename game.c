@@ -463,23 +463,20 @@ static void dealStreet(GameState* gs, Deck* deck)
         gs->players[i].current_bet = 0;
     }
 
+    //deal up to the street's target count, preserving any cards already revealed
+    //early (e.g. by the REVEAL powerup) so they aren't overwritten
     switch(gs->stage)
     {
         case PREFLOP:
-            gs->community[0] = deal(deck);
-            gs->community[1] = deal(deck);
-            gs->community[2] = deal(deck);
-            gs->communityCount = 3;
+            while (gs->communityCount < 3) gs->community[gs->communityCount++] = deal(deck);
             gs->stage = FLOP;
             break;
         case FLOP:
-            gs->community[3] = deal(deck);
-            gs->communityCount = 4;
+            while (gs->communityCount < 4) gs->community[gs->communityCount++] = deal(deck);
             gs->stage = TURN;
             break;
         case TURN:
-            gs->community[4] = deal(deck);
-            gs->communityCount = 5;
+            while (gs->communityCount < 5) gs->community[gs->communityCount++] = deal(deck);
             gs->stage = RIVER;
             break;
         case RIVER:

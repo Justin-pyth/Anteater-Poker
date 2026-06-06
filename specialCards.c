@@ -40,11 +40,11 @@ void revealOppCard(GameState *gs, int oppID, int oppCardIdx){
     (void)gs; (void)oppID; (void)oppCardIdx;
 }
 
-//Swap your opponent's cards 
-void swapOppCards(GameState *gs, int oppID){
-    Card temp = gs->players[oppID].hand[0];
-    gs->players[oppID].hand[0] = gs->players[oppID].hand[1];
-    gs->players[oppID].hand[1] = temp;
+//Sabotage a target opponent: replace both their hole cards with fresh deck draws
+void swapOppCards(GameState *gs, Deck *deck, int oppID){
+    if (deck->top + 2 > DECK_SIZE + SPECIAL_CARDS) return; // not enough cards left
+    gs->players[oppID].hand[0] = deck->cards[deck->top++];
+    gs->players[oppID].hand[1] = deck->cards[deck->top++];
 }
 
 // Instant win (server validates payment of 75% of pot)
@@ -74,7 +74,10 @@ bool buyPowerup(GameState *gs, Deck *deck, uint8_t playerID, Anteater_shop card,
 {
     if (!shop_window_open(gs)) return false;
 
-    //buyer must be a live player in the hand 
+    //TEMP: INSTAWIN disabled — keep the cost/instaWin() code below for re-enabling
+    if (card == INSTAWIN) return false;
+
+    //buyer must be a live player in the hand
     if (playerID >= MAX_PLAYERS) return false;
     Player *p = &gs->players[playerID];
     if (p->status != PLAYER_PLAYING) return false;
@@ -107,7 +110,7 @@ bool buyPowerup(GameState *gs, Deck *deck, uint8_t playerID, Anteater_shop card,
         case REVEAL:   revealComCard(gs, deck);                                break;
         case REDRAW:   redrawCards(gs, deck, playerID, myCardIdx);             break;
         case INSTAWIN: instaWin(gs, playerID);                                 break;
-        case SWAPOPS:  swapOppCards(gs, target);                               break;
+        case SWAPOPS:  swapOppCards(gs, deck, target);                         break;
     }
     return true;
 }

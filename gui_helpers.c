@@ -378,7 +378,7 @@ typedef struct {
 static ShopState shop;
 
 static const Anteater_shop SHOP_SLOTS[6] = {
-    SWAP1, SWAP2, REVEAL, REDRAW, INSTAWIN, SWAPOPS
+    SWAP1, SWAP2, REVEAL, REDRAW, SWAPOPS, INSTAWIN  /* INSTAWIN last: hidden while disabled */
 };
 
 static int gui_slot_to_player_id(int gui_slot)
@@ -503,10 +503,10 @@ void shop_open(void)
     if (!W.shop || !shop_is_available()) return;
     shop.open = TRUE;
     shop_reset_selection();
-    refresh_shop_ui();
     gtk_window_set_transient_for(GTK_WINDOW(W.shop), GTK_WINDOW(W.window));
     gtk_window_set_modal(GTK_WINDOW(W.shop), FALSE);
     gtk_widget_show_all(W.shop);
+    refresh_shop_ui();   //after show_all so hidden slots (INSTAWIN) stay hidden
 }
 
 static void shop_advance_after_card_pick(void)
@@ -531,6 +531,7 @@ static void shop_advance_after_card_pick(void)
 void shop_on_card_slot_clicked(int slot)
 {
     if (!shop.open || slot < 0 || slot >= 6) return;
+    if (SHOP_SLOTS[slot] == INSTAWIN) return; /* TEMP: INSTAWIN disabled */
     if (!shop_can_afford(SHOP_SLOTS[slot])) return;
 
     shop_clear_highlights();
@@ -638,6 +639,12 @@ void refresh_shop_ui(void)
     for (int i = 0; i < 6; i++) {
         if (!W.shop_cards[i]) continue;
         Anteater_shop card = SHOP_SLOTS[i];
+
+        if (card == INSTAWIN) {            /* TEMP: INSTAWIN hidden while disabled */
+            gtk_widget_hide(W.shop_cards[i]);
+            continue;
+        }
+
         char label[64];
         uint32_t price = shop_card_price(g, card);
         snprintf(label, sizeof(label), "%s\n$%u", shop_card_name(card), price);
