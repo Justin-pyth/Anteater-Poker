@@ -233,7 +233,7 @@ void server_gui_init(ServerState *state)
 
     for (int i = 0; i < MAX_PLAYERS; i++) {
         char seat[8];
-        snprintf(seat, sizeof(seat), "%d", i);
+        snprintf(seat, sizeof(seat), "%d", i + 1);  /* display 1-6; backend seats stay 0-5 */
         gtk_grid_attach(GTK_GRID(grid), mklabel(seat, "sg-cell"), 0, i + 1, 1, 1);
 
         SG.seat_name[i]   = mklabel("—", "sg-cell");
