@@ -176,6 +176,7 @@ static const char * __attribute__((unused)) CSS =
 "  font-size: 13px; font-weight: bold; letter-spacing: 1px; padding: 10px 18px; }"
 "#btn-shop:hover  { background-color: #3d2755; }"
 "#btn-shop:active { background-color: #1e1228; }"
+"#btn-shop:disabled { opacity: 0.3; }"
 ".shop-card-selected { background-color: #4a3060; border: 2px solid #c39bd3; }"
 ".shop-target-hint  { border-color: #c39bd3;"
 "  background-color: rgba(155,89,182,0.15); }"

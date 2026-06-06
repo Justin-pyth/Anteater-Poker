@@ -102,21 +102,23 @@ static void on_restart_clicked(GtkButton *b, gpointer u)
     if (!SG.state) return;
     GameState *g = &SG.state->game;
 
-    /* free any disconnected seats first (resetGame would otherwise skip them) */
+    /* free disconnected seats and bot seats (resetGame would otherwise keep them).
+       Emptied bot seats are automatically refilled by addBot() on the next /ready
+       or New Hand, so the bots rejoin the next hand. */
     for (int s = 0; s < MAX_PLAYERS; s++) {
-        if (g->players[s].status == PLAYER_DISCONNECTED) {
+        if (g->players[s].status == PLAYER_DISCONNECTED || isBot(g->players[s].name)) {
             memset(&g->players[s], 0, sizeof(Player));
             g->players[s].id = s;
             g->players[s].status = PLAYER_EMPTY;
         }
     }
 
-    /* initial state: remaining players back to $1000, board/pot cleared, gameOver=0 */
+    /* initial state: remaining (human) players back to $1000, board/pot cleared, gameOver=0 */
     resetGame(g);
 
     broadcast_chat_message(SG.state, MAX_PLAYERS, "Game restarted — chips reset to $1000.");
     broadcast_game_state(SG.state);
-    server_gui_log("Game restarted — chips reset, disconnected seats cleared.");
+    server_gui_log("Game restarted — chips reset, bot & disconnected seats cleared.");
 }
 
 static void on_addbots_clicked(GtkButton *b, gpointer u)
