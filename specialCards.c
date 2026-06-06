@@ -64,9 +64,9 @@ void init_shop_slots(GameState *gs)
 
 bool shop_window_open(const GameState *gs)
 {
-    return gs->handPlaying
-        && gs->stage == PREFLOP
-        && gs->communityCount == 0;
+    //usable throughout a live hand (every street); callers additionally gate on
+    //it being the buyer's turn so the shop can be used any number of times.
+    return gs->handPlaying;
 }
 
 bool buyPowerup(GameState *gs, Deck *deck, uint8_t playerID, Anteater_shop card,
@@ -77,8 +77,9 @@ bool buyPowerup(GameState *gs, Deck *deck, uint8_t playerID, Anteater_shop card,
     //TEMP: INSTAWIN disabled — keep the cost/instaWin() code below for re-enabling
     if (card == INSTAWIN) return false;
 
-    //buyer must be a live player in the hand
+    //buyer must be a live player, and only on their own turn
     if (playerID >= MAX_PLAYERS) return false;
+    if (gs->currentPlayer != playerID) return false;
     Player *p = &gs->players[playerID];
     if (p->status != PLAYER_PLAYING) return false;
     if (myCardIdx >= HAND_SIZE || oppCardIdx >= HAND_SIZE) return false;

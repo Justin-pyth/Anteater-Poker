@@ -466,6 +466,7 @@ gboolean shop_is_available(void)
 {
     if (!C.connected || C.my_player_id >= MAX_PLAYERS) return FALSE;
     if (!shop_window_open(&C.game)) return FALSE;
+    if (C.game.currentPlayer != C.my_player_id) return FALSE; //only on your turn
     return C.game.players[C.my_player_id].status == PLAYER_PLAYING;
 }
 
