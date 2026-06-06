@@ -402,6 +402,8 @@ void broadcast_game_state(ServerState *state)
         }
     }
 }
+void (*server_chat_log_hook)(const char *line) = NULL;
+
 void broadcast_chat_message(ServerState *state, uint8_t sender_id, const char *message)
 {
     uint8_t buffer[BUFFER_SIZE];
@@ -414,6 +416,17 @@ void broadcast_chat_message(ServerState *state, uint8_t sender_id, const char *m
         if (state->clients[i].connected) {
             send_to_client(&state->clients[i], buffer, payload_len);
         }
+    }
+
+    //mirror the same chat into the server GUI monitor, if one is attached
+    if (server_chat_log_hook) {
+        char line[MAX_PAYLOAD_SIZE + 64];
+        if (sender_id < MAX_PLAYERS && state->game.players[sender_id].name[0])
+            snprintf(line, sizeof(line), "%s: %s",
+                     state->game.players[sender_id].name, message);
+        else
+            snprintf(line, sizeof(line), "%s", message);
+        server_chat_log_hook(line);
     }
 }
 void broadcast_cd_signal(ServerState *state, uint8_t target_id)

@@ -47,15 +47,6 @@ void append_chat(const char *sender, const char *msg, const char *tag_name)
     gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(W.chat_log), mark);
 }
 
-/* -- Anteater deck --------------------------------------------------------- */
-void set_anteater_count(int count)
-{
-    if (!W.anteater_count_label) return;
-    char buf[64];
-    snprintf(buf, sizeof(buf), "Anteater:\n%d card%s", count, count == 1 ? "" : "s");
-    gtk_label_set_text(GTK_LABEL(W.anteater_count_label), buf);
-}
-
 
 /* -- Dispatch one parsed message ------------------------------------------- */
 static void dispatch_message(Message *msg)

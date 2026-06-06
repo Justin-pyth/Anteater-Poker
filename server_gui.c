@@ -176,9 +176,18 @@ static GtkWidget *mkbutton(const char *text, const char *name, GCallback cb)
 /* =========================================================================
    Public: init
    ========================================================================= */
+/* relay used by broadcast_chat_message() to mirror client chat into the monitor */
+static void sg_chat_relay(const char *line)
+{
+    server_gui_log("%s", line);
+}
+
 void server_gui_init(ServerState *state)
 {
     SG.state = state;
+
+    /* mirror all client/server chat into the event log */
+    server_chat_log_hook = sg_chat_relay;
 
     /* CSS */
     GtkCssProvider *css = gtk_css_provider_new();

@@ -76,10 +76,6 @@ typedef struct {
     GtkWidget *confirm_button;
     GtkWidget *back_button;
 
-    /* anteater side deck */
-    GtkWidget *anteater_panel;
-    GtkWidget *anteater_count_label;
-
     /* chat */
     GtkWidget *chat_log;
     GtkWidget *chat_entry;
@@ -182,12 +178,6 @@ static const char * __attribute__((unused)) CSS =
 ".shop-card-selected { background-color: #4a3060; border: 2px solid #c39bd3; }"
 ".shop-target-hint  { border-color: #c39bd3;"
 "  background-color: rgba(155,89,182,0.15); }"
-
-/* anteater deck panel */
-"#anteater-panel { background-color: #161b22; border: 1px solid #30363d;"
-"  border-radius: 10px; padding: 8px; }"
-"#anteater-title { font-size: 11px; color: #e6c87a; letter-spacing: 2px; }"
-"#anteater-count { font-size: 10px; color: #8b949e; }"
 
 /* chat */
 "#chat-box { background-color: #161b22; border-top: 1px solid #30363d; padding: 6px 12px; }"

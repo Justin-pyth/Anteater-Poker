@@ -2432,9 +2432,10 @@
                       <object class="GtkBox" id="chat_box">
                         <property name="name">chat-box</property>
                         <property name="height-request">156</property>
+                        <property name="width-request">240</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="hexpand">True</property>
+                        <property name="hexpand">False</property>
                         <property name="vexpand">True</property>
                         <property name="orientation">vertical</property>
                         <property name="spacing">4</property>
@@ -2567,9 +2568,8 @@
                           <object class="GtkBox" id="comm_row">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="margin-start">65</property>
-                            <property name="margin-end">65</property>
-                            <property name="hexpand">True</property>
+                            <property name="halign">center</property>
+                            <property name="hexpand">False</property>
                             <property name="vexpand">True</property>
                             <property name="spacing">8</property>
                             <child>
@@ -2667,44 +2667,11 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkBox" id="anteater_panel">
-                        <property name="name">anteater-panel</property>
-                        <property name="width-request">110</property>
+                      <object class="GtkBox" id="table_right_spacer">
+                        <property name="width-request">240</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="hexpand">True</property>
-                        <property name="vexpand">True</property>
-                        <property name="orientation">vertical</property>
-                        <property name="spacing">8</property>
-                        <child>
-                          <object class="GtkLabel" id="anteater_title_lbl">
-                            <property name="name">anteater-title</property>
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="label">ANTEATER
-DECK</property>
-                            <property name="justify">center</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">False</property>
-                            <property name="position">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="anteater_count_label">
-                            <property name="name">anteater-count</property>
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="label">Anteater:
-0 cards</property>
-                          </object>
-                          <packing>
-                            <property name="expand">False</property>
-                            <property name="fill">False</property>
-                            <property name="position">1</property>
-                          </packing>
-                        </child>
+                        <property name="hexpand">False</property>
                       </object>
                       <packing>
                         <property name="expand">False</property>

@@ -38,8 +38,6 @@ void init_gui(int *argc, char ***argv)
     W.btn_allin        = GET("btn_ALLIN");
     W.btn_shop         = GET("btn_shop");
     W.raise_spin       = GET("raise_spin");
-    W.anteater_panel        = GET("anteater_panel");
-    W.anteater_count_label  = GET("anteater_count_label");
     W.chat_log       = GET("chat_log");
     W.chat_entry     = GET("chat_entry");
     W.btn_send_chat  = GET("btn_send_chat");

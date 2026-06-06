@@ -75,6 +75,10 @@ void cleanup_server(ServerState *state);
 
 void broadcast_game_state(ServerState *state);
 void broadcast_chat_message(ServerState *state, uint8_t sender_id, const char *message);
+
+/* Optional sink for chat/system messages (set by the server GUI to mirror chat in
+   its monitor; left NULL for the headless server). */
+extern void (*server_chat_log_hook)(const char *line);
 void broadcast_cd_signal(ServerState *state, uint8_t target_id);
 //client functions
 void init_client_state(ClientState *client);

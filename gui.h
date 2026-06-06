@@ -19,9 +19,6 @@ void infer_my_player_id(void);
 void append_chat(const char *sender, const char *msg, const char *tag_name);
 
 
-/* -- Anteater deck --------------------------------------------------------- */
-void set_anteater_count(int count);
-
 /* -- Server IO ------------------------------------------------------------- */
 gboolean on_server_data(GIOChannel *ch, GIOCondition cond, gpointer data);
 
