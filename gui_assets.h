@@ -4,7 +4,7 @@
 #include <gtk/gtk.h>
 #include "protocol.h"
 
-#define GUI_OPPONENT_SLOTS 5
+#define GUI_OPPONENT_SLOTS 6
 #define TURN_SECONDS       30
 
 /* -- Per-seat countdown timer ---------------------------------------------- */

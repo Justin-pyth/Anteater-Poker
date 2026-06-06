@@ -374,7 +374,6 @@ static int gui_slot_to_player_id(int gui_slot)
 {
     int slot = 0;
     for (int i = 0; i < MAX_PLAYERS; i++) {
-        if (i == (int)C.my_player_id) continue;
         if (C.game.players[i].status == PLAYER_EMPTY) continue;
         if (slot == gui_slot) return i;
         slot++;
@@ -543,6 +542,7 @@ gboolean shop_on_opponent_clicked(int gui_slot)
 
     int pid = gui_slot_to_player_id(gui_slot);
     if (pid < 0) return FALSE;
+    if (pid == (int)C.my_player_id) return FALSE;
     if (!C.game.players[pid].has_cards) return FALSE;
 
     shop.target = (uint8_t)pid;
@@ -591,7 +591,7 @@ gboolean shop_on_opp_card_clicked(int gui_slot, int card_idx)
     if (card_idx < 0 || card_idx >= HAND_SIZE) return FALSE;
 
     int pid = gui_slot_to_player_id(gui_slot);
-    if (pid < 0 || pid != (int)shop.target) return FALSE;
+    if (pid < 0 || pid == (int)C.my_player_id || pid != (int)shop.target) return FALSE;
 
     shop.opp_card_idx = (uint8_t)card_idx;
     shop.step = SHOP_STEP_CONFIRM;

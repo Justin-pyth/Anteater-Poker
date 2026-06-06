@@ -79,7 +79,6 @@ static void dispatch_message(Message *msg)
         } else {
             int slot = 0;
             for (int i = 0; i < MAX_PLAYERS && slot < GUI_OPPONENT_SLOTS; i++) {
-                if (i == C.my_player_id) continue;
                 if (C.game.players[i].status == PLAYER_EMPTY) continue;
                 if (i == target) { start_player_timer(slot, TURN_SECONDS); break; }
                 slot++;
@@ -185,7 +184,6 @@ if (me->has_cards) {
 
     int opp_slot = 0;
     for (int pi = 0; pi < MAX_PLAYERS && opp_slot < GUI_OPPONENT_SLOTS; pi++) {
-        if (pi == C.my_player_id) continue;
         Player *p = &game->players[pi];
         if (p->status == PLAYER_EMPTY) continue;
         
