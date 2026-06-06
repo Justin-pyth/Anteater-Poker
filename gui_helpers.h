@@ -41,11 +41,17 @@ void stop_my_timer(void);
 
 void send_gui_move(MoveType move, uint32_t amount);
 void sendReadyToServer(void);
+void sendSeatSelectToServer(uint8_t seat);
 void sendNameToServer(const char *name);
 void sendChatToServer(const char *text);
 
 /* -- Leaderboard display -------------------------------------------------------*/
 void show_leaderboard(void);
+
+/* -- Seat selection overlay ----------------------------------------------------*/
+void show_seat_select(void);
+void hide_seat_select(void);
+void on_seat_select_clicked(GtkButton *b, gpointer seat);
 
 /* -- Shop ----------------------------------------------------------------------*/
 gboolean shop_is_available(void);

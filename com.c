@@ -272,6 +272,9 @@ uint32_t prepare_payload(uint8_t *buffer, MessageType type, const Message*data)
             write_u8(buffer, &offset, data->sender_id); // sender_id = target.
             break;
            }
+        case MSG_TYPE_SELECT_SEAT:
+            write_u8(buffer, &offset, data->sender_id); // sender_id = chosen seat index
+            break;
         default:
             return 0;
     }
@@ -312,6 +315,8 @@ int receive_payload(const uint8_t *buffer, uint32_t buf_len,  Message *out_data)
         {
             return read_u8(buffer, &offset, &out_data->sender_id); // sender_id = target.
         }
+    case MSG_TYPE_SELECT_SEAT:
+        return read_u8(buffer, &offset, &out_data->sender_id); // sender_id = chosen seat index
     default:
         return -1; // Unknown message type
 

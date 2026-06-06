@@ -79,7 +79,6 @@ typedef struct {
     /* anteater side deck */
     GtkWidget *anteater_panel;
     GtkWidget *anteater_count_label;
-    GtkWidget *btn_draw_anteater;
 
     /* chat */
     GtkWidget *chat_log;
@@ -95,6 +94,11 @@ typedef struct {
     GtkWidget *lb_name [MAX_PLAYERS];
     GtkWidget *lb_place[MAX_PLAYERS];
     GtkWidget *lb_card [MAX_PLAYERS][2];
+
+    /* seat selection overlay */
+    GtkWidget *seat_select;
+    GtkWidget *seat_sel_name[MAX_PLAYERS];
+    GtkWidget *seat_sel_btn [MAX_PLAYERS];
 
     guint net_source; /* g_io_add_watch source id */
 } AppWidgets;
@@ -184,10 +188,6 @@ static const char * __attribute__((unused)) CSS =
 "  border-radius: 10px; padding: 8px; }"
 "#anteater-title { font-size: 11px; color: #e6c87a; letter-spacing: 2px; }"
 "#anteater-count { font-size: 10px; color: #8b949e; }"
-"#btn-draw-anteater { background-color: #1a3a1a; border: 1px solid #27ae60;"
-"  border-radius: 6px; color: #7ae890; font-family: 'Georgia', serif;"
-"  font-size: 12px; padding: 6px 10px; }"
-"#btn-draw-anteater:hover { background-color: #234e23; }"
 
 /* chat */
 "#chat-box { background-color: #161b22; border-top: 1px solid #30363d; padding: 6px 12px; }"

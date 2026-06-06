@@ -6,10 +6,22 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
-/************************************************* 
+/*************************************************
  *Client handling functions, all the game logic will
  * be implemented after  recieve payload data is valid
 *****************************************************/
+
+/* A connection's seat is its client->id (UNSEATED_ID until it picks one), so the
+   connection-slot index in clients[] is NOT the seat. This maps a seat back to a
+   connected client occupying it. */
+static bool seat_has_connected_client(ServerState *state, int seat)
+{
+    for (int i = 0; i < MAX_CLIENTS; i++)
+        if (state->clients[i].connected && state->clients[i].id == seat)
+            return true;
+    return false;
+}
+
 void handle_client_communication(ServerState *state, Client *client)
 {
     uint8_t buffer[BUFFER_SIZE];
@@ -88,8 +100,11 @@ void handle_client_communication(ServerState *state, Client *client)
                 name[i] = data.chat[i];
             name[i] = '\0';//add terminator char
 
-            strcpy(state->clients[client->id].name, name);
-            strcpy(state->game.players[client->id].name, name);
+            //the connection has not picked a seat yet, so the name lives on the
+            //connection until seat selection copies it onto the chosen player
+            strcpy(client->name, name);
+            if (client->id < MAX_PLAYERS)
+                strcpy(state->game.players[client->id].name, name);
 
             //welcome message
             char welcome[MAX_PAYLOAD_SIZE];
@@ -105,11 +120,16 @@ void handle_client_communication(ServerState *state, Client *client)
                 return;
             }
 
-            //if any player sends a ready message, check for disconnected players and set them as empty
+            //a connection that has not picked a seat yet cannot ready up
+            if (client->id >= MAX_PLAYERS) {
+                broadcast_game_state(state);
+                return;
+            }
+
+            //if any player sends a ready message, free up any disconnected seats
             for (int i = 0; i < MAX_PLAYERS; i++)
             {
-                if (!state->clients[i].connected &&
-                    state->game.players[i].status == PLAYER_DISCONNECTED)
+                if (state->game.players[i].status == PLAYER_DISCONNECTED)
                 {
                     memset(&state->game.players[i], 0, sizeof(Player));
                     state->game.players[i].id = i;
@@ -127,16 +147,17 @@ void handle_client_communication(ServerState *state, Client *client)
             snprintf(msg, sizeof(msg), "%s is ready!", name);
             broadcast_chat_message(state, MAX_PLAYERS, msg);
 
-            //server counts # of ready vs connected
+            //server counts # of ready vs connected (seated connections only;
+            //connections still on the seat-select overlay are not counted)
             int connectedClients = 0;
             int readyClients = 0;
-            for (int i = 0; i < MAX_PLAYERS; i++) 
+            for (int i = 0; i < MAX_CLIENTS; i++)
             {
-                if (state->clients[i].connected) 
+                if (state->clients[i].connected && state->clients[i].id < MAX_PLAYERS)
                 {
                     connectedClients++;
 
-                    if (state->game.players[i].status == PLAYER_READY)
+                    if (state->game.players[state->clients[i].id].status == PLAYER_READY)
                         readyClients++;
                 }
             }
@@ -152,16 +173,16 @@ void handle_client_communication(ServerState *state, Client *client)
                     resetGame(&state->game);
                 }
 
-                //make every connected player ready again
-                for(int i = 0; i < MAX_PLAYERS; i++)
+                //make every seated player ready again, empty the rest (for bots to fill)
+                for(int s = 0; s < MAX_PLAYERS; s++)
                 {
-                    if(state->clients[i].connected)
-                        state->game.players[i].status = PLAYER_READY;
+                    if(seat_has_connected_client(state, s))
+                        state->game.players[s].status = PLAYER_READY;
                     else
                     {
-                        memset(&state->game.players[i], 0, sizeof(Player));
-                        state->game.players[i].id = i;
-                        state->game.players[i].status = PLAYER_EMPTY;
+                        memset(&state->game.players[s], 0, sizeof(Player));
+                        state->game.players[s].id = s;
+                        state->game.players[s].status = PLAYER_EMPTY;
                     }
                 }
 
@@ -175,11 +196,43 @@ void handle_client_communication(ServerState *state, Client *client)
 
             broadcast_game_state(state);
         }
+        else if (data.type == MSG_TYPE_SELECT_SEAT)
+        {
+            uint8_t seat = data.sender_id;
 
-        
+            //only an unseated connection may pick, and only a valid empty seat
+            if (client->id != UNSEATED_ID ||
+                seat >= MAX_PLAYERS ||
+                state->game.players[seat].status != PLAYER_EMPTY)
+            {
+                uint8_t error_buffer[BUFFER_SIZE];
+                Message error_message;
+                error_message.type = MSG_TYPE_ERROR_MESSAGE;
+                strncpy(error_message.error, "Seat unavailable", MAX_PAYLOAD_SIZE);
+                error_message.error[MAX_PAYLOAD_SIZE - 1] = '\0';
+                uint32_t error_len = prepare_payload(error_buffer, MSG_TYPE_ERROR_MESSAGE, &error_message);
+                send_to_client(client, error_buffer, error_len);
+                broadcast_game_state(state); //refresh the picker's overlay (seat may now be taken)
+                return;
+            }
+
+            //seat the connection: client->id is the seat from now on
+            client->id = seat;
+            initPlayer(&state->game.players[seat], seat, client->name, INIT_CHIPS);
+            state->game.players[seat].status =
+                state->game.handPlaying ? PLAYER_SPECTATING : PLAYER_CONNECTED;
+            state->game.playerCount++;
+
+            char msg[MAX_PAYLOAD_SIZE];
+            snprintf(msg, sizeof(msg), "%s took seat %d.", client->name, seat + 1);
+            broadcast_chat_message(state, MAX_PLAYERS, msg);
+            broadcast_game_state(state);
+        }
+
+
     } else {
         fprintf(stderr, "ERROR processing received payload\n");
-     } 
+     }
 
 }
 
@@ -275,16 +328,10 @@ void add_connection(ServerState *state, Client *client)
             state->clients[i].sock_fd = client_fd;
             state->clients[i].connected = 1; // Mark the client as connected
             state->clients[i].address = address;
-            state->clients[i].id = i; // Assign the matching 0-based player index
+            state->clients[i].id = UNSEATED_ID; // no seat yet: the client picks one via the overlay
+            memset(state->clients[i].name, 0, sizeof(state->clients[i].name));
 
-            //create a new player on gamestate
-            initPlayer(&state->game.players[i], i, "Player", INIT_CHIPS);
-            if (state->game.handPlaying) 
-                state->game.players[i].status = PLAYER_SPECTATING;//set to spectating if hand is playing
-            else
-                state->game.players[i].status = PLAYER_CONNECTED; //if the client is a player, then set them as connected instead of bot default(READY)
-
-            state->game.playerCount++;
+            //no player is created until the client selects a seat (MSG_TYPE_SELECT_SEAT)
 
             if (client != NULL)
                 *client = state->clients[i];
@@ -411,6 +458,14 @@ void remove_client(ServerState *state, Client *client)
 void handle_player_disconnect(ServerState *state, Client *client)
 {
     uint8_t playerID = client->id;
+
+    //an unseated connection holds no seat; just drop it and resync
+    if (playerID >= MAX_PLAYERS) {
+        remove_client(state, client);
+        broadcast_game_state(state);
+        return;
+    }
+
     bool wasPlaying = state->game.handPlaying; //track if the hand was active
     bool wasCurrent = wasPlaying && state->game.currentPlayer == playerID; //track the current player
 
@@ -777,19 +832,19 @@ void start_new_hand(ServerState *state)
 
     // Re-sync human seats with connection state, but keep existing bots in
     // their seats between hands. Bot names only shuffle on a new game.
-    for (int i = 0; i < MAX_PLAYERS; i++) {
-        if (state->clients[i].connected && state->game.players[i].chips > 0)
-            state->game.players[i].status = PLAYER_READY;
-        else if (isBot(state->game.players[i].name)) {
-            if (state->game.players[i].chips > 0)
-                state->game.players[i].status = PLAYER_READY;
+    for (int s = 0; s < MAX_PLAYERS; s++) {
+        if (seat_has_connected_client(state, s) && state->game.players[s].chips > 0)
+            state->game.players[s].status = PLAYER_READY;
+        else if (isBot(state->game.players[s].name)) {
+            if (state->game.players[s].chips > 0)
+                state->game.players[s].status = PLAYER_READY;
             else
-                state->game.players[i].status = PLAYER_SPECTATING;
+                state->game.players[s].status = PLAYER_SPECTATING;
         }
-        else if (!state->clients[i].connected) {
-            memset(&state->game.players[i], 0, sizeof(Player));
-            state->game.players[i].id = i;
-            state->game.players[i].status = PLAYER_EMPTY;
+        else if (!seat_has_connected_client(state, s)) {
+            memset(&state->game.players[s], 0, sizeof(Player));
+            state->game.players[s].id = s;
+            state->game.players[s].status = PLAYER_EMPTY;
         }
     }
 

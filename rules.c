@@ -1,54 +1,72 @@
 #include "rules.h"
 
-/* ============================================================
-    HAND EVALUATION
-   ============================================================ */
-
-/*  Scores exactly 5 cards as a packed int: bits 23-20 = hand type (0-9),
-    bits 19-0 = up to 5 tie-breaker rank nibbles in descending importance.
-    Higher score always beats lower score; equal scores are ties.
-*/
+//Helper function, scores 5 card hand
 static int score5(Card five[5])
 {
     // Extract ranks and suits into plain arrays
     int r[5], suits[5];
-    for (int i = 0; i < 5; i++) { r[i] = five[i].rank; suits[i] = five[i].suit; }
+    for (int i = 0; i < 5; i++) {
+         r[i] = five[i].rank; 
+         suits[i] = five[i].suit;
+    }
 
-    // Sort ranks descending so r[0] is highest — needed for straight/flush tie-breaks
-    for (int i = 0; i < 4; i++)
-        for (int j = i + 1; j < 5; j++)
+    // Sort ranks descending so r[0] is highest, needed for straight/flush tie-breaks
+    for (int i = 0; i < 4; i++) {
+        for (int j = i + 1; j < 5; j++) {
             if (r[j] > r[i]) {
-                int t = r[i]; r[i] = r[j]; r[j] = t; 
+                int t = r[i]; 
+                r[i] = r[j]; 
+                r[j] = t; 
             }
+        }
+    }
 
     // Flush: all five cards share the same suit
-    int isFlush = (suits[0] == suits[1] && suits[1] == suits[2] &&
-                   suits[2] == suits[3] && suits[3] == suits[4]);
+    int isFlush = (suits[0] == suits[1] &&
+                   suits[1] == suits[2] &&
+                   suits[2] == suits[3] &&
+                   suits[3] == suits[4] );
 
     // Straight: each rank is exactly one below the previous when sorted
     int isStraight = 0, straightHigh = r[0];
-    if (r[0]-r[1]==1 && r[1]-r[2]==1 && r[2]-r[3]==1 && r[3]-r[4]==1)
+    if (r[0]-r[1]==1 && r[1]-r[2]==1 && r[2]-r[3]==1 && r[3]-r[4]==1) {
         isStraight = 1;
+    }
 
     // Special case: Ace can play low in a 5-high straight (A-2-3-4-5).
-    // (A-2-3-4-5): ace plays low, so sorted ranks look like [13,4,3,2,1].
+    // (A-2-3-4-5): ace plays low
     // The effective high card is the 5, not the ace.
     if (!isStraight && r[0]==ACE && r[1]==FIVE && r[2]==FOUR && r[3]==THREE && r[4]==TWO) {
-        isStraight = 1; straightHigh = FIVE;
+        isStraight = 1; 
+        straightHigh = FIVE;
     }
 
     // Count how many times each rank appears (index = rank enum value, 1-13)
     int count[14] = {0};
-    for (int i = 0; i < 5; i++) count[r[i]]++;
+    for (int i = 0; i < 5; i++) {
+        count[r[i]]++;
+    }
 
     //Finding Pairs, Trips, Quads, and Singles
-    int quad = -1, triple = -1, pairs[2] = {-1, -1}, pairCount = 0;
+    int quad = -1;
+    int triple = -1;
+    int pairs[2] = {-1, -1};
+    int pairCount = 0;
     int singles[5], singleCount = 0;
+
     for (int rank = ACE; rank >= TWO; rank--) {
-        if      (count[rank] == 4) quad = rank;
-        else if (count[rank] == 3) triple = rank;
-        else if (count[rank] == 2 && pairCount < 2) pairs[pairCount++] = rank;
-        else if (count[rank] == 1) singles[singleCount++] = rank;
+        if (count[rank] == 4) {
+            quad = rank;
+        } 
+        else if (count[rank] == 3) {
+            triple = rank;
+        }
+        else if (count[rank] == 2 && pairCount < 2) {
+            pairs[pairCount++] = rank;
+        }
+        else if (count[rank] == 1) {
+            singles[singleCount++] = rank;
+        }
     }
 
     // Determine hand type using standard poker priority (highest first).
@@ -91,21 +109,31 @@ int evaluateHand(const GameState* gs, const Card* hand)
     pool[0] = hand[0];
     pool[1] = hand[1];
     int total = 2;
-    for (int i = 0; i < gs->communityCount; i++)
+    for (int i = 0; i < gs->communityCount; i++) {
         pool[total++] = gs->community[i];
+    } 
 
-    if (total < 5) return 0; // not enough cards to form a hand yet
+    // not enough cards to form a hand yet
+    if (total < 5) {
+        return 0; 
+    }
 
     //Try all 21 hand combinations
     int best = 0;
-    for (int a = 0; a < total-4; a++)
-    for (int b = a+1; b < total-3; b++)
-    for (int c = b+1; c < total-2; c++)
-    for (int d = c+1; d < total-1; d++)
-    for (int e = d+1; e < total; e++) {
-        Card five[5] = { pool[a], pool[b], pool[c], pool[d], pool[e] };
-        int sc = score5(five);
-        if (sc > best) best = sc;
+    for (int a = 0; a < total-4; a++) {
+        for (int b = a+1; b < total-3; b++){
+            for (int c = b+1; c < total-2; c++){
+                for (int d = c+1; d < total-1; d++){
+                    for (int e = d+1; e < total; e++) {
+                        Card five[5] = { pool[a], pool[b], pool[c], pool[d], pool[e] };
+                        int sc = score5(five);
+                        if (sc > best){
+                        best = sc;
+                        }
+                    }
+                }
+            }
+        }
     }
     return best;
 }

@@ -16,6 +16,7 @@
 #include "com.h"
 
 #define MAX_CLIENTS 6
+#define UNSEATED_ID MAX_PLAYERS // client->id value for a connection that has not picked a seat yet
 #define PORT 10160 // port 10160
 #define BUFFER_SIZE (MAX_PAYLOAD_SIZE + PROTOCOL_HEADER_SIZE) // buffer size for receiving data
 

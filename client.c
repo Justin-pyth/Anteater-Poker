@@ -40,7 +40,6 @@ void init_gui(int *argc, char ***argv)
     W.raise_spin       = GET("raise_spin");
     W.anteater_panel        = GET("anteater_panel");
     W.anteater_count_label  = GET("anteater_count_label");
-    W.btn_draw_anteater     = GET("btn_draw_anteater");
     W.chat_log       = GET("chat_log");
     W.chat_entry     = GET("chat_entry");
     W.btn_send_chat  = GET("btn_send_chat");
@@ -87,6 +86,19 @@ void init_gui(int *argc, char ***argv)
         snprintf(id, sizeof(id), "card_1_%d",           i+1); W.lb_card[i][1] = GET(id);
         init_card_widget(W.lb_card[i][0]);
         init_card_widget(W.lb_card[i][1]);
+    }
+
+    /* seat selection overlay */
+    W.seat_select = GET("seat_select");
+    if (W.seat_select)
+        g_signal_connect(W.seat_select, "delete-event", G_CALLBACK(gtk_true), NULL);
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        char id[32];
+        snprintf(id, sizeof(id), "seat_sel_name_%d", i); W.seat_sel_name[i] = GET(id);
+        snprintf(id, sizeof(id), "seat_sel_btn_%d",  i); W.seat_sel_btn[i]  = GET(id);
+        if (W.seat_sel_btn[i])
+            g_signal_connect(W.seat_sel_btn[i], "clicked",
+                             G_CALLBACK(on_seat_select_clicked), GINT_TO_POINTER(i));
     }
 
     for (int i = 0; i < 5; i++) {

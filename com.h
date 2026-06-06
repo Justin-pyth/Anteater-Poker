@@ -18,7 +18,8 @@ typedef enum {
     MSG_TYPE_ERROR_MESSAGE = 4,
     MSG_CD_SIGNAL= 5,// for sending count down signal
     MSG_TYPE_JOIN = 6,
-    MSG_TYPE_READY = 7
+    MSG_TYPE_READY = 7,
+    MSG_TYPE_SELECT_SEAT = 8 // client picks a seat; sender_id carries the chosen seat index
 } MessageType;
 typedef struct {
     MessageType type;

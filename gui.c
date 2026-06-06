@@ -62,7 +62,14 @@ static void dispatch_message(Message *msg)
 {
     if (msg->type == MSG_TYPE_GAME_STATE) {
         C.game = msg->gameState;
-        refresh_ui();
+        if (C.game.yourPlayerID >= MAX_PLAYERS) {
+            //not seated yet: show the blocking seat-select overlay (re-populated each
+            //state so seats taken by others lose their Select button)
+            show_seat_select();
+        } else {
+            hide_seat_select();
+            refresh_ui();
+        }
     } else if (msg->type == MSG_TYPE_CHAT_MESSAGE) {
         if (msg->sender_id >= MAX_PLAYERS)
             append_chat("SERVER", msg->chat, "server");
@@ -76,13 +83,9 @@ static void dispatch_message(Message *msg)
         for (int i = 0; i < GUI_OPPONENT_SLOTS; i++) stop_player_timer(i);
         if (target == C.my_player_id) {
             start_my_timer(TURN_SECONDS);
-        } else {
-            int slot = 0;
-            for (int i = 0; i < MAX_PLAYERS && slot < GUI_OPPONENT_SLOTS; i++) {
-                if (C.game.players[i].status == PLAYER_EMPTY) continue;
-                if (i == target) { start_player_timer(slot, TURN_SECONDS); break; }
-                slot++;
-            }
+        } else if (target < MAX_PLAYERS) {
+            //strip tile index == seat index
+            start_player_timer(target, TURN_SECONDS);
         }
     }
 }
@@ -182,14 +185,24 @@ if (me->has_cards) {
     }
     set_blind_marker(W.self_blind, myBlind);
 
-    int opp_slot = 0;
-    for (int pi = 0; pi < MAX_PLAYERS && opp_slot < GUI_OPPONENT_SLOTS; pi++) {
+    /* each seat maps to a fixed strip tile (tile index == seat index) */
+    for (int pi = 0; pi < MAX_PLAYERS; pi++) {
         Player *p = &game->players[pi];
-        if (p->status == PLAYER_EMPTY) continue;
-        
 
-        gtk_widget_set_opacity(W.opp_cards[opp_slot][0], 1);
-        gtk_widget_set_opacity(W.opp_cards[opp_slot][1], 1);
+        if (p->status == PLAYER_EMPTY) {
+            gtk_label_set_text(GTK_LABEL(W.opp_name[pi]),   "Empty");
+            gtk_label_set_text(GTK_LABEL(W.opp_chips[pi]),  "$0  |  bet $0");
+            gtk_label_set_text(GTK_LABEL(W.opp_status[pi]), "Waiting");
+            gtk_widget_set_opacity(W.opp_cards[pi][0], 0);
+            gtk_widget_set_opacity(W.opp_cards[pi][1], 0);
+            set_blind_marker(W.opp_blind[pi], BLIND_NONE);
+            gtk_style_context_remove_class(
+                gtk_widget_get_style_context(W.opp_frame[pi]), "active-seat");
+            continue;
+        }
+
+        gtk_widget_set_opacity(W.opp_cards[pi][0], 1);
+        gtk_widget_set_opacity(W.opp_cards[pi][1], 1);
 
         /* small/big blind marker for this seat (only during a live hand) */
         BlindKind oppBlind = BLIND_NONE;
@@ -197,63 +210,55 @@ if (me->has_cards) {
             if      (pi == game->smallBlindIndex) oppBlind = BLIND_SB;
             else if (pi == game->bigBlindIndex)   oppBlind = BLIND_BB;
         }
-        set_blind_marker(W.opp_blind[opp_slot], oppBlind);
+        set_blind_marker(W.opp_blind[pi], oppBlind);
 
-        gtk_label_set_text(GTK_LABEL(W.opp_name[opp_slot]),
+        gtk_label_set_text(GTK_LABEL(W.opp_name[pi]),
             p->name[0] ? p->name : "Player");
         snprintf(buf, sizeof(buf), "$%u  |  bet $%u", p->chips, p->total_bet);
-        gtk_label_set_text(GTK_LABEL(W.opp_chips[opp_slot]), buf);
+        gtk_label_set_text(GTK_LABEL(W.opp_chips[pi]), buf);
 
         const char *st = "Waiting";
-        if      (p->status == PLAYER_FOLDED)       
+        if      (p->status == PLAYER_FOLDED)
         {
-            gtk_widget_set_opacity(W.opp_cards[opp_slot][0], 0);
-            gtk_widget_set_opacity(W.opp_cards[opp_slot][1], 0);
+            gtk_widget_set_opacity(W.opp_cards[pi][0], 0);
+            gtk_widget_set_opacity(W.opp_cards[pi][1], 0);
             st = "Folded";
         }
         else if (p->status == PLAYER_ALL_IN)        st = "All in";
-        else if (p->status == PLAYER_DISCONNECTED)  
+        else if (p->status == PLAYER_DISCONNECTED)
         {
-            gtk_widget_set_opacity(W.opp_cards[opp_slot][0], 0);
-            gtk_widget_set_opacity(W.opp_cards[opp_slot][1], 0);
+            gtk_widget_set_opacity(W.opp_cards[pi][0], 0);
+            gtk_widget_set_opacity(W.opp_cards[pi][1], 0);
             st = "Disconnected";
         }
-        else if (p->status == PLAYER_SPECTATING)    
+        else if (p->status == PLAYER_SPECTATING)
         {
-            gtk_widget_set_opacity(W.opp_cards[opp_slot][0], 0);
-            gtk_widget_set_opacity(W.opp_cards[opp_slot][1], 0);
+            gtk_widget_set_opacity(W.opp_cards[pi][0], 0);
+            gtk_widget_set_opacity(W.opp_cards[pi][1], 0);
             st = "Spectating";
         }
         else if (p->status == PLAYER_PLAYING && pi == game->currentPlayer && game->handPlaying) st = "Acting";
-        gtk_label_set_text(GTK_LABEL(W.opp_status[opp_slot]), st);
+        gtk_label_set_text(GTK_LABEL(W.opp_status[pi]), st);
 
         if (p->has_cards) {
             if (card_is_known(p->hand[0]))
-                set_card_face(W.opp_cards[opp_slot][0], p->hand[0], 1);
+                set_card_face(W.opp_cards[pi][0], p->hand[0], 1);
             else
-                set_card_back(W.opp_cards[opp_slot][0]);
+                set_card_back(W.opp_cards[pi][0]);
             if (card_is_known(p->hand[1]))
-                set_card_face(W.opp_cards[opp_slot][1], p->hand[1], 1);
+                set_card_face(W.opp_cards[pi][1], p->hand[1], 1);
             else
-                set_card_back(W.opp_cards[opp_slot][1]);
+                set_card_back(W.opp_cards[pi][1]);
         } else {
-            set_card_back(W.opp_cards[opp_slot][0]);
-            set_card_back(W.opp_cards[opp_slot][1]);
+            set_card_back(W.opp_cards[pi][0]);
+            set_card_back(W.opp_cards[pi][1]);
         }
 
-        GtkStyleContext *ctx = gtk_widget_get_style_context(W.opp_frame[opp_slot]);
+        GtkStyleContext *ctx = gtk_widget_get_style_context(W.opp_frame[pi]);
         if (p->status == PLAYER_PLAYING && pi == game->currentPlayer && game->handPlaying)
             gtk_style_context_add_class(ctx, "active-seat");
         else
             gtk_style_context_remove_class(ctx, "active-seat");
-        opp_slot++;
-    }
-    for (int i = opp_slot; i < GUI_OPPONENT_SLOTS; i++) {
-        gtk_label_set_text(GTK_LABEL(W.opp_name[i]),   "Empty");
-        gtk_label_set_text(GTK_LABEL(W.opp_chips[i]),  "$0  |  bet $0");
-        gtk_label_set_text(GTK_LABEL(W.opp_status[i]), "Waiting");
-        gtk_style_context_remove_class(
-            gtk_widget_get_style_context(W.opp_frame[i]), "active-seat");
     }
 
     /* One-shot chip-win popup: fire once when a hand ends with a single winner.
@@ -513,4 +518,41 @@ void show_leaderboard(void)
 
     gtk_window_set_transient_for(GTK_WINDOW(W.leaderboard), GTK_WINDOW(W.window));
     gtk_widget_show_all(W.leaderboard);
+}
+
+/* -- Seat selection overlay ------------------------------------------------ */
+void show_seat_select(void)
+{
+    if (!W.seat_select) return;
+
+    GameState *g = &C.game;
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        Player *p = &g->players[i];
+        int empty = (p->status == PLAYER_EMPTY);
+
+        if (W.seat_sel_name[i])
+            gtk_label_set_text(GTK_LABEL(W.seat_sel_name[i]),
+                empty ? "— Empty Seat —" : (p->name[0] ? p->name : "Player"));
+
+        //a Select button only appears next to an empty seat
+        if (W.seat_sel_btn[i])
+            gtk_widget_set_visible(W.seat_sel_btn[i], empty);
+    }
+
+    gtk_window_set_transient_for(GTK_WINDOW(W.seat_select), GTK_WINDOW(W.window));
+    gtk_window_set_modal(GTK_WINDOW(W.seat_select), TRUE);
+    gtk_widget_show(W.seat_select);
+}
+
+void hide_seat_select(void)
+{
+    if (W.seat_select)
+        gtk_widget_hide(W.seat_select);
+}
+
+void on_seat_select_clicked(GtkButton *b, gpointer seat)
+{
+    (void)b;
+    //the confirming game state (with a real yourPlayerID) closes the overlay
+    sendSeatSelectToServer((uint8_t)GPOINTER_TO_INT(seat));
 }

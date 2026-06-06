@@ -318,6 +318,17 @@ void sendReadyToServer(void)
     send_to_server(&C, buffer, len);
 }
 
+void sendSeatSelectToServer(uint8_t seat)
+{
+    if (!C.connected) return;
+    Message msg;
+    msg.type      = MSG_TYPE_SELECT_SEAT;
+    msg.sender_id = seat; // chosen backend seat index (0-5)
+    uint8_t buffer[BUFFER_SIZE];
+    uint32_t len = prepare_payload(buffer, MSG_TYPE_SELECT_SEAT, &msg);
+    send_to_server(&C, buffer, len);
+}
+
 void sendNameToServer(const char *name)
 {
     if (!C.connected || !name) return;
@@ -372,13 +383,10 @@ static const Anteater_shop SHOP_SLOTS[6] = {
 
 static int gui_slot_to_player_id(int gui_slot)
 {
-    int slot = 0;
-    for (int i = 0; i < MAX_PLAYERS; i++) {
-        if (C.game.players[i].status == PLAYER_EMPTY) continue;
-        if (slot == gui_slot) return i;
-        slot++;
-    }
-    return -1;
+    //strip tile index == seat index
+    if (gui_slot < 0 || gui_slot >= MAX_PLAYERS) return -1;
+    if (C.game.players[gui_slot].status == PLAYER_EMPTY) return -1;
+    return gui_slot;
 }
 
 static const char *shop_card_name(Anteater_shop card)
