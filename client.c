@@ -160,6 +160,7 @@ void init_gui(int *argc, char ***argv)
     gtk_widget_hide(W.my_timer.bar);
 
 #undef GET
+    build_last_hand_panel(builder);   //replaces table_right_spacer with the sliding panel
     g_object_unref(builder);
     gtk_widget_show_all(W.window);
 }

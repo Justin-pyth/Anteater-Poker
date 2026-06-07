@@ -97,6 +97,14 @@ typedef struct {
     GtkWidget *seat_sel_name[MAX_PLAYERS];
     GtkWidget *seat_sel_btn [MAX_PLAYERS];
 
+    /* last-hand info side panel (built in C, replaces table_right_spacer) */
+    GtkWidget *last_hand_revealer;
+    GtkWidget *last_hand_toggle;
+    GtkWidget *lh_community[5];
+    GtkWidget *lh_name [MAX_PLAYERS];
+    GtkWidget *lh_cards[MAX_PLAYERS][2];
+    GtkWidget *lh_rank [MAX_PLAYERS];
+
     guint net_source; /* g_io_add_watch source id */
 } AppWidgets;
 
@@ -193,7 +201,20 @@ static const char * __attribute__((unused)) CSS =
 "#btn-send-chat { background-color: #e6c87a; color: #0d1117; border: none;"
 "  border-radius: 6px; font-family: 'Georgia', serif;"
 "  font-size: 12px; font-weight: bold; padding: 6px 14px; }"
-"#btn-send-chat:hover { background-color: #f0d898; }";
+"#btn-send-chat:hover { background-color: #f0d898; }"
+
+/* last-hand info side panel */
+"#lh-panel { background-color: #161b22; border-left: 1px solid #30363d; padding: 8px; }"
+"#lh-title { font-size: 13px; color: #e6c87a; font-weight: bold; letter-spacing: 2px; }"
+"#lh-head  { font-size: 10px; color: #8b949e; letter-spacing: 1px; }"
+"#lh-seat  { font-size: 11px; color: #8b949e; }"
+".lh-name  { font-size: 12px; color: #c9d1d9; }"
+".lh-rank  { font-size: 11px; color: #a0c8a0; }"
+".lh-winner { color: #ffd700; font-weight: bold; }"
+"#lh-toggle { background-color: #2a1a3a; border: 1px solid #9b59b6; border-radius: 8px;"
+"  color: #ffffff; font-family: 'Georgia', serif; font-size: 12px; font-weight: bold;"
+"  letter-spacing: 2px; padding: 6px 2px; }"
+"#lh-toggle:hover { background-color: #3d2755; }";
 
 
 #endif /* TEMP_GUI_ASSETS_H */

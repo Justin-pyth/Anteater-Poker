@@ -15,6 +15,11 @@ void show_login_screen(void);
 void refresh_ui(void);
 void infer_my_player_id(void);
 
+/* -- Last Hand Info side panel --------------------------------------------- */
+void build_last_hand_panel(GtkBuilder *builder);
+void update_last_hand_panel(void);
+void on_last_hand_toggle(GtkButton *b, gpointer d);
+
 /* -- Chat ------------------------------------------------------------------ */
 void append_chat(const char *sender, const char *msg, const char *tag_name);
 

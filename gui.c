@@ -1,11 +1,33 @@
 #include "gui.h"
 #include "gui_helpers.h"
+#include "rules.h"        /* evaluateHand for the last-hand panel rankings */
 #include <stdio.h>
 #include <string.h>
 
 /* -- Globals --------------------------------------------------------------- */
 AppWidgets W;
 ClientState C;
+
+/* snapshot of the most recently completed hand (for the Last Hand Info panel) */
+static GameState g_last_hand;
+static gboolean  g_have_last_hand = FALSE;
+
+static const char *hand_type_name(int type)
+{
+    switch (type) {
+        case ROYAL_FLUSH:    return "Royal Flush";
+        case STRAIGHT_FLUSH: return "Straight Flush";
+        case FOUR_KIND:      return "Four of a Kind";
+        case FULL_HOUSE:     return "Full House";
+        case FLUSH:          return "Flush";
+        case STRAIGHT:       return "Straight";
+        case THREE_KIND:     return "Three of a Kind";
+        case TWO_PAIR:       return "Two Pair";
+        case PAIR:           return "Pair";
+        case HIGHT_CARD:     return "High Card";
+        default:             return "-";
+    }
+}
 
 /* -- Chat display ---------------------------------------------------------- */
 void append_chat(const char *sender, const char *msg, const char *tag_name)
@@ -264,6 +286,13 @@ if (me->has_cards) {
             : (game->players[game->winnerID].name[0]
                ? game->players[game->winnerID].name : "Player");
         start_chip_win_anim(wname, prev_pot);
+    }
+    /* snapshot the just-finished hand for the Last Hand Info panel (this edge fires
+       on the HAND_COMPLETE broadcast, where all cards/community/winner are present) */
+    if (prev_handPlaying && !game->handPlaying) {
+        g_last_hand = *game;
+        g_have_last_hand = TRUE;
+        update_last_hand_panel();
     }
     prev_handPlaying = game->handPlaying;
     if (game->handPlaying) prev_pot = game->pot;  /* remember pot while the hand is live */
@@ -546,4 +575,105 @@ void on_seat_select_clicked(GtkButton *b, gpointer seat)
     (void)b;
     //the confirming game state (with a real yourPlayerID) closes the overlay
     sendSeatSelectToServer((uint8_t)GPOINTER_TO_INT(seat));
+}
+
+/* -- Last Hand Info side panel --------------------------------------------- */
+void on_last_hand_toggle(GtkButton *b, gpointer d)
+{
+    (void)b; (void)d;
+    if (!W.last_hand_revealer) return;
+    gboolean open = gtk_revealer_get_reveal_child(GTK_REVEALER(W.last_hand_revealer));
+    gtk_revealer_set_reveal_child(GTK_REVEALER(W.last_hand_revealer), !open);
+}
+
+void update_last_hand_panel(void)
+{
+    if (!W.last_hand_revealer) return; //panel not built yet
+
+    if (!g_have_last_hand) {
+        for (int i = 0; i < 5; i++)
+            if (W.lh_community[i]) set_card_back(W.lh_community[i]);
+        for (int i = 0; i < MAX_PLAYERS; i++) {
+            if (W.lh_name[i])  gtk_label_set_text(GTK_LABEL(W.lh_name[i]), "-");
+            if (W.lh_rank[i])  gtk_label_set_text(GTK_LABEL(W.lh_rank[i]), "");
+            if (W.lh_cards[i][0]) set_card_back(W.lh_cards[i][0]);
+            if (W.lh_cards[i][1]) set_card_back(W.lh_cards[i][1]);
+            if (W.lh_name[i])
+                gtk_style_context_remove_class(
+                    gtk_widget_get_style_context(W.lh_name[i]), "lh-winner");
+        }
+        return;
+    }
+
+    GameState *g = &g_last_hand;
+
+    for (int i = 0; i < 5; i++) {
+        if (!W.lh_community[i]) continue;
+        if (i < g->communityCount)
+            set_card_face(W.lh_community[i], g->community[i], card_is_known(g->community[i]));
+        else
+            set_card_back(W.lh_community[i]);
+    }
+
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        Player *p = &g->players[i];
+        int empty = (p->status == PLAYER_EMPTY);
+
+        if (W.lh_name[i])
+            gtk_label_set_text(GTK_LABEL(W.lh_name[i]),
+                empty ? "Empty" : (p->name[0] ? p->name : "Player"));
+
+        if (!empty && p->has_cards) {
+            set_card_face(W.lh_cards[i][0], p->hand[0], card_is_known(p->hand[0]));
+            set_card_face(W.lh_cards[i][1], p->hand[1], card_is_known(p->hand[1]));
+        } else {
+            set_card_back(W.lh_cards[i][0]);
+            set_card_back(W.lh_cards[i][1]);
+        }
+
+        const char *rank = "";
+        if (empty)                            rank = "";
+        else if (p->status == PLAYER_FOLDED)  rank = "Folded";
+        else if (p->has_cards && card_is_known(p->hand[0])) {
+            int score = evaluateHand(g, p->hand);
+            rank = hand_type_name((score >> 20) & 0xF);
+        } else                                rank = "-";
+        if (W.lh_rank[i]) gtk_label_set_text(GTK_LABEL(W.lh_rank[i]), rank);
+
+        if (W.lh_name[i]) {
+            GtkStyleContext *ctx = gtk_widget_get_style_context(W.lh_name[i]);
+            if (!empty && i == (int)g->winnerID)
+                gtk_style_context_add_class(ctx, "lh-winner");
+            else
+                gtk_style_context_remove_class(ctx, "lh-winner");
+        }
+    }
+}
+
+/* The panel is defined in anteater_poker.glade (the last_hand_* / lh_* widgets).
+   This binds those widgets and attaches the card draw callbacks; the toggle's
+   "clicked" signal is wired by gtk_builder_connect_signals -> on_last_hand_toggle. */
+void build_last_hand_panel(GtkBuilder *builder)
+{
+    char id[24];
+
+    W.last_hand_revealer = GTK_WIDGET(gtk_builder_get_object(builder, "last_hand_revealer"));
+    W.last_hand_toggle   = GTK_WIDGET(gtk_builder_get_object(builder, "last_hand_toggle"));
+
+    for (int i = 0; i < 5; i++) {
+        snprintf(id, sizeof(id), "lh_comm_%d", i);
+        W.lh_community[i] = GTK_WIDGET(gtk_builder_get_object(builder, id));
+        init_card_widget(W.lh_community[i]);
+    }
+
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        snprintf(id, sizeof(id), "lh_name_%d", i);   W.lh_name[i]    = GTK_WIDGET(gtk_builder_get_object(builder, id));
+        snprintf(id, sizeof(id), "lh_rank_%d", i);   W.lh_rank[i]    = GTK_WIDGET(gtk_builder_get_object(builder, id));
+        snprintf(id, sizeof(id), "lh_card_%d_a", i); W.lh_cards[i][0] = GTK_WIDGET(gtk_builder_get_object(builder, id));
+        snprintf(id, sizeof(id), "lh_card_%d_b", i); W.lh_cards[i][1] = GTK_WIDGET(gtk_builder_get_object(builder, id));
+        init_card_widget(W.lh_cards[i][0]);
+        init_card_widget(W.lh_cards[i][1]);
+    }
+
+    update_last_hand_panel();
 }
