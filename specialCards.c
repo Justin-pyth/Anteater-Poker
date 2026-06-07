@@ -72,23 +72,50 @@ bool shop_window_open(const GameState *gs)
 bool buyPowerup(GameState *gs, Deck *deck, uint8_t playerID, Anteater_shop card,
                 uint8_t target, uint8_t myCardIdx, uint8_t oppCardIdx)
 {
-    if (!shop_window_open(gs)) return false;
+    if (!shop_window_open(gs)) {
+        fprintf(stderr, "buyPowerup reject: no hand in progress\n");
+        return false;
+    }
 
     //TEMP: INSTAWIN disabled — keep the cost/instaWin() code below for re-enabling
-    if (card == INSTAWIN) return false;
+    if (card == INSTAWIN) {
+        fprintf(stderr, "buyPowerup reject: INSTAWIN disabled\n");
+        return false;
+    }
 
     //buyer must be a live player, and only on their own turn
-    if (playerID >= MAX_PLAYERS) return false;
-    if (gs->currentPlayer != playerID) return false;
+    if (playerID >= MAX_PLAYERS) {
+        fprintf(stderr, "buyPowerup reject: bad playerID %u\n", playerID);
+        return false;
+    }
+    if (gs->currentPlayer != playerID) {
+        fprintf(stderr, "buyPowerup reject: not your turn (current=%u, you=%u)\n",
+                gs->currentPlayer, playerID);
+        return false;
+    }
     Player *p = &gs->players[playerID];
-    if (p->status != PLAYER_PLAYING) return false;
-    if (myCardIdx >= HAND_SIZE || oppCardIdx >= HAND_SIZE) return false;
+    if (p->status != PLAYER_PLAYING) {
+        fprintf(stderr, "buyPowerup reject: player %u status %u not PLAYING\n",
+                playerID, p->status);
+        return false;
+    }
+    if (myCardIdx >= HAND_SIZE || oppCardIdx >= HAND_SIZE) {
+        fprintf(stderr, "buyPowerup reject: bad card index (my=%u opp=%u)\n",
+                myCardIdx, oppCardIdx);
+        return false;
+    }
 
     //target must be a real opponent holding cards (target-based cards)
     bool needsTarget = (card == SWAP1 || card == SWAP2 || card == SWAPOPS);
     if (needsTarget) {
-        if (target >= MAX_PLAYERS || target == playerID) return false;
-        if (!gs->players[target].has_cards) return false;
+        if (target >= MAX_PLAYERS || target == playerID) {
+            fprintf(stderr, "buyPowerup reject: bad target %u (you=%u)\n", target, playerID);
+            return false;
+        }
+        if (!gs->players[target].has_cards) {
+            fprintf(stderr, "buyPowerup reject: target %u has no cards\n", target);
+            return false;
+        }
     }
 
     //cost, INSTAWIN is 75% of the pot, everything else is a flat price
@@ -102,7 +129,11 @@ bool buyPowerup(GameState *gs, Deck *deck, uint8_t playerID, Anteater_shop card,
         case INSTAWIN: cost = gs->pot * 3 / 4; break;
         default:       return false;
     }
-    if (p->chips < cost) return false;
+    if (p->chips < cost) {
+        fprintf(stderr, "buyPowerup reject: can't afford (chips=%u < cost=%u)\n",
+                p->chips, cost);
+        return false;
+    }
 
     p->chips -= cost;
     switch (card) {
