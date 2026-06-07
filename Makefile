@@ -8,22 +8,25 @@ endif
 GTK_CFLAGS := $(shell pkg-config --cflags gtk+-3.0 2>$(NULL))
 GTK_LIBS := $(shell pkg-config --libs gtk+-3.0 2>$(NULL))
 
-.PHONY: all test clean run server_gui
+.PHONY: all test clean run server_gui server_headless
 
-all: server_gui_server client
+all: server client
 
 test: tests/test_game tests/flow_demo
 	./tests/test_game
 	./tests/flow_demo
 
-server: server.o protocol.o game.o rules.o bot.o com.o specialCards.o
+# `server` is the server WITH its monitor GUI (GTK + ENABLE_SERVER_GUI)
+server: server_gui_main.o server_gui.o protocol.o game.o rules.o bot.o com.o specialCards.o
+	$(CC) $(CFLAGS) $^ $(GTK_LIBS) -o $@
+
+# headless server (no GUI) for environments without a display
+server_headless: server.o protocol.o game.o rules.o bot.o com.o specialCards.o
 	$(CC) $(CFLAGS) $^ -o $@
 
-server_gui: server_gui_server
-	./server_gui_server
-
-server_gui_server: server_gui_main.o server_gui.o protocol.o game.o rules.o bot.o com.o specialCards.o
-	$(CC) $(CFLAGS) $^ $(GTK_LIBS) -o $@
+# build + launch the GUI server
+server_gui: server
+	./server
 
 client: client.o gui.o gui_helpers.o protocol.o game.o rules.o bot.o com.o specialCards.o
 	$(CC) $(CFLAGS) $^ $(GTK_LIBS) -rdynamic -o $@
@@ -73,7 +76,7 @@ clean:
 	-@del /Q /F server client gui server_gui_server test_server test_client server.exe client.exe gui.exe server_gui_server.exe test_server.exe test_client.exe *.o tests\*.o tests\test_game tests\flow_demo tests\test_game.exe tests\flow_demo.exe >NUL 2>NUL
 else
 clean:
-	rm -f server client gui server_gui_server test_server test_client tests/test_game tests/flow_demo *.o tests/*.o
+	rm -f server server_headless client gui server_gui_server test_server test_client tests/test_game tests/flow_demo *.o tests/*.o
 endif
 
 run: clean all

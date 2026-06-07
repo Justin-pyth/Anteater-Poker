@@ -69,7 +69,12 @@ int decode_client_data(const uint8_t *buffer, uint32_t *offset, PlayerAction *ac
     action->move = move_byte;
     read_u32(buffer, offset, &action->amount);
     read_u8(buffer, offset, &action->target);
-    read_u8(buffer, offset, (uint8_t *)&action->useSpecialCard);
+    //useSpecialCard is a 4-byte enum but only 1 byte is on the wire; read into a
+    //byte and assign so the upper 3 bytes are zeroed (a raw (uint8_t*) cast would
+    //leave them as stack garbage, corrupting the enum -> buyPowerup default reject)
+    uint8_t special_byte;
+    read_u8(buffer, offset, &special_byte);
+    action->useSpecialCard = special_byte;
     /*if (action->playerID<0 ||action->move <0 || action->amount <0) {
         return -1; // Invalid data
     }*/
@@ -177,7 +182,10 @@ int decode_server_data(const uint8_t *buffer, uint32_t *offset, GameState *gameS
     }
     for (int i=0;i<6;i++)
     {
-        read_u8(buffer, offset, (uint8_t *)&gameState->cardPrice[i]);
+        //cardPrice is a 4-byte enum; read 1 wire byte and assign (zeroes upper bytes)
+        uint8_t price_byte;
+        read_u8(buffer, offset, &price_byte);
+        gameState->cardPrice[i] = price_byte;
     }
      read_u8(buffer, offset, &gameState->stage);
      read_u8(buffer, offset, &gameState->currentPlayer);
