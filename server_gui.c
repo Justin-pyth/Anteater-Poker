@@ -150,57 +150,6 @@ static gboolean on_window_delete(GtkWidget *w, GdkEvent *e, gpointer u)
 }
 
 /* =========================================================================
-   CSS (dark theme matching the client palette)
-   ========================================================================= */
-static const char *SGUI_CSS =
-"window { background-color: #0d1117; }"
-"label  { color: #c9d1d9; font-family: 'Georgia', serif; }"
-"#sg-title  { font-size: 20px; font-weight: bold; color: #e6c87a; letter-spacing: 3px; }"
-"#sg-stat   { font-size: 13px; color: #e6c87a; }"
-"#sg-head   { font-size: 11px; color: #8b949e; letter-spacing: 1px; }"
-"#sg-cell   { font-size: 12px; color: #c9d1d9; }"
-"#sg-active { color: #ffd700; font-weight: bold; }"
-"#sg-log {"
-"  background-color: #0d1117; color: #7ab870;"
-"  font-family: monospace; font-size: 11px;"
-"  border: 1px solid #30363d; border-radius: 6px; padding: 4px;"
-"}"
-".sg-btn {"
-"  border-radius: 8px; font-family: 'Georgia', serif; font-size: 14px;"
-"  font-weight: bold; letter-spacing: 1px; padding: 8px 16px; border: 1px solid;"
-"  background-image: none;"   /* defeat the native theme gradient so our colors show */
-"  color: #ffffff;"
-"}"
-/* target the button's label node directly so it wins over the global `label{}`
-   rule, which would otherwise override the inherited button text color */
-".sg-btn label { color: #ffffff; font-weight: bold; }"
-"#sg-newhand { background-color: #1a3a1a; border-color: #27ae60; }"
-"#sg-restart { background-color: #14342f; border-color: #16a085; }"
-"#sg-addbots { background-color: #2a1a3a; border-color: #9b59b6; }"
-"#sg-quit    { background-color: #3a1a1a; border-color: #c0392b; }"
-".sg-btn:hover { opacity: 0.85; }";
-
-/* =========================================================================
-   Build helpers
-   ========================================================================= */
-static GtkWidget *mklabel(const char *text, const char *name)
-{
-    GtkWidget *l = gtk_label_new(text);
-    if (name) gtk_widget_set_name(l, name);
-    gtk_widget_set_halign(l, GTK_ALIGN_START);
-    return l;
-}
-
-static GtkWidget *mkbutton(const char *text, const char *name, GCallback cb)
-{
-    GtkWidget *btn = gtk_button_new_with_label(text);
-    gtk_widget_set_name(btn, name);
-    gtk_style_context_add_class(gtk_widget_get_style_context(btn), "sg-btn");
-    g_signal_connect(btn, "clicked", cb, NULL);
-    return btn;
-}
-
-/* =========================================================================
    Public: init
    ========================================================================= */
 /* relay used by broadcast_chat_message() to mirror client chat into the monitor */
@@ -216,94 +165,52 @@ void server_gui_init(ServerState *state)
     /* mirror all client/server chat into the event log */
     server_chat_log_hook = sg_chat_relay;
 
-    /* CSS */
+    /* CSS — loaded from server_gui.css (working dir) so Glade can preview the
+       same styling via its interface-css-provider-path reference */
     GtkCssProvider *css = gtk_css_provider_new();
-    gtk_css_provider_load_from_data(css, SGUI_CSS, -1, NULL);
+    GError *css_err = NULL;
+    if (!gtk_css_provider_load_from_path(css, "server_gui.css", &css_err)) {
+        fprintf(stderr, "server_gui: could not load server_gui.css: %s\n",
+                css_err ? css_err->message : "unknown error");
+        g_clear_error(&css_err);
+    }
     gtk_style_context_add_provider_for_screen(
         gdk_screen_get_default(), GTK_STYLE_PROVIDER(css),
         GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     g_object_unref(css);
 
-    SG.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(SG.window), "Anteater Poker — Server Monitor");
-    gtk_window_set_default_size(GTK_WINDOW(SG.window), 560, 520);
-    gtk_container_set_border_width(GTK_CONTAINER(SG.window), 12);
-    g_signal_connect(SG.window, "delete-event", G_CALLBACK(on_window_delete), NULL);
+    /* UI is defined in server_gui.glade (loaded from the working directory) */
+    GtkBuilder *b = gtk_builder_new_from_file("server_gui.glade");
+#define SG_GET(id) GTK_WIDGET(gtk_builder_get_object(b, (id)))
 
-    GtkWidget *root = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-    gtk_container_add(GTK_CONTAINER(SG.window), root);
-
-    /* title */
-    GtkWidget *title = mklabel("ANTEATER POKER  ·  SERVER MONITOR", "sg-title");
-    gtk_widget_set_halign(title, GTK_ALIGN_CENTER);
-    gtk_box_pack_start(GTK_BOX(root), title, FALSE, FALSE, 0);
-
-    /* status row */
-    GtkWidget *stat = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
-    SG.lbl_pot    = mklabel("Pot: $0",        "sg-stat");
-    SG.lbl_stage  = mklabel("Stage: —",       "sg-stat");
-    SG.lbl_turn   = mklabel("Turn: —",        "sg-stat");
-    SG.lbl_phase  = mklabel("Phase: —",       "sg-stat");
-    SG.lbl_hand   = mklabel("Hand: idle",     "sg-stat");
-    SG.lbl_pcount = mklabel("Players: 0",     "sg-stat");
-    gtk_box_pack_start(GTK_BOX(stat), SG.lbl_pot,    FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(stat), SG.lbl_stage,  FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(stat), SG.lbl_turn,   FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(stat), SG.lbl_phase,  FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(stat), SG.lbl_hand,   FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(stat), SG.lbl_pcount, FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(root), stat, FALSE, FALSE, 0);
-
-    SG.lbl_community = mklabel("Board: —", "sg-stat");
-    gtk_box_pack_start(GTK_BOX(root), SG.lbl_community, FALSE, FALSE, 0);
-
-    /* player table */
-    GtkWidget *grid = gtk_grid_new();
-    gtk_grid_set_column_spacing(GTK_GRID(grid), 18);
-    gtk_grid_set_row_spacing(GTK_GRID(grid), 4);
-    gtk_box_pack_start(GTK_BOX(root), grid, FALSE, FALSE, 6);
-
-    const char *heads[] = { "Seat", "Name", "Chips", "Bet", "Status", "Cards" };
-    for (int c = 0; c < 6; c++)
-        gtk_grid_attach(GTK_GRID(grid), mklabel(heads[c], "sg-head"), c, 0, 1, 1);
+    SG.window        = SG_GET("sg_window");
+    SG.lbl_pot       = SG_GET("lbl_pot");
+    SG.lbl_stage     = SG_GET("lbl_stage");
+    SG.lbl_turn      = SG_GET("lbl_turn");
+    SG.lbl_phase     = SG_GET("lbl_phase");
+    SG.lbl_hand      = SG_GET("lbl_hand");
+    SG.lbl_pcount    = SG_GET("lbl_pcount");
+    SG.lbl_community = SG_GET("lbl_community");
+    SG.log_view      = SG_GET("sg_log_view");
 
     for (int i = 0; i < MAX_PLAYERS; i++) {
-        char seat[8];
-        snprintf(seat, sizeof(seat), "%d", i + 1);  /* display 1-6; backend seats stay 0-5 */
-        gtk_grid_attach(GTK_GRID(grid), mklabel(seat, "sg-cell"), 0, i + 1, 1, 1);
-
-        SG.seat_name[i]   = mklabel("—", "sg-cell");
-        SG.seat_chips[i]  = mklabel("—", "sg-cell");
-        SG.seat_bet[i]    = mklabel("—", "sg-cell");
-        SG.seat_status[i] = mklabel("—", "sg-cell");
-        SG.seat_cards[i]  = mklabel("—", "sg-cell");
-        gtk_grid_attach(GTK_GRID(grid), SG.seat_name[i],   1, i + 1, 1, 1);
-        gtk_grid_attach(GTK_GRID(grid), SG.seat_chips[i],  2, i + 1, 1, 1);
-        gtk_grid_attach(GTK_GRID(grid), SG.seat_bet[i],    3, i + 1, 1, 1);
-        gtk_grid_attach(GTK_GRID(grid), SG.seat_status[i], 4, i + 1, 1, 1);
-        gtk_grid_attach(GTK_GRID(grid), SG.seat_cards[i],  5, i + 1, 1, 1);
+        char id[24];
+        snprintf(id, sizeof id, "seat_name_%d",   i); SG.seat_name[i]   = SG_GET(id);
+        snprintf(id, sizeof id, "seat_chips_%d",  i); SG.seat_chips[i]  = SG_GET(id);
+        snprintf(id, sizeof id, "seat_bet_%d",    i); SG.seat_bet[i]    = SG_GET(id);
+        snprintf(id, sizeof id, "seat_status_%d", i); SG.seat_status[i] = SG_GET(id);
+        snprintf(id, sizeof id, "seat_cards_%d",  i); SG.seat_cards[i]  = SG_GET(id);
     }
 
-    /* button row */
-    GtkWidget *btns = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
-    gtk_widget_set_halign(btns, GTK_ALIGN_CENTER);
-    gtk_box_pack_start(GTK_BOX(btns), mkbutton("New Hand", "sg-newhand", G_CALLBACK(on_newhand_clicked)), FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(btns), mkbutton("Restart",  "sg-restart", G_CALLBACK(on_restart_clicked)), FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(btns), mkbutton("Add Bots", "sg-addbots", G_CALLBACK(on_addbots_clicked)), FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(btns), mkbutton("Quit",     "sg-quit",    G_CALLBACK(on_quit_clicked)),    FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(root), btns, FALSE, FALSE, 6);
+    /* signals (handlers stay static -> wired here rather than via Glade) */
+    g_signal_connect(SG.window,            "delete-event", G_CALLBACK(on_window_delete),   NULL);
+    g_signal_connect(SG_GET("sg_newhand"), "clicked",      G_CALLBACK(on_newhand_clicked), NULL);
+    g_signal_connect(SG_GET("sg_restart"), "clicked",      G_CALLBACK(on_restart_clicked), NULL);
+    g_signal_connect(SG_GET("sg_addbots"), "clicked",      G_CALLBACK(on_addbots_clicked), NULL);
+    g_signal_connect(SG_GET("sg_quit"),    "clicked",      G_CALLBACK(on_quit_clicked),    NULL);
 
-    /* event log */
-    GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll),
-                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-    gtk_widget_set_vexpand(scroll, TRUE);
-    SG.log_view = gtk_text_view_new();
-    gtk_widget_set_name(SG.log_view, "sg-log");
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(SG.log_view), FALSE);
-    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(SG.log_view), FALSE);
-    gtk_container_add(GTK_CONTAINER(scroll), SG.log_view);
-    gtk_box_pack_start(GTK_BOX(root), scroll, TRUE, TRUE, 0);
+#undef SG_GET
+    g_object_unref(b);
 
     gtk_widget_show_all(SG.window);
     server_gui_log("Server monitor ready.");

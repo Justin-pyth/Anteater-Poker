@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Anteater Poker — Server Monitor window. Bound by id in server_gui.c
+     (server_gui_init). CSS (SGUI_CSS) is still loaded programmatically and
+     targets the widget names (#sg-title, #sg-stat, #sg-head, #sg-cell, #sg-log,
+     #sg-newhand, ...) and the .sg-btn style class set here. -->
+<interface>
+  <requires lib="gtk+" version="3.20"/>
+  <!-- interface-css-provider-path server_gui.css -->
+  <object class="GtkWindow" id="sg_window">
+    <property name="can-focus">False</property>
+    <property name="title" translatable="yes">Anteater Poker — Server Monitor</property>
+    <property name="default-width">560</property>
+    <property name="default-height">520</property>
+    <property name="border-width">12</property>
+    <child>
+      <object class="GtkBox" id="sg_root">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">10</property>
+        <child>
+          <object class="GtkLabel" id="sg_title">
+            <property name="name">sg-title</property>
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="halign">center</property>
+            <property name="label" translatable="yes">ANTEATER POKER  ·  SERVER MONITOR</property>
+          </object>
+          <packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="sg_status_row">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="spacing">16</property>
+            <child>
+              <object class="GtkLabel" id="lbl_pot">
+                <property name="name">sg-stat</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property>
+                <property name="label" translatable="yes">Pot: $0</property>
+              </object>
+              <packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="lbl_stage">
+                <property name="name">sg-stat</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property>
+                <property name="label" translatable="yes">Stage: —</property>
+              </object>
+              <packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="lbl_turn">
+                <property name="name">sg-stat</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property>
+                <property name="label" translatable="yes">Turn: —</property>
+              </object>
+              <packing><property name="expand">False</property><property name="fill">False</property><property name="position">2</property></packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="lbl_phase">
+                <property name="name">sg-stat</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property>
+                <property name="label" translatable="yes">Phase: —</property>
+              </object>
+              <packing><property name="expand">False</property><property name="fill">False</property><property name="position">3</property></packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="lbl_hand">
+                <property name="name">sg-stat</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property>
+                <property name="label" translatable="yes">Hand: idle</property>
+              </object>
+              <packing><property name="expand">False</property><property name="fill">False</property><property name="position">4</property></packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="lbl_pcount">
+                <property name="name">sg-stat</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property>
+                <property name="label" translatable="yes">Players: 0</property>
+              </object>
+              <packing><property name="expand">False</property><property name="fill">False</property><property name="position">5</property></packing>
+            </child>
+          </object>
+          <packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="lbl_community">
+            <property name="name">sg-stat</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property>
+            <property name="label" translatable="yes">Board: —</property>
+          </object>
+          <packing><property name="expand">False</property><property name="fill">False</property><property name="position">2</property></packing>
+        </child>
+        <child>
+          <object class="GtkGrid" id="sg_grid">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="column-spacing">18</property>
+            <property name="row-spacing">4</property>
+            <child><object class="GtkLabel"><property name="name">sg-head</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">Seat</property></object><packing><property name="left-attach">0</property><property name="top-attach">0</property></packing></child>
+            <child><object class="GtkLabel"><property name="name">sg-head</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">Name</property></object><packing><property name="left-attach">1</property><property name="top-attach">0</property></packing></child>
+            <child><object class="GtkLabel"><property name="name">sg-head</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">Chips</property></object><packing><property name="left-attach">2</property><property name="top-attach">0</property></packing></child>
+            <child><object class="GtkLabel"><property name="name">sg-head</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">Bet</property></object><packing><property name="left-attach">3</property><property name="top-attach">0</property></packing></child>
+            <child><object class="GtkLabel"><property name="name">sg-head</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">Status</property></object><packing><property name="left-attach">4</property><property name="top-attach">0</property></packing></child>
+            <child><object class="GtkLabel"><property name="name">sg-head</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">Cards</property></object><packing><property name="left-attach">5</property><property name="top-attach">0</property></packing></child>
+
+            <child><object class="GtkLabel"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">1</property></object><packing><property name="left-attach">0</property><property name="top-attach">1</property></packing></child>
+            <child><object class="GtkLabel" id="seat_name_0"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">1</property><property name="top-attach">1</property></packing></child>
+            <child><object class="GtkLabel" id="seat_chips_0"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">2</property><property name="top-attach">1</property></packing></child>
+            <child><object class="GtkLabel" id="seat_bet_0"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">3</property><property name="top-attach">1</property></packing></child>
+            <child><object class="GtkLabel" id="seat_status_0"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">4</property><property name="top-attach">1</property></packing></child>
+            <child><object class="GtkLabel" id="seat_cards_0"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">5</property><property name="top-attach">1</property></packing></child>
+
+            <child><object class="GtkLabel"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">2</property></object><packing><property name="left-attach">0</property><property name="top-attach">2</property></packing></child>
+            <child><object class="GtkLabel" id="seat_name_1"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">1</property><property name="top-attach">2</property></packing></child>
+            <child><object class="GtkLabel" id="seat_chips_1"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">2</property><property name="top-attach">2</property></packing></child>
+            <child><object class="GtkLabel" id="seat_bet_1"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">3</property><property name="top-attach">2</property></packing></child>
+            <child><object class="GtkLabel" id="seat_status_1"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">4</property><property name="top-attach">2</property></packing></child>
+            <child><object class="GtkLabel" id="seat_cards_1"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">5</property><property name="top-attach">2</property></packing></child>
+
+            <child><object class="GtkLabel"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">3</property></object><packing><property name="left-attach">0</property><property name="top-attach">3</property></packing></child>
+            <child><object class="GtkLabel" id="seat_name_2"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">1</property><property name="top-attach">3</property></packing></child>
+            <child><object class="GtkLabel" id="seat_chips_2"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">2</property><property name="top-attach">3</property></packing></child>
+            <child><object class="GtkLabel" id="seat_bet_2"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">3</property><property name="top-attach">3</property></packing></child>
+            <child><object class="GtkLabel" id="seat_status_2"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">4</property><property name="top-attach">3</property></packing></child>
+            <child><object class="GtkLabel" id="seat_cards_2"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">5</property><property name="top-attach">3</property></packing></child>
+
+            <child><object class="GtkLabel"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">4</property></object><packing><property name="left-attach">0</property><property name="top-attach">4</property></packing></child>
+            <child><object class="GtkLabel" id="seat_name_3"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">1</property><property name="top-attach">4</property></packing></child>
+            <child><object class="GtkLabel" id="seat_chips_3"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">2</property><property name="top-attach">4</property></packing></child>
+            <child><object class="GtkLabel" id="seat_bet_3"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">3</property><property name="top-attach">4</property></packing></child>
+            <child><object class="GtkLabel" id="seat_status_3"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">4</property><property name="top-attach">4</property></packing></child>
+            <child><object class="GtkLabel" id="seat_cards_3"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">5</property><property name="top-attach">4</property></packing></child>
+
+            <child><object class="GtkLabel"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">5</property></object><packing><property name="left-attach">0</property><property name="top-attach">5</property></packing></child>
+            <child><object class="GtkLabel" id="seat_name_4"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">1</property><property name="top-attach">5</property></packing></child>
+            <child><object class="GtkLabel" id="seat_chips_4"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">2</property><property name="top-attach">5</property></packing></child>
+            <child><object class="GtkLabel" id="seat_bet_4"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">3</property><property name="top-attach">5</property></packing></child>
+            <child><object class="GtkLabel" id="seat_status_4"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">4</property><property name="top-attach">5</property></packing></child>
+            <child><object class="GtkLabel" id="seat_cards_4"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">5</property><property name="top-attach">5</property></packing></child>
+
+            <child><object class="GtkLabel"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">6</property></object><packing><property name="left-attach">0</property><property name="top-attach">6</property></packing></child>
+            <child><object class="GtkLabel" id="seat_name_5"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">1</property><property name="top-attach">6</property></packing></child>
+            <child><object class="GtkLabel" id="seat_chips_5"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">2</property><property name="top-attach">6</property></packing></child>
+            <child><object class="GtkLabel" id="seat_bet_5"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">3</property><property name="top-attach">6</property></packing></child>
+            <child><object class="GtkLabel" id="seat_status_5"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">4</property><property name="top-attach">6</property></packing></child>
+            <child><object class="GtkLabel" id="seat_cards_5"><property name="name">sg-cell</property><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">—</property></object><packing><property name="left-attach">5</property><property name="top-attach">6</property></packing></child>
+          </object>
+          <packing><property name="expand">False</property><property name="fill">False</property><property name="padding">6</property><property name="position">3</property></packing>
+        </child>
+        <child>
+          <object class="GtkBox" id="sg_btn_row">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="halign">center</property>
+            <property name="spacing">10</property>
+            <child>
+              <object class="GtkButton" id="sg_newhand">
+                <property name="name">sg-newhand</property><property name="visible">True</property><property name="can-focus">True</property><property name="receives-default">True</property>
+                <property name="label" translatable="yes">New Hand</property>
+                <style><class name="sg-btn"/></style>
+              </object>
+              <packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="sg_restart">
+                <property name="name">sg-restart</property><property name="visible">True</property><property name="can-focus">True</property><property name="receives-default">True</property>
+                <property name="label" translatable="yes">Restart</property>
+                <style><class name="sg-btn"/></style>
+              </object>
+              <packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="sg_addbots">
+                <property name="name">sg-addbots</property><property name="visible">True</property><property name="can-focus">True</property><property name="receives-default">True</property>
+                <property name="label" translatable="yes">Add Bots</property>
+                <style><class name="sg-btn"/></style>
+              </object>
+              <packing><property name="expand">False</property><property name="fill">False</property><property name="position">2</property></packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="sg_quit">
+                <property name="name">sg-quit</property><property name="visible">True</property><property name="can-focus">True</property><property name="receives-default">True</property>
+                <property name="label" translatable="yes">Quit</property>
+                <style><class name="sg-btn"/></style>
+              </object>
+              <packing><property name="expand">False</property><property name="fill">False</property><property name="position">3</property></packing>
+            </child>
+          </object>
+          <packing><property name="expand">False</property><property name="fill">False</property><property name="padding">6</property><property name="position">4</property></packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="sg_log_scroll">
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="hscrollbar-policy">never</property>
+            <property name="vscrollbar-policy">automatic</property>
+            <property name="vexpand">True</property>
+            <child>
+              <object class="GtkTextView" id="sg_log_view">
+                <property name="name">sg-log</property>
+                <property name="visible">True</property>
+                <property name="can-focus">True</property>
+                <property name="editable">False</property>
+                <property name="cursor-visible">False</property>
+              </object>
+            </child>
+          </object>
+          <packing><property name="expand">True</property><property name="fill">True</property><property name="position">5</property></packing>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
