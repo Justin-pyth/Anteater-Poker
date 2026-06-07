@@ -2275,7 +2275,6 @@
                             <property name="can-focus">False</property>
                             <property name="transition-type">slide-left</property>
                             <property name="transition-duration">200</property>
-                            <property name="reveal-child">False</property>
                             <child>
                               <object class="GtkBox" id="lh_panel">
                                 <property name="name">lh-panel</property>
@@ -2324,7 +2323,11 @@
                                         <property name="visible">True</property>
                                         <property name="can-focus">False</property>
                                       </object>
-                                      <packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
                                     </child>
                                     <child>
                                       <object class="GtkDrawingArea" id="lh_comm_1">
@@ -2333,7 +2336,11 @@
                                         <property name="visible">True</property>
                                         <property name="can-focus">False</property>
                                       </object>
-                                      <packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
                                     </child>
                                     <child>
                                       <object class="GtkDrawingArea" id="lh_comm_2">
@@ -2342,7 +2349,11 @@
                                         <property name="visible">True</property>
                                         <property name="can-focus">False</property>
                                       </object>
-                                      <packing><property name="expand">False</property><property name="fill">False</property><property name="position">2</property></packing>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">2</property>
+                                      </packing>
                                     </child>
                                     <child>
                                       <object class="GtkDrawingArea" id="lh_comm_3">
@@ -2351,7 +2362,11 @@
                                         <property name="visible">True</property>
                                         <property name="can-focus">False</property>
                                       </object>
-                                      <packing><property name="expand">False</property><property name="fill">False</property><property name="position">3</property></packing>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">3</property>
+                                      </packing>
                                     </child>
                                     <child>
                                       <object class="GtkDrawingArea" id="lh_comm_4">
@@ -2360,7 +2375,11 @@
                                         <property name="visible">True</property>
                                         <property name="can-focus">False</property>
                                       </object>
-                                      <packing><property name="expand">False</property><property name="fill">False</property><property name="position">4</property></packing>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">4</property>
+                                      </packing>
                                     </child>
                                   </object>
                                   <packing>
@@ -2383,81 +2402,579 @@
                                 </child>
                                 <child>
                                   <object class="GtkBox" id="lh_row_0">
-                                    <property name="visible">True</property><property name="can-focus">False</property><property name="spacing">4</property>
-                                    <child><object class="GtkLabel"><property name="name">lh-seat</property><property name="width-request">14</property><property name="visible">True</property><property name="can-focus">False</property><property name="label">1</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing></child>
-                                    <child><object class="GtkDrawingArea" id="lh_card_0_a"><property name="width-request">22</property><property name="height-request">32</property><property name="visible">True</property><property name="can-focus">False</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing></child>
-                                    <child><object class="GtkDrawingArea" id="lh_card_0_b"><property name="width-request">22</property><property name="height-request">32</property><property name="visible">True</property><property name="can-focus">False</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">2</property></packing></child>
-                                    <child><object class="GtkBox"><property name="visible">True</property><property name="can-focus">False</property><property name="orientation">vertical</property>
-                                      <child><object class="GtkLabel" id="lh_name_0"><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">Empty</property><style><class name="lh-name"/></style></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing></child>
-                                      <child><object class="GtkLabel" id="lh_rank_0"><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">-</property><style><class name="lh-rank"/></style></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing></child>
-                                    </object><packing><property name="expand">True</property><property name="fill">True</property><property name="position">3</property></packing></child>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="name">lh-seat</property>
+                                        <property name="width-request">14</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="label">1</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="lh_card_0_a">
+                                        <property name="width-request">22</property>
+                                        <property name="height-request">32</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="lh_card_0_b">
+                                        <property name="width-request">22</property>
+                                        <property name="height-request">32</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="orientation">vertical</property>
+                                        <child>
+                                          <object class="GtkLabel" id="lh_name_0">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label">Empty</property>
+                                            <style>
+                                              <class name="lh-name"/>
+                                            </style>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="lh_rank_0">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label">-</property>
+                                            <style>
+                                              <class name="lh-rank"/>
+                                            </style>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">3</property>
+                                      </packing>
+                                    </child>
                                   </object>
-                                  <packing><property name="expand">False</property><property name="fill">False</property><property name="position">4</property></packing>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">4</property>
+                                  </packing>
                                 </child>
                                 <child>
                                   <object class="GtkBox" id="lh_row_1">
-                                    <property name="visible">True</property><property name="can-focus">False</property><property name="spacing">4</property>
-                                    <child><object class="GtkLabel"><property name="name">lh-seat</property><property name="width-request">14</property><property name="visible">True</property><property name="can-focus">False</property><property name="label">2</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing></child>
-                                    <child><object class="GtkDrawingArea" id="lh_card_1_a"><property name="width-request">22</property><property name="height-request">32</property><property name="visible">True</property><property name="can-focus">False</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing></child>
-                                    <child><object class="GtkDrawingArea" id="lh_card_1_b"><property name="width-request">22</property><property name="height-request">32</property><property name="visible">True</property><property name="can-focus">False</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">2</property></packing></child>
-                                    <child><object class="GtkBox"><property name="visible">True</property><property name="can-focus">False</property><property name="orientation">vertical</property>
-                                      <child><object class="GtkLabel" id="lh_name_1"><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">Empty</property><style><class name="lh-name"/></style></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing></child>
-                                      <child><object class="GtkLabel" id="lh_rank_1"><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">-</property><style><class name="lh-rank"/></style></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing></child>
-                                    </object><packing><property name="expand">True</property><property name="fill">True</property><property name="position">3</property></packing></child>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="name">lh-seat</property>
+                                        <property name="width-request">14</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="label">2</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="lh_card_1_a">
+                                        <property name="width-request">22</property>
+                                        <property name="height-request">32</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="lh_card_1_b">
+                                        <property name="width-request">22</property>
+                                        <property name="height-request">32</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="orientation">vertical</property>
+                                        <child>
+                                          <object class="GtkLabel" id="lh_name_1">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label">Empty</property>
+                                            <style>
+                                              <class name="lh-name"/>
+                                            </style>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="lh_rank_1">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label">-</property>
+                                            <style>
+                                              <class name="lh-rank"/>
+                                            </style>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">3</property>
+                                      </packing>
+                                    </child>
                                   </object>
-                                  <packing><property name="expand">False</property><property name="fill">False</property><property name="position">5</property></packing>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">5</property>
+                                  </packing>
                                 </child>
                                 <child>
                                   <object class="GtkBox" id="lh_row_2">
-                                    <property name="visible">True</property><property name="can-focus">False</property><property name="spacing">4</property>
-                                    <child><object class="GtkLabel"><property name="name">lh-seat</property><property name="width-request">14</property><property name="visible">True</property><property name="can-focus">False</property><property name="label">3</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing></child>
-                                    <child><object class="GtkDrawingArea" id="lh_card_2_a"><property name="width-request">22</property><property name="height-request">32</property><property name="visible">True</property><property name="can-focus">False</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing></child>
-                                    <child><object class="GtkDrawingArea" id="lh_card_2_b"><property name="width-request">22</property><property name="height-request">32</property><property name="visible">True</property><property name="can-focus">False</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">2</property></packing></child>
-                                    <child><object class="GtkBox"><property name="visible">True</property><property name="can-focus">False</property><property name="orientation">vertical</property>
-                                      <child><object class="GtkLabel" id="lh_name_2"><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">Empty</property><style><class name="lh-name"/></style></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing></child>
-                                      <child><object class="GtkLabel" id="lh_rank_2"><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">-</property><style><class name="lh-rank"/></style></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing></child>
-                                    </object><packing><property name="expand">True</property><property name="fill">True</property><property name="position">3</property></packing></child>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="name">lh-seat</property>
+                                        <property name="width-request">14</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="label">3</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="lh_card_2_a">
+                                        <property name="width-request">22</property>
+                                        <property name="height-request">32</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="lh_card_2_b">
+                                        <property name="width-request">22</property>
+                                        <property name="height-request">32</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="orientation">vertical</property>
+                                        <child>
+                                          <object class="GtkLabel" id="lh_name_2">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label">Empty</property>
+                                            <style>
+                                              <class name="lh-name"/>
+                                            </style>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="lh_rank_2">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label">-</property>
+                                            <style>
+                                              <class name="lh-rank"/>
+                                            </style>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">3</property>
+                                      </packing>
+                                    </child>
                                   </object>
-                                  <packing><property name="expand">False</property><property name="fill">False</property><property name="position">6</property></packing>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">6</property>
+                                  </packing>
                                 </child>
                                 <child>
                                   <object class="GtkBox" id="lh_row_3">
-                                    <property name="visible">True</property><property name="can-focus">False</property><property name="spacing">4</property>
-                                    <child><object class="GtkLabel"><property name="name">lh-seat</property><property name="width-request">14</property><property name="visible">True</property><property name="can-focus">False</property><property name="label">4</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing></child>
-                                    <child><object class="GtkDrawingArea" id="lh_card_3_a"><property name="width-request">22</property><property name="height-request">32</property><property name="visible">True</property><property name="can-focus">False</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing></child>
-                                    <child><object class="GtkDrawingArea" id="lh_card_3_b"><property name="width-request">22</property><property name="height-request">32</property><property name="visible">True</property><property name="can-focus">False</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">2</property></packing></child>
-                                    <child><object class="GtkBox"><property name="visible">True</property><property name="can-focus">False</property><property name="orientation">vertical</property>
-                                      <child><object class="GtkLabel" id="lh_name_3"><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">Empty</property><style><class name="lh-name"/></style></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing></child>
-                                      <child><object class="GtkLabel" id="lh_rank_3"><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">-</property><style><class name="lh-rank"/></style></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing></child>
-                                    </object><packing><property name="expand">True</property><property name="fill">True</property><property name="position">3</property></packing></child>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="name">lh-seat</property>
+                                        <property name="width-request">14</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="label">4</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="lh_card_3_a">
+                                        <property name="width-request">22</property>
+                                        <property name="height-request">32</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="lh_card_3_b">
+                                        <property name="width-request">22</property>
+                                        <property name="height-request">32</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="orientation">vertical</property>
+                                        <child>
+                                          <object class="GtkLabel" id="lh_name_3">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label">Empty</property>
+                                            <style>
+                                              <class name="lh-name"/>
+                                            </style>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="lh_rank_3">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label">-</property>
+                                            <style>
+                                              <class name="lh-rank"/>
+                                            </style>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">3</property>
+                                      </packing>
+                                    </child>
                                   </object>
-                                  <packing><property name="expand">False</property><property name="fill">False</property><property name="position">7</property></packing>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">7</property>
+                                  </packing>
                                 </child>
                                 <child>
                                   <object class="GtkBox" id="lh_row_4">
-                                    <property name="visible">True</property><property name="can-focus">False</property><property name="spacing">4</property>
-                                    <child><object class="GtkLabel"><property name="name">lh-seat</property><property name="width-request">14</property><property name="visible">True</property><property name="can-focus">False</property><property name="label">5</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing></child>
-                                    <child><object class="GtkDrawingArea" id="lh_card_4_a"><property name="width-request">22</property><property name="height-request">32</property><property name="visible">True</property><property name="can-focus">False</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing></child>
-                                    <child><object class="GtkDrawingArea" id="lh_card_4_b"><property name="width-request">22</property><property name="height-request">32</property><property name="visible">True</property><property name="can-focus">False</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">2</property></packing></child>
-                                    <child><object class="GtkBox"><property name="visible">True</property><property name="can-focus">False</property><property name="orientation">vertical</property>
-                                      <child><object class="GtkLabel" id="lh_name_4"><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">Empty</property><style><class name="lh-name"/></style></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing></child>
-                                      <child><object class="GtkLabel" id="lh_rank_4"><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">-</property><style><class name="lh-rank"/></style></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing></child>
-                                    </object><packing><property name="expand">True</property><property name="fill">True</property><property name="position">3</property></packing></child>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="name">lh-seat</property>
+                                        <property name="width-request">14</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="label">5</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="lh_card_4_a">
+                                        <property name="width-request">22</property>
+                                        <property name="height-request">32</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="lh_card_4_b">
+                                        <property name="width-request">22</property>
+                                        <property name="height-request">32</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="orientation">vertical</property>
+                                        <child>
+                                          <object class="GtkLabel" id="lh_name_4">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label">Empty</property>
+                                            <style>
+                                              <class name="lh-name"/>
+                                            </style>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="lh_rank_4">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label">-</property>
+                                            <style>
+                                              <class name="lh-rank"/>
+                                            </style>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">3</property>
+                                      </packing>
+                                    </child>
                                   </object>
-                                  <packing><property name="expand">False</property><property name="fill">False</property><property name="position">8</property></packing>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">8</property>
+                                  </packing>
                                 </child>
                                 <child>
                                   <object class="GtkBox" id="lh_row_5">
-                                    <property name="visible">True</property><property name="can-focus">False</property><property name="spacing">4</property>
-                                    <child><object class="GtkLabel"><property name="name">lh-seat</property><property name="width-request">14</property><property name="visible">True</property><property name="can-focus">False</property><property name="label">6</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing></child>
-                                    <child><object class="GtkDrawingArea" id="lh_card_5_a"><property name="width-request">22</property><property name="height-request">32</property><property name="visible">True</property><property name="can-focus">False</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing></child>
-                                    <child><object class="GtkDrawingArea" id="lh_card_5_b"><property name="width-request">22</property><property name="height-request">32</property><property name="visible">True</property><property name="can-focus">False</property></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">2</property></packing></child>
-                                    <child><object class="GtkBox"><property name="visible">True</property><property name="can-focus">False</property><property name="orientation">vertical</property>
-                                      <child><object class="GtkLabel" id="lh_name_5"><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">Empty</property><style><class name="lh-name"/></style></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">0</property></packing></child>
-                                      <child><object class="GtkLabel" id="lh_rank_5"><property name="visible">True</property><property name="can-focus">False</property><property name="halign">start</property><property name="label">-</property><style><class name="lh-rank"/></style></object><packing><property name="expand">False</property><property name="fill">False</property><property name="position">1</property></packing></child>
-                                    </object><packing><property name="expand">True</property><property name="fill">True</property><property name="position">3</property></packing></child>
+                                    <property name="visible">True</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="spacing">4</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="name">lh-seat</property>
+                                        <property name="width-request">14</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="label">6</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">0</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="lh_card_5_a">
+                                        <property name="width-request">22</property>
+                                        <property name="height-request">32</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">1</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDrawingArea" id="lh_card_5_b">
+                                        <property name="width-request">22</property>
+                                        <property name="height-request">32</property>
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">False</property>
+                                        <property name="fill">False</property>
+                                        <property name="position">2</property>
+                                      </packing>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="orientation">vertical</property>
+                                        <child>
+                                          <object class="GtkLabel" id="lh_name_5">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label">Empty</property>
+                                            <style>
+                                              <class name="lh-name"/>
+                                            </style>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">0</property>
+                                          </packing>
+                                        </child>
+                                        <child>
+                                          <object class="GtkLabel" id="lh_rank_5">
+                                            <property name="visible">True</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="halign">start</property>
+                                            <property name="label">-</property>
+                                            <style>
+                                              <class name="lh-rank"/>
+                                            </style>
+                                          </object>
+                                          <packing>
+                                            <property name="expand">False</property>
+                                            <property name="fill">False</property>
+                                            <property name="position">1</property>
+                                          </packing>
+                                        </child>
+                                      </object>
+                                      <packing>
+                                        <property name="expand">True</property>
+                                        <property name="fill">True</property>
+                                        <property name="position">3</property>
+                                      </packing>
+                                    </child>
                                   </object>
-                                  <packing><property name="expand">False</property><property name="fill">False</property><property name="position">9</property></packing>
+                                  <packing>
+                                    <property name="expand">False</property>
+                                    <property name="fill">False</property>
+                                    <property name="position">9</property>
+                                  </packing>
                                 </child>
                               </object>
                             </child>
@@ -3364,18 +3881,14 @@
           </packing>
         </child>
         <child>
-          <object class="GtkEntry" id="shop_text">
-            <property name="name">Shop_text</property>
+          <object class="GtkImage" id="shop_icon">
             <property name="visible">True</property>
-            <property name="can-focus">True</property>
-            <property name="halign">center</property>
-            <property name="margin-top">1</property>
-            <property name="text" translatable="yes">Shop </property>
+            <property name="can-focus">False</property>
+            <property name="stock">gtk-missing-image</property>
           </object>
           <packing>
             <property name="expand">False</property>
-            <property name="fill">False</property>
-            <property name="padding">5</property>
+            <property name="fill">True</property>
             <property name="position">0</property>
           </packing>
         </child>

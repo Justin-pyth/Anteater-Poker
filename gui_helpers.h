@@ -57,6 +57,7 @@ void on_seat_select_clicked(GtkButton *b, gpointer seat);
 gboolean shop_is_available(void);
 gboolean shop_is_open(void);
 void shop_init_dialog(void);
+void shop_wire_card_buttons(void);
 void shop_open(void);
 void shop_close(void);
 void refresh_shop_ui(void);

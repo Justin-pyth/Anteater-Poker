@@ -72,7 +72,7 @@ typedef struct {
     /* shop */
     GtkWidget *btn_shop;
     GtkWidget *shop;
-    GtkWidget *shop_text;
+    GtkWidget *shop_icon;
     GtkWidget *shop_cards[6];
     GtkWidget *confirm_button;
     GtkWidget *back_button;
