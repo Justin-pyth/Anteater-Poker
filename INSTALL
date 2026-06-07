@@ -1,38 +1,22 @@
-Extract and build:
+Extract the package and run the prebuilt binaries:
 
-  tar -xvzf Poker_V1.0_src.tar.gz
-  cd Poker_V1.0_src
-  make
+  tar -xvzf Poker_V1.0.tar.gz
+  cd Poker_V1.0
 
-The top-level `Makefile` runs the lower-level `src/Makefile` to build object files into `src/build/` and link binaries into `bin/`.
-Runtime GUI assets are stored in `bin/assets/`.
+Start the server:
 
-Make options:
-- `make` : build all binaries and test binaries
-- `make all` : same as `make` (builds the application and all test binaries)
-- `make test` : build and run non-GUI tests (`test_unit`, `test_protocol`, `test_game_flow`)
-- `make test-unit` : build and run unit tests only (`test_unit`)
-- `make test-logic` : build and run logic tests (`test_unit` and `test_game_flow`)
-- `make test-comm` : build and run communication tests (`test_protocol` and `test_system`)
-- `make test-gui` : build the GUI client (`poker_client`) and print run instructions
-- `make test_gui` : same as `make test-gui`
-- `make test_server` : build the communication test server
-- `make test_client` : build the communication test client
-- `make clean` : remove generated object files and binaries
-- `make tar` : create `Poker_V1.0_src.tar.gz`
+  cd bin
+  ./poker_server
 
-For testing:
-  use `make test` to build and run the non-GUI test binaries
-  `cd bin` to navigate to the binaries location
-  run `./test_protocol` and `./test_system` for communication tests
-  run `./test_unit` for unit tests
-  run `./test_game_flow` for full game flow tests
+Then start a client in another terminal or on another machine:
 
-For running the Anteater Poker server/client:
-  use `make` to build the binaries
-  `cd bin` to navigate to the binaries location
-  run `./poker_server` to start the GUI server monitor (default port 10160)
-  on another terminal run `./poker_client`
-  enter the hostname and port 10160 to connect.
+  cd bin
+  ./poker_client
 
-If the host does not have a display available, run `./poker_server_headless` instead of `./poker_server`.
+The server uses port 10160 by default. In the client login screen, enter the
+server hostname and port 10160.
+
+This user package does not require compilation. If the host cannot open the GUI
+server window, run `./poker_server_headless` instead.
+
+For gameplay and connection instructions, see `doc/Poker_UserManual.pdf`.
