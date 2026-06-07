@@ -10,7 +10,7 @@ GTK_LIBS := $(shell pkg-config --libs gtk+-3.0 2>$(NULL))
 
 .PHONY: all test clean run server_gui
 
-all: server client
+all: server_gui_server client
 
 test: tests/test_game tests/flow_demo
 	./tests/test_game
