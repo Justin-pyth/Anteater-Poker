@@ -41,6 +41,8 @@ int main(int argc, char *argv[])
     //of relying on select() blocking for a full second lets the server GUI build cap
     //the select timeout for responsiveness without speeding up the bots.
     struct timeval next_bot_action = {0, 0};
+    int bot_delay_armed = 0;
+    uint8_t delayed_bot = MAX_PLAYERS;
 
     while (state.running) {
 #ifdef ENABLE_SERVER_GUI
@@ -69,6 +71,23 @@ int main(int argc, char *argv[])
         }
         struct timeval timeout;
         struct timeval *timeout_ptr = NULL;
+        int bot_turn = state.game.handPlaying &&
+                       state.game.currentPlayer < MAX_PLAYERS &&
+                       isBot(state.game.players[state.game.currentPlayer].name);
+
+        if (bot_turn &&
+            (!bot_delay_armed || delayed_bot != state.game.currentPlayer))
+        {
+            gettimeofday(&next_bot_action, NULL);
+            next_bot_action.tv_sec += 1;
+            bot_delay_armed = 1;
+            delayed_bot = state.game.currentPlayer;
+        }
+        else if (!bot_turn)
+        {
+            bot_delay_armed = 0;
+            delayed_bot = MAX_PLAYERS;
+        }
 
         if (state.timer_active)
         {
@@ -84,13 +103,17 @@ int main(int argc, char *argv[])
             timeout.tv_usec = usec;
             timeout_ptr = &timeout;
         }
-        else if (state.game.handPlaying &&
-                 state.game.currentPlayer < MAX_PLAYERS &&
-                 isBot(state.game.players[state.game.currentPlayer].name))
+        else if (bot_turn)
         {
-            //bot's turn: wait 1.0 seconds so the GUI can show the action
-            timeout.tv_sec = 1;
-            timeout.tv_usec = 0;
+            //bot's turn: wake when its one-second deadline is reached
+            struct timeval now;
+            gettimeofday(&now, NULL);
+            long sec  = next_bot_action.tv_sec  - now.tv_sec;
+            long usec = next_bot_action.tv_usec - now.tv_usec;
+            if (usec < 0) { sec -= 1; usec += 1000000; }
+            if (sec < 0) { sec = 0; usec = 0; }
+            timeout.tv_sec = sec;
+            timeout.tv_usec = usec;
             timeout_ptr = &timeout;
         }
 #ifdef ENABLE_SERVER_GUI
@@ -139,9 +162,7 @@ int main(int argc, char *argv[])
             //bot's turn: pace moves ~1s apart using the wall clock (independent of how
             //often select() wakes), so the headless build is unchanged while the GUI
             //build stays responsive.
-            if (state.game.handPlaying &&
-                state.game.currentPlayer < MAX_PLAYERS &&
-                isBot(state.game.players[state.game.currentPlayer].name) &&
+            if (bot_turn &&
                 (now.tv_sec > next_bot_action.tv_sec ||
                  (now.tv_sec == next_bot_action.tv_sec &&
                   now.tv_usec >= next_bot_action.tv_usec)))
@@ -156,9 +177,8 @@ int main(int argc, char *argv[])
                     handle_after_move(&state);
                 }
 
-                //schedule the next bot action ~1s out
-                gettimeofday(&next_bot_action, NULL);
-                next_bot_action.tv_sec += 1;
+                bot_delay_armed = 0;
+                delayed_bot = MAX_PLAYERS;
             }
             continue;
         }

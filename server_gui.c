@@ -34,6 +34,31 @@ typedef struct {
 
 static ServerGui SG;      /* zero-initialized */
 
+static int server_gui_seat_has_client(ServerState *state, int seat)
+{
+    for (int i = 0; i < MAX_CLIENTS; i++)
+        if (state->clients[i].connected && state->clients[i].id == seat)
+            return 1;
+    return 0;
+}
+
+static void server_gui_clear_unoccupied_seats(ServerState *state)
+{
+    state->game.playerCount = 0;
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        if (server_gui_seat_has_client(state, i)) {
+            state->game.players[i].status = PLAYER_CONNECTED;
+            state->game.players[i].chips = INIT_CHIPS;
+            state->game.players[i].place = 0;
+            state->game.playerCount++;
+        } else {
+            memset(&state->game.players[i], 0, sizeof(Player));
+            state->game.players[i].id = i;
+            state->game.players[i].status = PLAYER_EMPTY;
+        }
+    }
+}
+
 /* =========================================================================
    Small enum -> text helpers
    ========================================================================= */
@@ -98,7 +123,11 @@ static void on_restart_clicked(GtkButton *b, gpointer u)
     (void)b; (void)u;
     if (!SG.state) return;
     resetGame(&SG.state->game);
+    server_gui_clear_unoccupied_seats(SG.state);
+    SG.state->timer_active = 0;
+    SG.state->time_between_hands = 0;
     broadcast_game_state(SG.state);
+    broadcast_chat_message(SG.state, MAX_PLAYERS, "Type /ready to ready up.");
     server_gui_log("Game reset - chips restored. Waiting for players to ready up.");
 }
 
@@ -153,7 +182,9 @@ static const char *SGUI_CSS =
 ".sg-btn {"
 "  border-radius: 8px; font-family: 'Georgia', serif; font-size: 14px;"
 "  font-weight: bold; letter-spacing: 1px; padding: 11px 24px; border: none;"
+"  background-image: none; color: #ffffff;"
 "}"
+".sg-btn label { color: #ffffff; font-weight: bold; }"
 "#sg-restart { background-color: #2ea043; color: #ffffff; }"
 "#sg-restart:hover  { background-color: #3fb950; }"
 "#sg-restart:active { background-color: #258838; }"

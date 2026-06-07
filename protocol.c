@@ -22,6 +22,26 @@ static bool seat_has_connected_client(ServerState *state, int seat)
     return false;
 }
 
+static void clear_unoccupied_lobby_seats(ServerState *state)
+{
+    GameState *g = &state->game;
+    if (g->handPlaying || g->phase != HAND_IDLE)
+        return;
+
+    g->playerCount = 0;
+    for (int seat = 0; seat < MAX_PLAYERS; seat++) {
+        if (seat_has_connected_client(state, seat)) {
+            if (g->players[seat].status == PLAYER_EMPTY)
+                g->players[seat].status = PLAYER_CONNECTED;
+            g->playerCount++;
+        } else {
+            memset(&g->players[seat], 0, sizeof(Player));
+            g->players[seat].id = seat;
+            g->players[seat].status = PLAYER_EMPTY;
+        }
+    }
+}
+
 void handle_client_communication(ServerState *state, Client *client)
 {
     uint8_t buffer[BUFFER_SIZE];
@@ -199,6 +219,7 @@ void handle_client_communication(ServerState *state, Client *client)
         else if (data.type == MSG_TYPE_SELECT_SEAT)
         {
             uint8_t seat = data.sender_id;
+            clear_unoccupied_lobby_seats(state);
 
             //only an unseated connection may pick, and only a valid empty seat
             if (client->id != UNSEATED_ID ||
@@ -381,6 +402,8 @@ void hide_card_info_for_others(GameState *client_state, uint8_t recipient_id)
 }
 void broadcast_game_state(ServerState *state)
 {
+    clear_unoccupied_lobby_seats(state);
+
     uint8_t buffer[BUFFER_SIZE];
     Message temp_data;
     for (int i = 0; i < MAX_CLIENTS; i++) {

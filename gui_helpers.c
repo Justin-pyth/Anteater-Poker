@@ -400,6 +400,7 @@ typedef struct {
 
 static ShopState shop;
 static GdkPixbuf *shop_card_pixbufs[6];
+static GdkPixbuf *shop_blank_pixbuf;
 
 static const Anteater_shop SHOP_SLOTS[6] = {
     SWAP1, SWAP2, REVEAL, REDRAW, SWAPOPS, INSTAWIN  /* INSTAWIN last: hidden while disabled */
@@ -459,6 +460,13 @@ static const char *shop_image_path(Anteater_shop card)
 
 static void shop_cache_images(void)
 {
+    if (!shop_blank_pixbuf) {
+        shop_blank_pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, TRUE, 8,
+                                           SHOP_ICON_W, SHOP_ICON_H);
+        if (shop_blank_pixbuf)
+            gdk_pixbuf_fill(shop_blank_pixbuf, 0x00000000);
+    }
+
     for (int i = 0; i < 6; i++) {
         const char *path = shop_image_path(SHOP_SLOTS[i]);
         if (!path) continue;
@@ -473,9 +481,10 @@ static void shop_cache_images(void)
 static void shop_clear_icon(void)
 {
     if (!W.shop_icon) return;
-    gtk_image_clear(GTK_IMAGE(W.shop_icon));
-    gtk_image_set_from_stock(GTK_IMAGE(W.shop_icon),
-                             GTK_STOCK_MISSING_IMAGE, GTK_ICON_SIZE_DIALOG);
+    if (shop_blank_pixbuf)
+        gtk_image_set_from_pixbuf(GTK_IMAGE(W.shop_icon), shop_blank_pixbuf);
+    else
+        gtk_image_clear(GTK_IMAGE(W.shop_icon));
 }
 
 static void shop_show_icon_slot(int slot)
@@ -483,6 +492,8 @@ static void shop_show_icon_slot(int slot)
     if (!W.shop_icon || slot < 0 || slot >= 6) return;
     if (shop_card_pixbufs[slot])
         gtk_image_set_from_pixbuf(GTK_IMAGE(W.shop_icon), shop_card_pixbufs[slot]);
+    else
+        shop_clear_icon();
 }
 
 static gboolean on_shop_card_enter(GtkWidget *widget, GdkEventCrossing *event,
@@ -628,6 +639,8 @@ void shop_init_dialog(void)
     g_signal_connect(W.shop, "delete-event", G_CALLBACK(on_shop_delete_event), NULL);
     gtk_window_set_modal(GTK_WINDOW(W.shop), FALSE);
     gtk_widget_hide(W.shop);
+    if (W.shop_icon)
+        gtk_widget_set_size_request(W.shop_icon, SHOP_ICON_W, SHOP_ICON_H);
     shop_cache_images();
     shop_clear_icon();
 }
