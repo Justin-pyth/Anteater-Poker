@@ -16,6 +16,7 @@ typedef struct {
     GtkWidget *lbl_phase;
     GtkWidget *lbl_hand;
     GtkWidget *lbl_pcount;
+    GtkWidget *lbl_port;
     GtkWidget *lbl_community;
 
     /* per-seat row labels */
@@ -43,7 +44,7 @@ static const char *stage_name(uint8_t s)
         case FLOP:    return "FLOP";
         case TURN:    return "TURN";
         case RIVER:   return "RIVER";
-        default:      return "—";
+        default:      return "-";
     }
 }
 
@@ -54,7 +55,7 @@ static const char *phase_name(HandPhase p)
         case HAND_BETTING:  return "BETTING";
         case HAND_RUNOUT:   return "RUNOUT";
         case HAND_COMPLETE: return "COMPLETE";
-        default:            return "—";
+        default:            return "-";
     }
 }
 
@@ -86,134 +87,205 @@ static void card_str(Card c, char *out, size_t n)
 }
 
 /* =========================================================================
-   Button / window callbacks
+   Button / window callbacks  (no game-flow buttons -- admin only)
    ========================================================================= */
-static void on_newhand_clicked(GtkButton *b, gpointer u)
-{
-    (void)b; (void)u;
-    if (!SG.state) return;
-    start_new_hand(SG.state);            /* same entry the READY path uses */
-    server_gui_log("New hand started.");
-}
 
+/* Restart: full reset to a clean lobby. Restores chips, clears the board,
+   sets players back to CONNECTED, then broadcasts. Does NOT force a deal --
+   the next hand begins through the normal ready-up flow. */
 static void on_restart_clicked(GtkButton *b, gpointer u)
 {
     (void)b; (void)u;
     if (!SG.state) return;
-    GameState *g = &SG.state->game;
-
-    /* free disconnected seats and bot seats (resetGame would otherwise keep them).
-       Emptied bot seats are automatically refilled by addBot() on the next /ready
-       or New Hand, so the bots rejoin the next hand. */
-    for (int s = 0; s < MAX_PLAYERS; s++) {
-        if (g->players[s].status == PLAYER_DISCONNECTED || isBot(g->players[s].name)) {
-            memset(&g->players[s], 0, sizeof(Player));
-            g->players[s].id = s;
-            g->players[s].status = PLAYER_EMPTY;
-        }
-    }
-
-    /* initial state: remaining (human) players back to $1000, board/pot cleared, gameOver=0 */
-    resetGame(g);
-
-    broadcast_chat_message(SG.state, MAX_PLAYERS, "Game restarted — chips reset to $1000.");
+    resetGame(&SG.state->game);
     broadcast_game_state(SG.state);
-    server_gui_log("Game restarted — chips reset, bot & disconnected seats cleared.");
+    server_gui_log("Game reset - chips restored. Waiting for players to ready up.");
 }
 
-static void on_addbots_clicked(GtkButton *b, gpointer u)
+/* Stop Server: end the main loop cleanly (cleanup_server runs after). */
+static void on_stop_clicked(GtkButton *b, gpointer u)
 {
     (void)b; (void)u;
-    if (!SG.state) return;
-    addBot(&SG.state->game, true);       /* fills empty seats (shuffle bot names) */
-    broadcast_game_state(SG.state);
-    server_gui_log("Bots added to empty seats.");
+    server_gui_log("Stopping server...");
+    if (SG.state) SG.state->running = 0;
 }
 
-static void on_quit_clicked(GtkButton *b, gpointer u)
+/* Clear Log: empty the on-screen event log. */
+static void on_clearlog_clicked(GtkButton *b, gpointer u)
 {
     (void)b; (void)u;
-    if (SG.state) {
-        broadcast_chat_message(SG.state, MAX_PLAYERS, "Server has been closed.");
-        SG.state->running = 0;           /* let server.c's loop exit + cleanup */
-    }
+    if (!SG.log_view) return;
+    GtkTextBuffer *tb = gtk_text_view_get_buffer(GTK_TEXT_VIEW(SG.log_view));
+    gtk_text_buffer_set_text(tb, "", -1);
 }
 
 static gboolean on_window_delete(GtkWidget *w, GdkEvent *e, gpointer u)
 {
     (void)w; (void)e; (void)u;
-    if (SG.state) {
-        broadcast_chat_message(SG.state, MAX_PLAYERS, "Server has been closed.");
-        SG.state->running = 0;           /* closing the window stops the server */
-    }
+    if (SG.state) SG.state->running = 0; /* closing the window stops the server */
     return FALSE;                        /* allow the window to be destroyed */
+}
+
+/* =========================================================================
+   CSS -- high-contrast, readable
+   ========================================================================= */
+static const char *SGUI_CSS =
+/* Force dark background on ALL container types — without this GTK3 renders
+   GtkBox and GtkGrid with the system light theme, making light text invisible */
+"window, box, grid, scrolledwindow { background-color: #0d1117; }"
+"label  { color: #c9d1d9; font-family: 'Georgia', serif; }"
+
+"#sg-title  { font-size: 22px; font-weight: bold; color: #e6c87a; letter-spacing: 3px; }"
+"#sg-stat   { font-size: 14px; color: #a8d8ea; }"         /* light blue: readable on dark */
+"#sg-port   { font-size: 14px; color: #7ab8e8; font-weight: bold; }"
+"#sg-head   { font-size: 13px; color: #8b949e; font-weight: bold; letter-spacing: 1px; }"
+"#sg-cell   { font-size: 14px; color: #e0e6ed; }"         /* near-white: readable on dark */
+"#sg-active { font-size: 14px; color: #ffd700; font-weight: bold; }"
+
+/* GtkTextView needs two selectors: the widget and its inner text node */
+"textview {"
+"  background-color: #0d1117;"
+"  font-family: monospace; font-size: 12px;"
+"  border: 1px solid #30363d; border-radius: 6px; padding: 4px;"
+"}"
+"textview text { background-color: #0d1117; color: #8fd98f; }"
+
+".sg-btn {"
+"  border-radius: 8px; font-family: 'Georgia', serif; font-size: 14px;"
+"  font-weight: bold; letter-spacing: 1px; padding: 11px 24px; border: none;"
+"}"
+"#sg-restart { background-color: #2ea043; color: #ffffff; }"
+"#sg-restart:hover  { background-color: #3fb950; }"
+"#sg-restart:active { background-color: #258838; }"
+"#sg-stop    { background-color: #c0392b; color: #ffffff; }"
+"#sg-stop:hover  { background-color: #da4b3b; }"
+"#sg-stop:active { background-color: #a52f23; }"
+"#sg-clear   { background-color: #444c56; color: #ffffff; }"
+"#sg-clear:hover  { background-color: #545d68; }"
+"#sg-clear:active { background-color: #383f47; }";
+
+/* =========================================================================
+   Build helpers
+   ========================================================================= */
+static GtkWidget *mklabel(const char *text, const char *name)
+{
+    GtkWidget *l = gtk_label_new(text);
+    if (name) gtk_widget_set_name(l, name);
+    gtk_widget_set_halign(l, GTK_ALIGN_START);
+    return l;
+}
+
+static GtkWidget *mkbutton(const char *text, const char *name, GCallback cb)
+{
+    GtkWidget *btn = gtk_button_new_with_label(text);
+    gtk_widget_set_name(btn, name);
+    gtk_style_context_add_class(gtk_widget_get_style_context(btn), "sg-btn");
+    g_signal_connect(btn, "clicked", cb, NULL);
+    return btn;
 }
 
 /* =========================================================================
    Public: init
    ========================================================================= */
-/* relay used by broadcast_chat_message() to mirror client chat into the monitor */
-static void sg_chat_relay(const char *line)
-{
-    server_gui_log("%s", line);
-}
-
 void server_gui_init(ServerState *state)
 {
     SG.state = state;
 
-    /* mirror all client/server chat into the event log */
-    server_chat_log_hook = sg_chat_relay;
-
-    /* CSS — loaded from server_gui.css (working dir) so Glade can preview the
-       same styling via its interface-css-provider-path reference */
     GtkCssProvider *css = gtk_css_provider_new();
-    GError *css_err = NULL;
-    if (!gtk_css_provider_load_from_path(css, "server_gui.css", &css_err)) {
-        fprintf(stderr, "server_gui: could not load server_gui.css: %s\n",
-                css_err ? css_err->message : "unknown error");
-        g_clear_error(&css_err);
-    }
+    gtk_css_provider_load_from_data(css, SGUI_CSS, -1, NULL);
     gtk_style_context_add_provider_for_screen(
         gdk_screen_get_default(), GTK_STYLE_PROVIDER(css),
         GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
     g_object_unref(css);
 
-    /* UI is defined in server_gui.glade (loaded from the working directory) */
-    GtkBuilder *b = gtk_builder_new_from_file("server_gui.glade");
-#define SG_GET(id) GTK_WIDGET(gtk_builder_get_object(b, (id)))
+    SG.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(SG.window), "Anteater Poker - Server");
+    gtk_window_set_default_size(GTK_WINDOW(SG.window), 560, 500);
+    gtk_container_set_border_width(GTK_CONTAINER(SG.window), 16);
+    g_signal_connect(SG.window, "delete-event", G_CALLBACK(on_window_delete), NULL);
 
-    SG.window        = SG_GET("sg_window");
-    SG.lbl_pot       = SG_GET("lbl_pot");
-    SG.lbl_stage     = SG_GET("lbl_stage");
-    SG.lbl_turn      = SG_GET("lbl_turn");
-    SG.lbl_phase     = SG_GET("lbl_phase");
-    SG.lbl_hand      = SG_GET("lbl_hand");
-    SG.lbl_pcount    = SG_GET("lbl_pcount");
-    SG.lbl_community = SG_GET("lbl_community");
-    SG.log_view      = SG_GET("sg_log_view");
+    GtkWidget *root = gtk_box_new(GTK_ORIENTATION_VERTICAL, 12);
+    gtk_container_add(GTK_CONTAINER(SG.window), root);
+
+    /* title + port */
+    GtkWidget *title = mklabel("ANTEATER POKER  -  SERVER", "sg-title");
+    gtk_widget_set_halign(title, GTK_ALIGN_CENTER);
+    gtk_box_pack_start(GTK_BOX(root), title, FALSE, FALSE, 0);
+
+    char portbuf[32];
+    snprintf(portbuf, sizeof(portbuf), "Listening on port %d", PORT);
+    SG.lbl_port = mklabel(portbuf, "sg-port");
+    gtk_widget_set_halign(SG.lbl_port, GTK_ALIGN_CENTER);
+    gtk_box_pack_start(GTK_BOX(root), SG.lbl_port, FALSE, FALSE, 0);
+
+    /* status row */
+    GtkWidget *stat = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 16);
+    SG.lbl_pot    = mklabel("Pot: $0",    "sg-stat");
+    SG.lbl_stage  = mklabel("Stage: -",   "sg-stat");
+    SG.lbl_turn   = mklabel("Turn: -",    "sg-stat");
+    SG.lbl_phase  = mklabel("Phase: -",   "sg-stat");
+    SG.lbl_hand   = mklabel("Hand: idle", "sg-stat");
+    SG.lbl_pcount = mklabel("Players: 0", "sg-stat");
+    gtk_box_pack_start(GTK_BOX(stat), SG.lbl_pot,    FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(stat), SG.lbl_stage,  FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(stat), SG.lbl_turn,   FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(stat), SG.lbl_phase,  FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(stat), SG.lbl_hand,   FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(stat), SG.lbl_pcount, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(root), stat, FALSE, FALSE, 0);
+
+    SG.lbl_community = mklabel("Board: -", "sg-stat");
+    gtk_box_pack_start(GTK_BOX(root), SG.lbl_community, FALSE, FALSE, 0);
+
+    /* player table (read-only monitor) */
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 20);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 5);
+    gtk_box_pack_start(GTK_BOX(root), grid, FALSE, FALSE, 6);
+
+    const char *heads[] = { "Seat", "Name", "Chips", "Bet", "Status", "Cards" };
+    for (int c = 0; c < 6; c++)
+        gtk_grid_attach(GTK_GRID(grid), mklabel(heads[c], "sg-head"), c, 0, 1, 1);
 
     for (int i = 0; i < MAX_PLAYERS; i++) {
-        char id[24];
-        snprintf(id, sizeof id, "seat_name_%d",   i); SG.seat_name[i]   = SG_GET(id);
-        snprintf(id, sizeof id, "seat_chips_%d",  i); SG.seat_chips[i]  = SG_GET(id);
-        snprintf(id, sizeof id, "seat_bet_%d",    i); SG.seat_bet[i]    = SG_GET(id);
-        snprintf(id, sizeof id, "seat_status_%d", i); SG.seat_status[i] = SG_GET(id);
-        snprintf(id, sizeof id, "seat_cards_%d",  i); SG.seat_cards[i]  = SG_GET(id);
+        char seat[8];
+        snprintf(seat, sizeof(seat), "%d", i);
+        gtk_grid_attach(GTK_GRID(grid), mklabel(seat, "sg-cell"), 0, i + 1, 1, 1);
+
+        SG.seat_name[i]   = mklabel("-", "sg-cell");
+        SG.seat_chips[i]  = mklabel("-", "sg-cell");
+        SG.seat_bet[i]    = mklabel("-", "sg-cell");
+        SG.seat_status[i] = mklabel("-", "sg-cell");
+        SG.seat_cards[i]  = mklabel("-", "sg-cell");
+        gtk_grid_attach(GTK_GRID(grid), SG.seat_name[i],   1, i + 1, 1, 1);
+        gtk_grid_attach(GTK_GRID(grid), SG.seat_chips[i],  2, i + 1, 1, 1);
+        gtk_grid_attach(GTK_GRID(grid), SG.seat_bet[i],    3, i + 1, 1, 1);
+        gtk_grid_attach(GTK_GRID(grid), SG.seat_status[i], 4, i + 1, 1, 1);
+        gtk_grid_attach(GTK_GRID(grid), SG.seat_cards[i],  5, i + 1, 1, 1);
     }
 
-    /* signals (handlers stay static -> wired here rather than via Glade) */
-    g_signal_connect(SG.window,            "delete-event", G_CALLBACK(on_window_delete),   NULL);
-    g_signal_connect(SG_GET("sg_newhand"), "clicked",      G_CALLBACK(on_newhand_clicked), NULL);
-    g_signal_connect(SG_GET("sg_restart"), "clicked",      G_CALLBACK(on_restart_clicked), NULL);
-    g_signal_connect(SG_GET("sg_addbots"), "clicked",      G_CALLBACK(on_addbots_clicked), NULL);
-    g_signal_connect(SG_GET("sg_quit"),    "clicked",      G_CALLBACK(on_quit_clicked),    NULL);
+    /* button row -- admin controls only */
+    GtkWidget *btns = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
+    gtk_widget_set_halign(btns, GTK_ALIGN_CENTER);
+    gtk_box_pack_start(GTK_BOX(btns), mkbutton("Restart Game", "sg-restart", G_CALLBACK(on_restart_clicked)),  FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(btns), mkbutton("Stop Server",  "sg-stop",    G_CALLBACK(on_stop_clicked)),     FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(btns), mkbutton("Clear Log",    "sg-clear",   G_CALLBACK(on_clearlog_clicked)), FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(root), btns, FALSE, FALSE, 8);
 
-#undef SG_GET
-    g_object_unref(b);
+    /* event log */
+    GtkWidget *scroll = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll),
+                                   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+    gtk_widget_set_vexpand(scroll, TRUE);
+    SG.log_view = gtk_text_view_new();
+    gtk_widget_set_name(SG.log_view, "sg-log");
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(SG.log_view), FALSE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(SG.log_view), FALSE);
+    gtk_container_add(GTK_CONTAINER(scroll), SG.log_view);
+    gtk_box_pack_start(GTK_BOX(root), scroll, TRUE, TRUE, 0);
 
     gtk_widget_show_all(SG.window);
-    server_gui_log("Server monitor ready.");
+    server_gui_log("Server monitor ready. Listening on port %d.", PORT);
 }
 
 /* =========================================================================
@@ -235,7 +307,7 @@ void server_gui_refresh(const GameState *gs)
     /* board */
     char board[64] = "Board: ";
     if (gs->communityCount == 0) {
-        strcat(board, "—");
+        strcat(board, "-");
     } else {
         for (int i = 0; i < gs->communityCount && i < 5; i++) {
             char cs[4];
@@ -251,7 +323,7 @@ void server_gui_refresh(const GameState *gs)
         const Player *p = &gs->players[i];
 
         gtk_label_set_text(GTK_LABEL(SG.seat_name[i]),
-            p->name[0] ? p->name : (p->status == PLAYER_EMPTY ? "—" : "Player"));
+            p->name[0] ? p->name : (p->status == PLAYER_EMPTY ? "-" : "Player"));
 
         snprintf(buf, sizeof(buf), "$%u", p->chips);
         gtk_label_set_text(GTK_LABEL(SG.seat_chips[i]), buf);
@@ -267,7 +339,7 @@ void server_gui_refresh(const GameState *gs)
             card_str(p->hand[1], b, sizeof(b));
             snprintf(buf, sizeof(buf), "%s %s", a, b);
         } else {
-            snprintf(buf, sizeof(buf), "—");
+            snprintf(buf, sizeof(buf), "-");
         }
         gtk_label_set_text(GTK_LABEL(SG.seat_cards[i]), buf);
 
@@ -304,7 +376,6 @@ void server_gui_log(const char *fmt, ...)
     gtk_text_buffer_get_end_iter(tb, &end);
     gtk_text_buffer_insert(tb, &end, line, -1);
 
-    /* autoscroll */
     gtk_text_buffer_get_end_iter(tb, &end);
     GtkTextMark *mark = gtk_text_buffer_get_mark(tb, "insert");
     gtk_text_buffer_move_mark(tb, mark, &end);
