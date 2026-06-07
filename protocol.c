@@ -699,6 +699,46 @@ void broadcast_side_pot_summary(ServerState *state)
 
 //the hand has reached HAND_COMPLETE: announce the result, end the tournament if
 //only one player has chips left, otherwise arm the inter-hand delay.
+//count players still in the hand (not folded/empty) — used to tell a showdown
+//(>=2 contestants) from an everyone-else-folded win (1 contestant)
+static int contestingCount(const GameState *g)
+{
+    int n = 0;
+    for (int i = 0; i < MAX_PLAYERS; i++)
+        if (g->players[i].status == PLAYER_PLAYING ||
+            g->players[i].status == PLAYER_ALL_IN)
+            n++;
+    return n;
+}
+
+//format a card as Value+Suit, e.g. "AS", "TH" (?? if unknown)
+static void card_vs(Card c, char *out, size_t n)
+{
+    static const char *R = "?23456789TJQKA"; //index by Rank enum
+    static const char *S = "?HDCS";           //index by Suit enum
+    if (c.rank == UNKNOW_R || c.suit == UNKNOW_S || c.rank > ACE || c.suit > SPADES)
+        snprintf(out, n, "??");
+    else
+        snprintf(out, n, "%c%c", R[c.rank], S[c.suit]);
+}
+
+static const char *handTypeName(int type)
+{
+    switch (type) {
+        case ROYAL_FLUSH:    return "Royal Flush";
+        case STRAIGHT_FLUSH: return "Straight Flush";
+        case FOUR_KIND:      return "Four of a Kind";
+        case FULL_HOUSE:     return "Full House";
+        case FLUSH:          return "Flush";
+        case STRAIGHT:       return "Straight";
+        case THREE_KIND:     return "Three of a Kind";
+        case TWO_PAIR:       return "Two Pair";
+        case PAIR:           return "Pair";
+        case HIGHT_CARD:     return "High Card";
+        default:             return "a winning hand";
+    }
+}
+
 static void finish_hand(ServerState *state)
 {
     GameState *g = &state->game;
@@ -732,10 +772,27 @@ static void finish_hand(ServerState *state)
 
     //hand winner announcement for chat
     //if a single winner, then output their name
-    if (g->winnerCount == 1)
+    if (g->winnerCount == 1 && g->winnerID < MAX_PLAYERS)
     {
         char msg[MAX_PAYLOAD_SIZE];
-        snprintf(msg, sizeof(msg), "%s wins the hand.", g->players[g->winnerID].name);
+        const char *wname = g->players[g->winnerID].name;
+
+        if (contestingCount(g) >= 2)
+        {
+            //showdown: reveal the winner's hole cards (Value Suit) and how they won
+            int score = evaluateHand(g, g->players[g->winnerID].hand);
+            int type  = (score >> 20) & 0xF;
+            char c0[4], c1[4];
+            card_vs(g->players[g->winnerID].hand[0], c0, sizeof(c0));
+            card_vs(g->players[g->winnerID].hand[1], c1, sizeof(c1));
+            snprintf(msg, sizeof(msg), "%s wins the hand with a %s (%s %s)",
+                     wname, handTypeName(type), c0, c1);
+        }
+        else
+        {
+            //won because everyone else folded — no reveal
+            snprintf(msg, sizeof(msg), "%s wins the hand.", wname);
+        }
         broadcast_chat_message(state, MAX_PLAYERS, msg);
     } //fallback for multiple winners **Note that the animated announcement will have highest earner as winner
     else if (g->winnerCount > 1)

@@ -502,6 +502,7 @@ static void endHandFold(GameState* gs)
 
     gs->players[winner].chips += gs->pot;
     gs->winnerID = winner;
+    gs->winnerCount = 1; //single uncontested winner (everyone else folded)
     endHand(gs);
 }
 
