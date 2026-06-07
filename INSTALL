@@ -1,0 +1,32 @@
+Extract and build:
+
+  tar -xvzf Poker_Beta_src.tar.gz
+  make
+
+The top-level `Makefile` runs the lower-level `src/Makefile` to build object files into `src/build/` and link binaries into `bin/`.
+
+Make options:
+- `make` : build all binaries and test binaries
+- `make all` : same as `make` (builds the application and all test binaries)
+- `make test` : build and run all tests (`test_unit`, `test_protocol`, `test_system`, `test_game_flow`)
+- `make test-unit` : build and run unit tests only (`test_unit`)
+- `make test-logic` : build and run logic tests (`test_unit` and `test_game_flow`)
+- `make test-comm` : build and run communication tests (`test_protocol` and `test_system`)
+- `make test-gui` : build and run the GUI client (`poker_client`)
+- `make clean` : remove all object files and binaries
+- `make tar` : create a tarball of the source code.
+
+For testing:
+  use `make test` to build and run all test binaries
+  `cd bin` to navigate to the binaries location
+  run `./test_protocol` and `./test_system` for communication tests
+  run `./test_unit` for unit tests
+  run `./test_game_flow` for full game flow tests
+
+For running the Anteater Poker server/client:
+  use `make` to build the binaries
+  `cd bin` to navigate to the binaries location
+  run `./poker_server` to start the server (default port 10160)
+  on another terminal run `./poker_client`
+  enter the hostname and port 10160 to connect.
+

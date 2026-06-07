@@ -1,83 +1,101 @@
 CC := cc
 CFLAGS := -Wall -Wextra -std=c11 -g -O2
-ifeq ($(OS),Windows_NT)
-NULL := NUL
-else
-NULL := /dev/null
-endif
-GTK_CFLAGS := $(shell pkg-config --cflags gtk+-3.0 2>$(NULL))
-GTK_LIBS := $(shell pkg-config --libs gtk+-3.0 2>$(NULL))
 
-.PHONY: all test clean run server_gui server_headless
+PKG_CONFIG := pkg-config
+GTK_CFLAGS := $(shell $(PKG_CONFIG) --cflags gtk+-3.0 2>/dev/null)
+GTK_LIBS := $(shell $(PKG_CONFIG) --libs gtk+-3.0 2>/dev/null)
 
-all: server client
+SRC_DIR ?= src
+BUILD_DIR := $(SRC_DIR)/build
+BIN_DIR ?= bin
 
-test: tests/test_game tests/flow_demo
-	./tests/test_game
-	./tests/flow_demo
+SERVER_BIN := $(BIN_DIR)/poker_server
+CLIENT_BIN := $(BIN_DIR)/poker_client
+TEST_UNIT_BIN := $(BIN_DIR)/test_unit
+TEST_PROTOCOL_BIN := $(BIN_DIR)/test_protocol
+TEST_SYSTEM_BIN := $(BIN_DIR)/test_system
+TEST_GAME_FLOW_BIN := $(BIN_DIR)/test_game_flow
 
-# `server` is the server WITH its monitor GUI (GTK + ENABLE_SERVER_GUI)
-server: server_gui_main.o server_gui.o protocol.o game.o rules.o bot.o com.o specialCards.o
-	$(CC) $(CFLAGS) $^ $(GTK_LIBS) -o $@
+COMMON_OBJS := \
+	$(BUILD_DIR)/protocol.o \
+	$(BUILD_DIR)/game.o \
+	$(BUILD_DIR)/rules.o \
+	$(BUILD_DIR)/bot.o \
+	$(BUILD_DIR)/com.o
 
-# headless server (no GUI) for environments without a display
-server_headless: server.o protocol.o game.o rules.o bot.o com.o specialCards.o
-	$(CC) $(CFLAGS) $^ -o $@
+SERVER_OBJS := $(BUILD_DIR)/server.o $(COMMON_OBJS)
+CLIENT_OBJS := \
+	$(BUILD_DIR)/client.o \
+	$(BUILD_DIR)/gui.o \
+	$(BUILD_DIR)/gui_helpers.o \
+	$(COMMON_OBJS)
+TEST_UNIT_OBJS := $(BUILD_DIR)/test_unit.o $(BUILD_DIR)/game.o $(BUILD_DIR)/rules.o
+TEST_PROTOCOL_OBJS := $(BUILD_DIR)/test_protocol.o $(BUILD_DIR)/protocol.o $(BUILD_DIR)/com.o $(BUILD_DIR)/game.o $(BUILD_DIR)/rules.o $(BUILD_DIR)/bot.o
+TEST_SYSTEM_OBJS := $(BUILD_DIR)/test_system.o $(BUILD_DIR)/protocol.o $(BUILD_DIR)/com.o $(BUILD_DIR)/game.o $(BUILD_DIR)/rules.o $(BUILD_DIR)/bot.o
+TEST_GAME_FLOW_OBJS := $(BUILD_DIR)/test_game_flow.o $(BUILD_DIR)/game.o $(BUILD_DIR)/rules.o $(BUILD_DIR)/bot.o
 
-# build + launch the GUI server
-server_gui: server
-	./server
+.PHONY: all test test-unit test-logic test-comm test-gui clean dirs src-objects tar
 
-client: client.o gui.o gui_helpers.o protocol.o game.o rules.o bot.o com.o specialCards.o
-	$(CC) $(CFLAGS) $^ $(GTK_LIBS) -rdynamic -o $@
+all: $(SERVER_BIN) $(CLIENT_BIN) $(TEST_UNIT_BIN) $(TEST_PROTOCOL_BIN) $(TEST_SYSTEM_BIN) $(TEST_GAME_FLOW_BIN)
 
+test: $(TEST_UNIT_BIN) $(TEST_PROTOCOL_BIN) $(TEST_SYSTEM_BIN) $(TEST_GAME_FLOW_BIN)
+	./$(TEST_UNIT_BIN)
+	./$(TEST_PROTOCOL_BIN)
+	./$(TEST_SYSTEM_BIN)
+	./$(TEST_GAME_FLOW_BIN)
 
-test_server: test_server.o protocol.o game.o rules.o bot.o com.o specialCards.o
-	$(CC) $(CFLAGS) $^ -o $@
+test-unit: $(TEST_UNIT_BIN)
+	./$(TEST_UNIT_BIN)
 
-test_client: test_client.o protocol.o game.o rules.o bot.o com.o specialCards.o
-	$(CC) $(CFLAGS) $^ -o $@
+test-logic: $(TEST_UNIT_BIN) $(TEST_GAME_FLOW_BIN)
+	./$(TEST_UNIT_BIN)
+	./$(TEST_GAME_FLOW_BIN)
 
-tests/test_game: tests/test_game.o game.o rules.o specialCards.o
-	$(CC) $(CFLAGS) $^ -o $@
+test-comm: $(TEST_PROTOCOL_BIN) $(TEST_SYSTEM_BIN)
+	./$(TEST_PROTOCOL_BIN)
+	./$(TEST_SYSTEM_BIN)
 
-tests/flow_demo: tests/flow_demo.o game.o rules.o bot.o
-	$(CC) $(CFLAGS) $^ -o $@
+test-gui: $(CLIENT_BIN)
+	./$(CLIENT_BIN)
 
-test_game: tests/test_game
-	./tests/test_game
+src-objects:
+	$(MAKE) -C $(SRC_DIR) all
 
-server.o: server.c protocol.h game.h rules.h uds.h bot.h
-server_gui_main.o: server.c protocol.h game.h rules.h uds.h bot.h server_gui.h
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -DENABLE_SERVER_GUI -c server.c -o server_gui_main.o
-server_gui.o: server_gui.c server_gui.h protocol.h game.h rules.h bot.h
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c server_gui.c -o server_gui.o
-protocol.o: protocol.c protocol.h game.h rules.h uds.h com.h
-client.o: client.c gui.h gui_assets.h
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c client.c -o client.o
-gui.o: gui.c gui.h gui_helpers.h gui_assets.h protocol.h com.h uds.h
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c gui.c -o gui.o
-gui_helpers.o: gui_helpers.c gui_helpers.h gui_assets.h protocol.h com.h uds.h
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c gui_helpers.c -o gui_helpers.o
-game.o: game.c game.h rules.h uds.h
-rules.o: rules.c rules.h uds.h
-bot.o: bot.c bot.h game.h rules.h uds.h
-com.o: com.c com.h uds.h
-specialCards.o: specialCards.c specialCards.h uds.h game.h rules.h
-test_server.o: test_server.c protocol.h com.h uds.h
-test_client.o: test_client.c protocol.h com.h uds.h
-tests/test_game.o: tests/test_game.c game.h rules.h uds.h
-	$(CC) $(CFLAGS) -c tests/test_game.c -o tests/test_game.o
-tests/flow_demo.o: tests/flow_demo.c bot.h game.h rules.h uds.h
-	$(CC) $(CFLAGS) -c tests/flow_demo.c -o tests/flow_demo.o
+dirs:
+	mkdir -p $(BIN_DIR)
 
-ifeq ($(OS),Windows_NT)
+$(SERVER_BIN): | dirs src-objects
+	$(CC) $(CFLAGS) $(SERVER_OBJS) -o $@
+
+$(CLIENT_BIN): | dirs src-objects
+	$(CC) $(CFLAGS) $(CLIENT_OBJS) $(GTK_LIBS) -rdynamic -o $@
+
+$(TEST_UNIT_BIN): | dirs src-objects
+	$(CC) $(CFLAGS) $(TEST_UNIT_OBJS) -o $@
+
+$(TEST_PROTOCOL_BIN): | dirs src-objects
+	$(CC) $(CFLAGS) $(TEST_PROTOCOL_OBJS) -o $@
+
+$(TEST_SYSTEM_BIN): | dirs src-objects
+	$(CC) $(CFLAGS) $(TEST_SYSTEM_OBJS) -o $@
+
+$(TEST_GAME_FLOW_BIN): | dirs src-objects
+	$(CC) $(CFLAGS) $(TEST_GAME_FLOW_OBJS) -o $@
+
 clean:
-	-@del /Q /F server client gui server_gui_server test_server test_client server.exe client.exe gui.exe server_gui_server.exe test_server.exe test_client.exe *.o tests\*.o tests\test_game tests\flow_demo tests\test_game.exe tests\flow_demo.exe >NUL 2>NUL
-else
-clean:
-	rm -f server server_headless client gui server_gui_server test_server test_client tests/test_game tests/flow_demo *.o tests/*.o
-endif
+	$(MAKE) -C $(SRC_DIR) clean
+	rm -rf $(BIN_DIR)
 
-run: clean all
-	./server
+tar: clean
+	mkdir -p $(SRC_STAGE)/src $(SRC_STAGE)/bin $(SRC_STAGE)/doc
+	cp README README.md COPYRIGHT INSTALL $(SRC_STAGE)/ 2>/dev/null || true
+	cp Makefile $(SRC_STAGE)/
+	cp $(SRC_DIR)/Makefile $(SRC_STAGE)/src/Makefile
+	cp $(SRC_DIR)/*.c $(SRC_DIR)/*.h $(SRC_STAGE)/src/
+	cp *.glade *.css $(SRC_STAGE)/ 2>/dev/null || true
+	cp -R img $(SRC_STAGE)/ 2>/dev/null || true
+	cp doc/*.pdf $(SRC_STAGE)/doc/ 2>/dev/null || true
+	cp Poker_UserManual.pdf Poker_SoftwareSpec.pdf $(SRC_STAGE)/doc/ 2>/dev/null || true
+	tar -czf $(SRC_TAR) $(SRC_STAGE)
+	rm -rf $(SRC_STAGE)
+
