@@ -47,7 +47,7 @@ void init_gui(int *argc, char ***argv)
     W.label_your_stack = GET("label_your_stack");
     W.leaderboard = GET("leaderboard");
     W.shop          = GET("shop");
-    W.shop_text     = GET("shop_text");
+    W.shop_icon     = GET("shop_icon");
     W.confirm_button = GET("confirm_button");
     W.back_button   = GET("back_button");
     for (int i = 0; i < 6; i++) {
@@ -58,19 +58,13 @@ void init_gui(int *argc, char ***argv)
     if (W.leaderboard)
         g_signal_connect(W.leaderboard, "delete-event", G_CALLBACK(gtk_widget_hide_on_delete), NULL);
     shop_init_dialog();
-    if (W.shop_text)
-        gtk_editable_set_editable(GTK_EDITABLE(W.shop_text), FALSE);
     if (W.btn_shop)
         g_signal_connect(W.btn_shop, "clicked", G_CALLBACK(on_shop_clicked), NULL);
     if (W.back_button)
         g_signal_connect(W.back_button, "clicked", G_CALLBACK(on_shop_back), NULL);
     if (W.confirm_button)
         g_signal_connect(W.confirm_button, "clicked", G_CALLBACK(on_shop_confirm), NULL);
-    for (int i = 0; i < 6; i++) {
-        if (W.shop_cards[i])
-            g_signal_connect(W.shop_cards[i], "clicked",
-                             G_CALLBACK(on_shop_card_clicked), GINT_TO_POINTER(i));
-    }
+    shop_wire_card_buttons();
     if (W.ready_btn)
         g_signal_connect(W.ready_btn, "clicked", G_CALLBACK(on_ready_clicked), NULL);
     if (W.quit_btn)

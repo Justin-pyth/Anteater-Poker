@@ -1,7 +1,12 @@
 #include "gui_helpers.h"
 #include "specialCards.h"
+
+void on_shop_card_clicked(GtkButton *b, gpointer d);
 #include <stdio.h>
 #include <string.h>
+
+#define SHOP_ICON_W 180
+#define SHOP_ICON_H 252
 
 /* -- Rank / suit ----------------------------------------------------------- */
 const char *RANK_STR[13] = {
@@ -394,6 +399,7 @@ typedef struct {
 } ShopState;
 
 static ShopState shop;
+static GdkPixbuf *shop_card_pixbufs[6];
 
 static const Anteater_shop SHOP_SLOTS[6] = {
     SWAP1, SWAP2, REVEAL, REDRAW, SWAPOPS, INSTAWIN  /* INSTAWIN last: hidden while disabled */
@@ -438,10 +444,74 @@ static gboolean shop_needs_target(Anteater_shop card)
     return card == SWAP1 || card == SWAP2 || card == SWAPOPS;
 }
 
-static void shop_set_name_display(const char *name)
+static const char *shop_image_path(Anteater_shop card)
 {
-    if (!W.shop_text) return;
-    gtk_entry_set_text(GTK_ENTRY(W.shop_text), name ? name : "");
+    switch (card) {
+        case SWAP1:    return "img/swap1_card.png";
+        case SWAP2:    return "img/swap2_cards.png";
+        case REVEAL:   return "img/reveal_community.jpg";
+        case REDRAW:   return "img/redraw.jpg";
+        case SWAPOPS:  return "img/swapopp_cards.png";
+        case INSTAWIN: return "img/reveal_opponent.jpg";
+        default:       return NULL;
+    }
+}
+
+static void shop_cache_images(void)
+{
+    for (int i = 0; i < 6; i++) {
+        const char *path = shop_image_path(SHOP_SLOTS[i]);
+        if (!path) continue;
+        GdkPixbuf *raw = gdk_pixbuf_new_from_file(path, NULL);
+        if (!raw) continue;
+        shop_card_pixbufs[i] = gdk_pixbuf_scale_simple(
+            raw, SHOP_ICON_W, SHOP_ICON_H, GDK_INTERP_BILINEAR);
+        g_object_unref(raw);
+    }
+}
+
+static void shop_clear_icon(void)
+{
+    if (!W.shop_icon) return;
+    gtk_image_clear(GTK_IMAGE(W.shop_icon));
+    gtk_image_set_from_stock(GTK_IMAGE(W.shop_icon),
+                             GTK_STOCK_MISSING_IMAGE, GTK_ICON_SIZE_DIALOG);
+}
+
+static void shop_show_icon_slot(int slot)
+{
+    if (!W.shop_icon || slot < 0 || slot >= 6) return;
+    if (shop_card_pixbufs[slot])
+        gtk_image_set_from_pixbuf(GTK_IMAGE(W.shop_icon), shop_card_pixbufs[slot]);
+}
+
+static gboolean on_shop_card_enter(GtkWidget *widget, GdkEventCrossing *event,
+                                   gpointer user_data)
+{
+    (void)widget; (void)event;
+    shop_show_icon_slot(GPOINTER_TO_INT(user_data));
+    return FALSE;
+}
+
+static gboolean on_shop_card_leave(GtkWidget *widget, GdkEventCrossing *event,
+                                   gpointer user_data)
+{
+    (void)widget; (void)event; (void)user_data;
+    shop_clear_icon();
+    return FALSE;
+}
+
+void shop_wire_card_buttons(void)
+{
+    for (int i = 0; i < 6; i++) {
+        if (!W.shop_cards[i]) continue;
+        g_signal_connect(W.shop_cards[i], "clicked",
+                         G_CALLBACK(on_shop_card_clicked), GINT_TO_POINTER(i));
+        g_signal_connect(W.shop_cards[i], "enter-notify-event",
+                         G_CALLBACK(on_shop_card_enter), GINT_TO_POINTER(i));
+        g_signal_connect(W.shop_cards[i], "leave-notify-event",
+                         G_CALLBACK(on_shop_card_leave), GINT_TO_POINTER(i));
+    }
 }
 
 static void shop_set_prompt(const char *msg)
@@ -518,7 +588,7 @@ static void shop_reset_selection(void)
     shop.opp_card_idx   = 0;
     shop.selected_slot  = -1;
     shop_clear_highlights();
-    shop_set_name_display("");
+    shop_clear_icon();
     if (W.confirm_button)
         gtk_widget_set_sensitive(W.confirm_button, FALSE);
 }
@@ -558,6 +628,8 @@ void shop_init_dialog(void)
     g_signal_connect(W.shop, "delete-event", G_CALLBACK(on_shop_delete_event), NULL);
     gtk_window_set_modal(GTK_WINDOW(W.shop), FALSE);
     gtk_widget_hide(W.shop);
+    shop_cache_images();
+    shop_clear_icon();
 }
 
 void shop_open(void)
@@ -593,7 +665,7 @@ void shop_on_card_slot_clicked(int slot)
         gtk_style_context_add_class(
             gtk_widget_get_style_context(W.shop_cards[slot]), "shop-card-selected");
 
-    shop_set_name_display(shop_card_name(shop.selected));
+    shop_show_icon_slot(slot);
     shop_advance_after_card_pick();
 }
 
