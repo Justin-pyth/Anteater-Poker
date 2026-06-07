@@ -14,7 +14,7 @@ void init_gui(int *argc, char ***argv)
         GTK_STYLE_PROVIDER(css),
         GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
-    GtkBuilder *builder = gtk_builder_new_from_file("anteater_poker.glade");
+    GtkBuilder *builder = gtk_builder_new_from_file("assets/anteater_poker.glade");
     gtk_builder_connect_signals(builder, NULL);
 
 #define GET(id) GTK_WIDGET(gtk_builder_get_object(builder, (id)))

@@ -137,8 +137,8 @@ static void load_blind_pixbufs(void)
 {
     if (blind_pix_loaded) return;
     blind_pix_loaded = 1;   // load once; relative path resolves when run from the repo dir
-    blind_sb_pix = gdk_pixbuf_new_from_file("img/small blind.png", NULL);
-    blind_bb_pix = gdk_pixbuf_new_from_file("img/big blind.png",   NULL);
+    blind_sb_pix = gdk_pixbuf_new_from_file("assets/img/small blind.png", NULL);
+    blind_bb_pix = gdk_pixbuf_new_from_file("assets/img/big blind.png",   NULL);
 }
 
 static gboolean draw_blind_cb(GtkWidget *widget, cairo_t *cr, gpointer data)
@@ -448,12 +448,12 @@ static gboolean shop_needs_target(Anteater_shop card)
 static const char *shop_image_path(Anteater_shop card)
 {
     switch (card) {
-        case SWAP1:    return "img/swap1_card.png";
-        case SWAP2:    return "img/swap2_cards.png";
-        case REVEAL:   return "img/reveal_community.jpg";
-        case REDRAW:   return "img/redraw.jpg";
-        case SWAPOPS:  return "img/swapopp_cards.png";
-        case INSTAWIN: return "img/reveal_opponent.jpg";
+        case SWAP1:    return "assets/img/swap1_card.png";
+        case SWAP2:    return "assets/img/swap2_cards.png";
+        case REVEAL:   return "assets/img/reveal_community.jpg";
+        case REDRAW:   return "assets/img/redraw.jpg";
+        case SWAPOPS:  return "assets/img/swapopp_cards.png";
+        case INSTAWIN: return "assets/img/reveal_opponent.jpg";
         default:       return NULL;
     }
 }
