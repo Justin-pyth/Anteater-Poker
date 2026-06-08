@@ -1,4 +1,7 @@
-/*Encoding/decoding protocol for communication between server and clients.
+/*
+Author: Duc Tran
+This is the encoding/decoding protocol for the anteater_poker game.
+purpose: encoding and decoding alow the data send as one whole message.
 Message format:
 [ type ][ length ][ payload ]
 uint16_t type      // 2 bytes
