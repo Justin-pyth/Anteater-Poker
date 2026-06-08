@@ -1,3 +1,9 @@
+/*
+    Author: Duc Tran
+    This is the protocol of the aneater poker game.
+    It contains the server and client connection handling functions
+    as well as controll the game loggic between multiple clients and the server.
+*/
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
